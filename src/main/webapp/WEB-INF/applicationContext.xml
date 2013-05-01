@@ -8,27 +8,32 @@
        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.5.xsd
        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd">
 
+    <context:annotation-config />
+    
+    <!-- Where to look for Spring annotated files -->
+    <context:component-scan base-package="uk.ac.ed.learn9.bb.timetabling.controller" />
+    <context:component-scan base-package="uk.ac.ed.learn9.bb.timetabling.service" />
+    
     <bean id="propertyConfigurer"
           class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"
           p:location="/WEB-INF/jdbc.properties" />
 
     <bean id="dataSource"
-      class="org.springframework.jdbc.datasource.DriverManagerDataSource"
-      p:driverClassName="${jdbc.driverClassName}"
-      p:url="${jdbc.url}"
-      p:username="${jdbc.username}"
-      p:password="${jdbc.password}" />
+          class="org.springframework.jdbc.datasource.DriverManagerDataSource"
+          p:driverClassName="${jdbc.driverClassName}"
+          p:url="${jdbc.url}"
+          p:username="${jdbc.username}"
+          p:password="${jdbc.password}" />
     
     <bean id="rdbDataSource"
-      class="org.springframework.jdbc.datasource.DriverManagerDataSource"
-      p:driverClassName="${jdbc_rdb.driverClassName}"
-      p:url="${jdbc_rdb.url}"
-      p:username="${jdbc_rdb.username}"
-      p:password="${jdbc_rdb.password}" />
+          class="org.springframework.jdbc.datasource.DriverManagerDataSource"
+          p:driverClassName="${jdbc_rdb.driverClassName}"
+          p:url="${jdbc_rdb.url}"
+          p:username="${jdbc_rdb.username}"
+          p:password="${jdbc_rdb.password}" />
     
     <!-- Service beans -->
-    <bean id="timetablingCloneService" class="uk.ac.ed.learn9.bb.timetabling.service.TimetablingCloneService">
-    </bean>
+    <bean id="timetablingCloneService" class="uk.ac.ed.learn9.bb.timetabling.service.TimetablingCloneService" />
     
     <bean id="synchronizationService" class="uk.ac.ed.learn9.bb.timetabling.service.SynchronizationService">
         <property name="dataSource" ref="dataSource"/>
@@ -36,6 +41,27 @@
         <property name="cloneService" ref="timetablingCloneService"/>
     </bean>
 
-    <!-- ADD PERSISTENCE SUPPORT HERE (jpa, hibernate, etc) -->
+    <!-- Hibernate persistence support -->
 
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="annotatedClasses">
+            <list>
+                <value>uk.ac.ed.learn9.bb.timetabling.data.SynchronizationRun</value>
+            </list>
+        </property>
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.dialect">org.hibernate.dialect.Oracle10gDialect</prop>
+                <prop key="hibernate.show_sql">false</prop>
+                <prop key="hibernate.bytecode.provider">javaassist</prop>
+            </props>
+        </property>
+    </bean> 
+    
+    <bean id="transactionManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory" />
+    </bean>
+    
+    <tx:annotation-driven transaction-manager="transactionManager" />
 </beans>

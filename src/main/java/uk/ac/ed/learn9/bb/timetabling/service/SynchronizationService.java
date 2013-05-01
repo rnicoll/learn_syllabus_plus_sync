@@ -9,17 +9,19 @@ import javax.sql.DataSource;
 import org.springframework.stereotype.Service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import uk.ac.ed.learn9.bb.timetabling.dao.SynchronizationRunDao;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronizationRun;
 
 @Service
 public class SynchronizationService extends Object {
-
     @Autowired
     private DataSource dataSource;
     @Autowired
     private DataSource rdbDataSource;
     @Autowired
     private TimetablingCloneService cloneService;
+    @Autowired
+    private SynchronizationRunDao runDao;
 
     public SynchronizationRun generateDiff()
             throws SQLException {
@@ -113,8 +115,20 @@ public class SynchronizationService extends Object {
             statement.close();
         }
         
-        // FIXME: Load the synchronization run
-        
-        return null;
+        return this.getRunDao().getRun(runId);
+    }
+
+    /**
+     * @return the synchronization run data access object.
+     */
+    public SynchronizationRunDao getRunDao() {
+        return runDao;
+    }
+
+    /**
+     * @param runDao the runDao to set
+     */
+    public void setRunDao(SynchronizationRunDao runDao) {
+        this.runDao = runDao;
     }
 }
