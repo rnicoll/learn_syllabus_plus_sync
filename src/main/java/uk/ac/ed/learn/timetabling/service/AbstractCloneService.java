@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -13,6 +14,7 @@ import java.util.Set;
  * copying data from the timetabling database, to the local copy used by the
  * synchronization service, but could be used for other tasks if desired.
  */
+@Service
 public abstract class AbstractCloneService extends Object {
     /**
      * Clones the data in a table (or view) from one database to another.
@@ -49,6 +51,7 @@ public abstract class AbstractCloneService extends Object {
                     cloneQuery(sourceStatement, destinationStatement,
                         sourcePkField, destinationPkField,
                         fieldMappings);
+                    destination.commit();
                 } finally {
                     sourceStatement.close();
                 }
@@ -84,7 +87,6 @@ public abstract class AbstractCloneService extends Object {
             final ResultSet sourceRs = destinationStatement.executeQuery();
             try {
                 doClone(sourceRs, destinationRs, sourcePkField, destinationPkField, fieldMappings);
-                destination.commit();
             } finally {
                 sourceRs.close();
             }
@@ -122,7 +124,7 @@ public abstract class AbstractCloneService extends Object {
                     // Out of existing entries, go to the writing stage.
                     break;
                 }
-                destinationPk = rs.getString(destinationPkField);
+                destinationPk = destinationRs.getString(destinationPkField);
             }
 
             while (destinationPk.compareTo(sourcePk) < 0) {
@@ -131,7 +133,7 @@ public abstract class AbstractCloneService extends Object {
                     // Out of existing entries, go to the writing stage.
                     break;
                 }
-                destinationPk = rs.getString(destinationPkField);
+                destinationPk = destinationRs.getString(destinationPkField);
             }
 
             // Check if we've found a match, or gone straight past the source key value
@@ -180,6 +182,7 @@ public abstract class AbstractCloneService extends Object {
 
             destinationRs.updateString(destinationPkField, sourcePk);
             for (String sourceFieldName: fieldMappings.keySet()) {
+                final String destinationFieldName = fieldMappings.get(sourceFieldName);
                 final String sourceVal = sourceRs.getString(sourceFieldName);
                 destinationRs.updateString(destinationFieldName, sourceVal);
             }
