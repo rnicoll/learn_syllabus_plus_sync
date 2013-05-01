@@ -2,6 +2,7 @@ package uk.ac.ed.learn9.bb.timetabling.service;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -84,12 +85,32 @@ public class AbstractCloneServiceTest {
     @org.junit.Test
     public void testBuildQuery() {
         System.out.println("buildQuery");
-        String table = "ACTIVITY";
-        String pkField = "ACTIVITY_ID";
-        Collection<String> otherFields = Collections.emptySet();
-        AbstractCloneService instance = new AbstractCloneServiceImpl();
-        String expResult = "SELECT ACTIVITY_ID FROM ACTIVITY ORDER BY ACTIVITY_ID";
-        String result = instance.buildQuery(table, pkField, otherFields);
+        
+        final String table = "ACTIVITY";
+        final String pkField = "ACTIVITY_ID";
+        final Collection<String> otherFields = Collections.emptySet();
+        final AbstractCloneService instance = new AbstractCloneServiceImpl();
+        final String expResult = "SELECT ACTIVITY_ID FROM ACTIVITY ORDER BY ACTIVITY_ID";
+        final String result = instance.buildQuery(table, pkField, otherFields);
+        
+        assertEquals(expResult, result);
+    }
+
+    /**
+     * Tests building a query against a table, where there are parameters
+     * beyond the primary key.
+     */
+    @org.junit.Test
+    public void testBuildQueryWithParameters() {
+        System.out.println("buildQuery");
+        
+        final String table = "ACTIVITY";
+        final String pkField = "ACTIVITY_ID";
+        final Collection<String> otherFields = Arrays.asList(new String[] {"FIELD_1", "FIELD_2"});
+        final AbstractCloneService instance = new AbstractCloneServiceImpl();
+        final String expResult = "SELECT ACTIVITY_ID, FIELD_1, FIELD_2 FROM ACTIVITY ORDER BY ACTIVITY_ID";
+        final String result = instance.buildQuery(table, pkField, otherFields);
+        
         assertEquals(expResult, result);
     }
 
