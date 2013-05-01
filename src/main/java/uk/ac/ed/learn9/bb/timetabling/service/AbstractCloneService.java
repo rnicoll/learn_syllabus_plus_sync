@@ -1,4 +1,4 @@
-package uk.ac.ed.learn.timetabling.service;
+package uk.ac.ed.learn9.bb.timetabling.service;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -10,12 +10,12 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Abstract service for cloning tables from one database to another. Intended for
- * copying data from the timetabling database, to the local copy used by the
+ * Abstract service for cloning tables from one database to another. Intended
+ * for copying data from the timetabling database, to the local copy used by the
  * synchronization service, but could be used for other tasks if desired.
  */
-@Service
 public abstract class AbstractCloneService extends Object {
+
     /**
      * Clones the data in a table (or view) from one database to another.
      *
@@ -24,33 +24,31 @@ public abstract class AbstractCloneService extends Object {
      * status on this database will be modified as part of the clone process.
      * @param sourceTable the name of the table to read records from.
      * @param destinationTable the name of the table to write records to.
-     * @param sourcePkField the name of the primary key field on the source table.
-     * Tables with compound primary keys are not supported.
+     * @param sourcePkField the name of the primary key field on the source
+     * table. Tables with compound primary keys are not supported.
      * @param destinationPkField the name of the primary key field on the
      * destination table. Tables with compound primary keys are not supported.
-     * @param fieldMappings a mapping from source field names to destination fields,
-     * for non-primary key fields to be cloned.
+     * @param fieldMappings a mapping from source field names to destination
+     * fields, for non-primary key fields to be cloned.
      */
     protected void cloneTable(final Connection source, final Connection destination,
-        final String sourceTable, final String destinationTable,
-        final String sourcePkField, final String destinationPkField,
-        final Map<String, String> fieldMappings)
-        throws SQLException {
+            final String sourceTable, final String destinationTable,
+            final String sourcePkField, final String destinationPkField,
+            final Map<String, String> fieldMappings)
+            throws SQLException {
         destination.setAutoCommit(false);
         try {
             final PreparedStatement destinationStatement = destination.prepareStatement(
-                buildQuery(destinationTable, destinationPkField, fieldMappings.values()),
-                ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE
-            );
+                    buildQuery(destinationTable, destinationPkField, fieldMappings.values()),
+                    ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
             try {
                 final PreparedStatement sourceStatement = source.prepareStatement(
-                    buildQuery(sourceTable, sourcePkField, fieldMappings.keySet()),
-                    ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY
-                );
+                        buildQuery(sourceTable, sourcePkField, fieldMappings.keySet()),
+                        ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
                 try {
                     cloneQuery(sourceStatement, destinationStatement,
-                        sourcePkField, destinationPkField,
-                        fieldMappings);
+                            sourcePkField, destinationPkField,
+                            fieldMappings);
                     destination.commit();
                 } finally {
                     sourceStatement.close();
@@ -71,17 +69,17 @@ public abstract class AbstractCloneService extends Object {
      * must be set up so it is scroll insensitive.
      * @param destinationStatement the prepared statement to write data into.
      * This must be set up to be updatable.
-     * @param sourcePkField the name of the primary key field on the source table.
-     * Tables with compound primary keys are not supported.
+     * @param sourcePkField the name of the primary key field on the source
+     * table. Tables with compound primary keys are not supported.
      * @param destinationPkField the name of the primary key field on the
      * destination table. Tables with compound primary keys are not supported.
-     * @param fieldMappings a mapping from source field names to destination fields,
-     * for non-primary key fields to be cloned.
+     * @param fieldMappings a mapping from source field names to destination
+     * fields, for non-primary key fields to be cloned.
      */
     protected void cloneQuery(final PreparedStatement sourceStatement, final PreparedStatement destinationStatement,
-        final String sourcePkField, final String destinationPkField,
-        final Map<String, String> fieldMappings)
-        throws SQLException {
+            final String sourcePkField, final String destinationPkField,
+            final Map<String, String> fieldMappings)
+            throws SQLException {
         final ResultSet destinationRs = destinationStatement.executeQuery();
         try {
             final ResultSet sourceRs = destinationStatement.executeQuery();
@@ -98,19 +96,21 @@ public abstract class AbstractCloneService extends Object {
     /**
      * Clones the data in from one result set into another.
      *
-     * @param sourceRs the result set to read data from. This must be scroll insensitive.
-     * @param destinationRs the result set to write data into. This must be updatable.
-     * @param sourcePkField the name of the primary key field on the source table.
-     * Tables with compound primary keys are not supported.
+     * @param sourceRs the result set to read data from. This must be scroll
+     * insensitive.
+     * @param destinationRs the result set to write data into. This must be
+     * updatable.
+     * @param sourcePkField the name of the primary key field on the source
+     * table. Tables with compound primary keys are not supported.
      * @param destinationPkField the name of the primary key field on the
      * destination table. Tables with compound primary keys are not supported.
-     * @param fieldMappings a mapping from source field names to destination fields,
-     * for non-primary key fields to be cloned.
+     * @param fieldMappings a mapping from source field names to destination
+     * fields, for non-primary key fields to be cloned.
      */
     private void doClone(final ResultSet sourceRs, final ResultSet destinationRs,
-        final String sourcePkField, final String destinationPkField,
-        final Map<String, String> fieldMappings)
-        throws SQLException {
+            final String sourcePkField, final String destinationPkField,
+            final Map<String, String> fieldMappings)
+            throws SQLException {
         String destinationPk = null;
         final Set<String> existingPks = new HashSet<String>();
 
@@ -145,7 +145,7 @@ public abstract class AbstractCloneService extends Object {
 
                 // Synchronize the data across - this only handles strings because that's fine here,
                 // but we should handle other data types
-                for (String sourceFieldName: fieldMappings.keySet()) {
+                for (String sourceFieldName : fieldMappings.keySet()) {
                     final String destinationFieldName = fieldMappings.get(sourceFieldName);
                     final String sourceVal = sourceRs.getString(sourceFieldName);
                     final String destinationVal = destinationRs.getString(destinationFieldName);
@@ -156,8 +156,8 @@ public abstract class AbstractCloneService extends Object {
                     }
 
                     if (null == sourceVal
-                        || null == destinationVal
-                        || !sourceVal.equals(destinationVal)) {
+                            || null == destinationVal
+                            || !sourceVal.equals(destinationVal)) {
                         destinationRs.updateString(destinationFieldName, sourceVal);
                         recordDirty = true;
                     }
@@ -181,7 +181,7 @@ public abstract class AbstractCloneService extends Object {
             }
 
             destinationRs.updateString(destinationPkField, sourcePk);
-            for (String sourceFieldName: fieldMappings.keySet()) {
+            for (String sourceFieldName : fieldMappings.keySet()) {
                 final String destinationFieldName = fieldMappings.get(sourceFieldName);
                 final String sourceVal = sourceRs.getString(sourceFieldName);
                 destinationRs.updateString(destinationFieldName, sourceVal);
@@ -198,14 +198,14 @@ public abstract class AbstractCloneService extends Object {
      */
     private String buildQuery(final String table, final String pkField, final Collection<String> otherFields) {
         final StringBuilder query = new StringBuilder("SELECT ")
-            .append(pkField);
+                .append(pkField);
 
-        for (String fieldName: otherFields) {
+        for (String fieldName : otherFields) {
             query.append(", ").append(fieldName);
         }
 
         query.append(" FROM ").append(table)
-            .append(" ORDER BY ").append(pkField);
+                .append(" ORDER BY ").append(pkField);
 
         return query.toString();
     }
