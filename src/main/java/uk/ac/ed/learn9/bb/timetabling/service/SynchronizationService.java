@@ -9,7 +9,7 @@ import javax.sql.DataSource;
 import org.springframework.stereotype.Service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import uk.ac.ed.learn9.bb.timetabling.dao.SynchronizationRun;
+import uk.ac.ed.learn9.bb.timetabling.data.SynchronizationRun;
 
 @Service
 public class SynchronizationService extends Object {

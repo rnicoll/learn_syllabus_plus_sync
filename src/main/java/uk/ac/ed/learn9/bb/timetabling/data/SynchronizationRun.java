@@ -1,4 +1,4 @@
-package uk.ac.ed.learn9.bb.timetabling.dao;
+package uk.ac.ed.learn9.bb.timetabling.data;
 
 import java.io.Serializable;
 import javax.persistence.Column;
