@@ -32,8 +32,28 @@ public class SynchronizationService extends Object {
 
             try {
                 final SynchronizationRun run = this.startNewRun(destination);
+                
+                // FIXME: Continue the difference generation
 
                 return run;
+            } finally {
+                destination.close();
+            }
+        } finally {
+            source.close();
+        }
+    }
+    
+    public void syncModulesAndActivities()
+            throws SQLException {
+        final Connection source = this.getRdbDataSource().getConnection();
+
+        try {
+            final Connection destination = this.getRdbDataSource().getConnection();
+
+            try {
+                this.cloneService.cloneModules(source, destination);
+                this.cloneService.cloneActivities(source, destination);
             } finally {
                 destination.close();
             }

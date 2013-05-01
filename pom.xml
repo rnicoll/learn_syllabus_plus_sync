@@ -149,17 +149,32 @@
         <dependency>
             <groupId>javax.transaction</groupId>
             <artifactId>jta</artifactId>
-            <version>1.0.1B</version>
+            <version>1.1</version>
+        </dependency>
+        <dependency>
+          <groupId>blackboard</groupId>
+          <artifactId>b2deploy-task</artifactId>
+          <version>1.0</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>blackboard</groupId>
+          <artifactId>bb-platform</artifactId>
+          <version>1.0</version>
+          <type>jar</type>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>blackboard</groupId>
+          <artifactId>bb-taglibs</artifactId>
+          <version>1.0</version>
+          <type>jar</type>
+          <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>ejb3-persistence</artifactId>
             <version>1.0.1.GA</version>
-        </dependency>
-        <dependency>
-            <groupId>unknown.binary</groupId>
-            <artifactId>derbyclient</artifactId>
-            <version>SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>javax</groupId>
@@ -219,10 +234,11 @@
         </plugins>
     </build>
     <repositories>
-        <repository>
-            <id>unknown-jars-temp-repo</id>
-            <name>A temporary repository created by NetBeans for libraries and jars it could not identify. Please replace the dependencies in this repository with correct ones and delete this repository.</name>
-            <url>file:${project.basedir}/lib</url>
-        </repository>
+      <repository>
+        <url>http://repo1.maven.org/maven2/</url>
+        <id>spring-framework300</id>
+        <layout>default</layout>
+        <name>Repository for library Library[spring-framework300]</name>
+      </repository>
     </repositories>
 </project>
