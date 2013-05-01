@@ -31,7 +31,7 @@ public abstract class AbstractCloneService extends Object {
      * @param fieldMappings a mapping from source field names to destination
      * fields, for non-primary key fields to be cloned.
      */
-    protected void cloneTable(final Connection source, final Connection destination,
+    public void cloneTable(final Connection source, final Connection destination,
             final String sourceTable, final String destinationTable,
             final String sourcePkField, final String destinationPkField,
             final Map<String, String> fieldMappings)
@@ -76,7 +76,7 @@ public abstract class AbstractCloneService extends Object {
      * @param fieldMappings a mapping from source field names to destination
      * fields, for non-primary key fields to be cloned.
      */
-    protected void cloneQuery(final PreparedStatement sourceStatement, final PreparedStatement destinationStatement,
+    public void cloneQuery(final PreparedStatement sourceStatement, final PreparedStatement destinationStatement,
             final String sourcePkField, final String destinationPkField,
             final Map<String, String> fieldMappings)
             throws SQLException {
@@ -196,7 +196,7 @@ public abstract class AbstractCloneService extends Object {
     /**
      * Builds a select statement against a single table.
      */
-    private String buildQuery(final String table, final String pkField, final Collection<String> otherFields) {
+    public String buildQuery(final String table, final String pkField, final Collection<String> otherFields) {
         final StringBuilder query = new StringBuilder("SELECT ")
                 .append(pkField);
 
