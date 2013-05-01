@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import uk.ac.ed.learn9.bb.timetabling.dao.SynchronizationRun;
 
 @Service
-public class TimetablingDiffService extends Object {
+public class SynchronizationService extends Object {
 
     @Autowired
     private DataSource dataSource;
