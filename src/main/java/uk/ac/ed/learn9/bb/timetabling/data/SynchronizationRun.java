@@ -1,6 +1,7 @@
 package uk.ac.ed.learn9.bb.timetabling.data;
 
 import java.io.Serializable;
+import java.util.Date;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -13,10 +14,10 @@ import javax.persistence.TemporalType;
 public class SynchronizationRun extends Object implements Serializable {
     private int runId;
     private int previousRunId;
-    private java.sql.Timestamp startTime;
-    private java.sql.Timestamp cacheCopyCompleted;
-    private java.sql.Timestamp diffCompleted;
-    private java.sql.Timestamp endTime;
+    private Date startTime;
+    private Date cacheCopyCompleted;
+    private Date diffCompleted;
+    private Date endTime;
 
     /**
      * @return the ID for this run.
@@ -40,7 +41,7 @@ public class SynchronizationRun extends Object implements Serializable {
      */
     @Column(name="start_time")
     @Temporal(value=TemporalType.TIMESTAMP)
-    public java.sql.Timestamp getStartTime() {
+    public Date getStartTime() {
         return startTime;
     }
 
@@ -50,14 +51,14 @@ public class SynchronizationRun extends Object implements Serializable {
      */
     @Column(name="cache_copy_completed")
     @Temporal(value=TemporalType.TIMESTAMP)
-    public java.sql.Timestamp getCacheCopyCompleted() {
+    public Date getCacheCopyCompleted() {
         return cacheCopyCompleted;
     }
 
     /**
      * @param cacheCopyCompleted the cacheCopyCompleted to set
      */
-    public void setCacheCopyCompleted(java.sql.Timestamp cacheCopyCompleted) {
+    public void setCacheCopyCompleted(Date cacheCopyCompleted) {
         this.cacheCopyCompleted = cacheCopyCompleted;
     }
 
@@ -66,14 +67,14 @@ public class SynchronizationRun extends Object implements Serializable {
      */
     @Column(name="diff_completed")
     @Temporal(value=TemporalType.TIMESTAMP)
-    public java.sql.Timestamp getDiffCompleted() {
+    public Date getDiffCompleted() {
         return diffCompleted;
     }
 
     /**
      * @param diffCompleted the diffCompleted to set
      */
-    public void setDiffCompleted(java.sql.Timestamp diffCompleted) {
+    public void setDiffCompleted(Date diffCompleted) {
         this.diffCompleted = diffCompleted;
     }
 
@@ -82,14 +83,14 @@ public class SynchronizationRun extends Object implements Serializable {
      */
     @Column(name="end_time")
     @Temporal(value=TemporalType.TIMESTAMP)
-    public java.sql.Timestamp getEndTime() {
+    public Date getEndTime() {
         return endTime;
     }
 
     /**
      * @param endTime the endTime to set
      */
-    public void setEndTime(java.sql.Timestamp endTime) {
+    public void setEndTime(Date endTime) {
         this.endTime = endTime;
     }
 }
