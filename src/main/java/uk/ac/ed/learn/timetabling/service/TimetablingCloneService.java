@@ -12,11 +12,9 @@ public class TimetablingCloneService extends AbstractCloneService {
     public static final String CACHE_ACTIVITY_TABLE = "activity";
     public static final String CACHE_MODULE_TABLE = "module";
     public static final String[][] ACTIVITY_FIELD_MAPPINGS = {
-        {"ID", "tt_activity_id"},
         {"MODUL", "tt_module_id"}
     };
     public static final String[][] MODULE_FIELD_MAPPINGS = {
-        {"ID", "tt_module_id"},
     };
 
     public void cloneActivities(final Connection source, final Connection destination)
@@ -29,6 +27,7 @@ public class TimetablingCloneService extends AbstractCloneService {
 
         cloneTable(source, destination,
             REPORTING_ACTIVITY_TABLE, CACHE_ACTIVITY_TABLE,
+            "ID", "tt_activity_id",
             fieldMappings);
     }
 
@@ -42,6 +41,7 @@ public class TimetablingCloneService extends AbstractCloneService {
 
         cloneTable(source, destination,
             REPORTING_MODULE_TABLE, CACHE_MODULE_TABLE,
+            "ID", "tt_module_id",
             fieldMappings);
     }
 }
