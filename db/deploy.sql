@@ -18,6 +18,20 @@ USE `learn_group`;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
+-- Table structure for table `module`
+--
+
+DROP TABLE IF EXISTS `module`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `module` (
+  `tt_module_id` varchar(32) NOT NULL,
+  `learn_course_id` varchar(80) DEFAULT NULL,
+  PRIMARY KEY (`tt_module_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `activity`
 --
 
@@ -35,79 +49,6 @@ CREATE TABLE `activity` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Table structure for table `cache_enrolment`
---
-
-DROP TABLE IF EXISTS `cache_enrolment`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `cache_enrolment` (
-  `run_id` int(11) NOT NULL,
-  `tt_student_set_id` varchar(32) NOT NULL,
-  `tt_activity_id` varchar(32) NOT NULL,
-  PRIMARY KEY (`run_id`,`tt_student_set_id`,`tt_activity_id`),
-  KEY `tt_activity_id` (`tt_activity_id`),
-  CONSTRAINT `cache_enrolment_ibfk_1` FOREIGN KEY (`tt_activity_id`) REFERENCES `activity` (`tt_activity_id`),
-  CONSTRAINT `cache_enrolment_ibfk_2` FOREIGN KEY (`run_id`) REFERENCES `synchronisation_run` (`run_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `enrolment_add`
---
-
-DROP TABLE IF EXISTS `enrolment_add`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `enrolment_add` (
-  `run_id` int(11) NOT NULL,
-  `tt_activity_id` varchar(32) NOT NULL,
-  `tt_student_set_id` varchar(32) NOT NULL,
-  `update_completed` datetime DEFAULT NULL,
-  PRIMARY KEY (`run_id`,`tt_activity_id`,`tt_student_set_id`),
-  KEY `tt_activity_id` (`tt_activity_id`),
-  KEY `enrolment_add_stu` (`tt_student_set_id`),
-  CONSTRAINT `enrolment_add_activ` FOREIGN KEY (`tt_activity_id`) REFERENCES `activity` (`tt_activity_id`),
-  CONSTRAINT `enrolment_add_stu` FOREIGN KEY (`tt_student_set_id`) REFERENCES `student_set` (`tt_student_set_id`),
-  CONSTRAINT `enrolment_add_run` FOREIGN KEY (`run_id`) REFERENCES `synchronisation_run` (`run_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `enrolment_remove`
---
-
-DROP TABLE IF EXISTS `enrolment_remove`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `enrolment_remove` (
-  `run_id` int(11) NOT NULL,
-  `tt_activity_id` varchar(32) NOT NULL,
-  `tt_student_set_id` varchar(32) NOT NULL,
-  `update_completed` datetime DEFAULT NULL,
-  PRIMARY KEY (`run_id`,`tt_activity_id`,`tt_student_set_id`),
-  KEY `tt_activity_id` (`tt_activity_id`),
-  KEY `enrolment_remove_stu` (`tt_student_set_id`),
-  CONSTRAINT `enrolment_remove_activ` FOREIGN KEY (`tt_activity_id`) REFERENCES `activity` (`tt_activity_id`),
-  CONSTRAINT `enrolment_remove_stu` FOREIGN KEY (`tt_student_set_id`) REFERENCES `student_set` (`tt_student_set_id`),
-  CONSTRAINT `enrolment_remove_run` FOREIGN KEY (`run_id`) REFERENCES `synchronisation_run` (`run_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `module`
---
-
-DROP TABLE IF EXISTS `module`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `module` (
-  `tt_module_id` varchar(32) NOT NULL,
-  `learn_course_id` varchar(80) DEFAULT NULL,
-  PRIMARY KEY (`tt_module_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `student_set`
@@ -142,6 +83,73 @@ CREATE TABLE `synchronisation_run` (
   UNIQUE KEY `synchronisation_previous_run` (`previous_run_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `cache_enrolment`
+--
+
+DROP TABLE IF EXISTS `cache_enrolment`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cache_enrolment` (
+  `run_id` int(11) NOT NULL,
+  `tt_student_set_id` varchar(32) NOT NULL,
+  `tt_activity_id` varchar(32) NOT NULL,
+  PRIMARY KEY (`run_id`,`tt_student_set_id`,`tt_activity_id`),
+  KEY `tt_activity_id` (`tt_activity_id`),
+  CONSTRAINT `cache_enrolment_ibfk_1` FOREIGN KEY (`tt_activity_id`) REFERENCES `activity` (`tt_activity_id`),
+  CONSTRAINT `cache_enrolment_ibfk_2` FOREIGN KEY (`run_id`) REFERENCES `synchronisation_run` (`run_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+
+--
+-- Table structure for table `enrolment_add`
+--
+
+DROP TABLE IF EXISTS `enrolment_add`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `enrolment_add` (
+  `change_id` int(11) NOT NULL AUTO_INCREMENT,
+  `run_id` int(11) NOT NULL,
+  `tt_activity_id` varchar(32) NOT NULL,
+  `tt_student_set_id` varchar(32) NOT NULL,
+  `update_completed` datetime DEFAULT NULL,
+  PRIMARY KEY (`change_id`),
+  UNIQUE KEY `run_id` (`run_id`,`tt_activity_id`,`tt_student_set_id`),
+  KEY `enrolment_add_activ` (`tt_activity_id`),
+  KEY `enrolment_add_stu` (`tt_student_set_id`),
+  CONSTRAINT `enrolment_add_activ` FOREIGN KEY (`tt_activity_id`) REFERENCES `activity` (`tt_activity_id`),
+  CONSTRAINT `enrolment_add_stu` FOREIGN KEY (`tt_student_set_id`) REFERENCES `student_set` (`tt_student_set_id`),
+  CONSTRAINT `enrolment_add_run` FOREIGN KEY (`run_id`) REFERENCES `synchronisation_run` (`run_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `enrolment_remove`
+--
+
+DROP TABLE IF EXISTS `enrolment_remove`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `enrolment_remove` (
+  `change_id` int(11) NOT NULL AUTO_INCREMENT,
+  `run_id` int(11) NOT NULL,
+  `tt_activity_id` varchar(32) NOT NULL,
+  `tt_student_set_id` varchar(32) NOT NULL,
+  `update_completed` datetime DEFAULT NULL,
+  PRIMARY KEY (`change_id`),
+  UNIQUE KEY `run_id` (`run_id`,`tt_activity_id`,`tt_student_set_id`),
+  KEY `enrolment_remove_activ` (`tt_activity_id`),
+  KEY `enrolment_remove_stu` (`tt_student_set_id`),
+  CONSTRAINT `enrolment_remove_activ` FOREIGN KEY (`tt_activity_id`) REFERENCES `activity` (`tt_activity_id`),
+  CONSTRAINT `enrolment_remove_stu` FOREIGN KEY (`tt_student_set_id`) REFERENCES `student_set` (`tt_student_set_id`),
+  CONSTRAINT `enrolment_remove_run` FOREIGN KEY (`run_id`) REFERENCES `synchronisation_run` (`run_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -152,4 +160,4 @@ CREATE TABLE `synchronisation_run` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2013-05-02 13:56:28
+-- Dump completed on 2013-05-02 15:51:11
