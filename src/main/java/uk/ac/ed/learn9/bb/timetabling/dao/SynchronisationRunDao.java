@@ -10,7 +10,7 @@ import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 @Transactional
 @Scope("singleton")
 @Component("runDao")
-public class SynchronizationRunDao extends HibernateDaoSupport {
+public class SynchronisationRunDao extends HibernateDaoSupport {
     public SynchronisationRun getRun(int runId) {
         return (SynchronisationRun)this.getSession().get(SynchronisationRun.class, runId);
     }
