@@ -29,7 +29,7 @@ public class SynchronisationRun extends Object implements Serializable {
     }
 
     /**
-     * @return the ID for the synchronization run this is diffed against.
+     * @return the ID for the synchronisation run this is diffed against.
      */
     @Column(name="previous_run_id")
     public Integer getPreviousRunId() {
@@ -37,7 +37,7 @@ public class SynchronisationRun extends Object implements Serializable {
     }
 
     /**
-     * @return the start time of the synchronization.
+     * @return the start time of the synchronisation.
      */
     @Column(name="start_time")
     @Temporal(value=TemporalType.TIMESTAMP)
@@ -65,7 +65,7 @@ public class SynchronisationRun extends Object implements Serializable {
     }
 
     /**
-     * @return the time when the synchronization completed.
+     * @return the time when the synchronisation completed.
      */
     @Column(name="end_time")
     @Temporal(value=TemporalType.TIMESTAMP)
@@ -74,7 +74,7 @@ public class SynchronisationRun extends Object implements Serializable {
     }
 
     /**
-     * @param cacheCopyCompleted the cacheCopyCompleted to set
+     * @param cacheCopyCompleted the time when the cache copy finished, to set.
      */
     public void setCacheCopyCompleted(Date cacheCopyCompleted) {
         this.cacheCopyCompleted = cacheCopyCompleted;
