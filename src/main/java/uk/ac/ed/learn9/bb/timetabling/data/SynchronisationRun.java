@@ -13,7 +13,7 @@ import javax.persistence.TemporalType;
 @Table(name="synchronisation_run")
 public class SynchronisationRun extends Object implements Serializable {
     private int runId;
-    private int previousRunId;
+    private Integer previousRunId;
     private Date startTime;
     private Date cacheCopyCompleted;
     private Date diffCompleted;
@@ -32,7 +32,7 @@ public class SynchronisationRun extends Object implements Serializable {
      * @return the ID for the synchronization run this is diffed against.
      */
     @Column(name="previous_run_id")
-    public int getPreviousRunId() {
+    public Integer getPreviousRunId() {
         return previousRunId;
     }
 
@@ -95,9 +95,10 @@ public class SynchronisationRun extends Object implements Serializable {
     }
 
     /**
-     * @param newPreviousRunId
+     * @param newPreviousRunId the ID of the run that this run is based up.
+     * Used to enforce database-level uniqueness in difference generation.
      */
-    public void setPreviousRunId(final int newPreviousRunId) {
+    public void setPreviousRunId(final Integer newPreviousRunId) {
         this.previousRunId = newPreviousRunId;
     }
 
