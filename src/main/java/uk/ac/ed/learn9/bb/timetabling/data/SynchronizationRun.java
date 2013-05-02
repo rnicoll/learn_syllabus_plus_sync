@@ -56,26 +56,12 @@ public class SynchronizationRun extends Object implements Serializable {
     }
 
     /**
-     * @param cacheCopyCompleted the cacheCopyCompleted to set
-     */
-    public void setCacheCopyCompleted(Date cacheCopyCompleted) {
-        this.cacheCopyCompleted = cacheCopyCompleted;
-    }
-
-    /**
      * @return the diffCompleted
      */
     @Column(name="diff_completed")
     @Temporal(value=TemporalType.TIMESTAMP)
     public Date getDiffCompleted() {
         return diffCompleted;
-    }
-
-    /**
-     * @param diffCompleted the diffCompleted to set
-     */
-    public void setDiffCompleted(Date diffCompleted) {
-        this.diffCompleted = diffCompleted;
     }
 
     /**
@@ -88,9 +74,44 @@ public class SynchronizationRun extends Object implements Serializable {
     }
 
     /**
+     * @param cacheCopyCompleted the cacheCopyCompleted to set
+     */
+    public void setCacheCopyCompleted(Date cacheCopyCompleted) {
+        this.cacheCopyCompleted = cacheCopyCompleted;
+    }
+
+    /**
+     * @param diffCompleted the diffCompleted to set
+     */
+    public void setDiffCompleted(Date diffCompleted) {
+        this.diffCompleted = diffCompleted;
+    }
+
+    /**
      * @param endTime the endTime to set
      */
     public void setEndTime(Date endTime) {
         this.endTime = endTime;
+    }
+
+    /**
+     * @param newPreviousRunId
+     */
+    public void setPreviousRunId(final int newPreviousRunId) {
+        this.previousRunId = newPreviousRunId;
+    }
+
+    /**
+     * @param newRunId
+     */
+    public void setRunId(final int newRunId) {
+        this.runId = newRunId;
+    }
+
+    /**
+     * @param newStartTime
+     */
+    public void setStartTime(final Date newStartTime) {
+        this.startTime = newStartTime;
     }
 }

@@ -28,7 +28,7 @@ public class SynchronizationService extends Object {
         final Connection source = this.getRdbDataSource().getConnection();
 
         try {
-            final Connection destination = this.getRdbDataSource().getConnection();
+            final Connection destination = this.getDataSource().getConnection();
 
             try {
                 final SynchronizationRun run = this.startNewRun(destination);
@@ -49,7 +49,7 @@ public class SynchronizationService extends Object {
         final Connection source = this.getRdbDataSource().getConnection();
 
         try {
-            final Connection destination = this.getRdbDataSource().getConnection();
+            final Connection destination = this.getDataSource().getConnection();
 
             try {
                 this.cloneService.cloneModules(source, destination);

@@ -82,7 +82,7 @@ public abstract class AbstractCloneService extends Object {
             throws SQLException {
         final ResultSet destinationRs = destinationStatement.executeQuery();
         try {
-            final ResultSet sourceRs = destinationStatement.executeQuery();
+            final ResultSet sourceRs = sourceStatement.executeQuery();
             try {
                 doClone(sourceRs, destinationRs, sourcePkField, destinationPkField, fieldMappings);
             } finally {
