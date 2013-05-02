@@ -26,7 +26,7 @@ DROP TABLE IF EXISTS `activity`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `activity` (
   `tt_activity_id` varchar(32) NOT NULL,
-  `tt_module_id` varchar(32) NOT NULL,
+  `tt_module_id` varchar(32) DEFAULT NULL,
   `learn_group_id` varchar(80) DEFAULT NULL,
   `description` text,
   PRIMARY KEY (`tt_activity_id`),
@@ -48,8 +48,8 @@ CREATE TABLE `cache_enrolment` (
   `tt_activity_id` varchar(32) NOT NULL,
   PRIMARY KEY (`run_id`,`tt_student_set_id`,`tt_activity_id`),
   KEY `tt_activity_id` (`tt_activity_id`),
-  CONSTRAINT `cache_enrolment_ibfk_2` FOREIGN KEY (`run_id`) REFERENCES `synchronisation_run` (`run_id`),
-  CONSTRAINT `cache_enrolment_ibfk_1` FOREIGN KEY (`tt_activity_id`) REFERENCES `activity` (`tt_activity_id`)
+  CONSTRAINT `cache_enrolment_ibfk_1` FOREIGN KEY (`tt_activity_id`) REFERENCES `activity` (`tt_activity_id`),
+  CONSTRAINT `cache_enrolment_ibfk_2` FOREIGN KEY (`run_id`) REFERENCES `synchronisation_run` (`run_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -63,11 +63,14 @@ DROP TABLE IF EXISTS `enrolment_add`;
 CREATE TABLE `enrolment_add` (
   `run_id` int(11) NOT NULL,
   `tt_activity_id` varchar(32) NOT NULL,
+  `tt_student_set_id` varchar(32) NOT NULL,
   `update_completed` datetime DEFAULT NULL,
-  PRIMARY KEY (`run_id`,`tt_activity_id`),
+  PRIMARY KEY (`run_id`,`tt_activity_id`,`tt_student_set_id`),
   KEY `tt_activity_id` (`tt_activity_id`),
-  CONSTRAINT `enrolment_add_ibfk_2` FOREIGN KEY (`tt_activity_id`) REFERENCES `activity` (`tt_activity_id`),
-  CONSTRAINT `enrolment_add_ibfk_1` FOREIGN KEY (`run_id`) REFERENCES `synchronisation_run` (`run_id`)
+  KEY `enrolment_add_stu` (`tt_student_set_id`),
+  CONSTRAINT `enrolment_add_activ` FOREIGN KEY (`tt_activity_id`) REFERENCES `activity` (`tt_activity_id`),
+  CONSTRAINT `enrolment_add_stu` FOREIGN KEY (`tt_student_set_id`) REFERENCES `student_set` (`tt_student_set_id`),
+  CONSTRAINT `enrolment_add_run` FOREIGN KEY (`run_id`) REFERENCES `synchronisation_run` (`run_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -81,11 +84,14 @@ DROP TABLE IF EXISTS `enrolment_remove`;
 CREATE TABLE `enrolment_remove` (
   `run_id` int(11) NOT NULL,
   `tt_activity_id` varchar(32) NOT NULL,
+  `tt_student_set_id` varchar(32) NOT NULL,
   `update_completed` datetime DEFAULT NULL,
-  PRIMARY KEY (`run_id`,`tt_activity_id`),
+  PRIMARY KEY (`run_id`,`tt_activity_id`,`tt_student_set_id`),
   KEY `tt_activity_id` (`tt_activity_id`),
-  CONSTRAINT `enrolment_remove_ibfk_2` FOREIGN KEY (`tt_activity_id`) REFERENCES `activity` (`tt_activity_id`),
-  CONSTRAINT `enrolment_remove_ibfk_1` FOREIGN KEY (`run_id`) REFERENCES `synchronisation_run` (`run_id`)
+  KEY `enrolment_remove_stu` (`tt_student_set_id`),
+  CONSTRAINT `enrolment_remove_activ` FOREIGN KEY (`tt_activity_id`) REFERENCES `activity` (`tt_activity_id`),
+  CONSTRAINT `enrolment_remove_stu` FOREIGN KEY (`tt_student_set_id`) REFERENCES `student_set` (`tt_student_set_id`),
+  CONSTRAINT `enrolment_remove_run` FOREIGN KEY (`run_id`) REFERENCES `synchronisation_run` (`run_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -100,6 +106,21 @@ CREATE TABLE `module` (
   `tt_module_id` varchar(32) NOT NULL,
   `learn_course_id` varchar(80) DEFAULT NULL,
   PRIMARY KEY (`tt_module_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `student_set`
+--
+
+DROP TABLE IF EXISTS `student_set`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `student_set` (
+  `tt_student_set_id` varchar(32) NOT NULL,
+  `tt_host_key` varchar(32) NOT NULL,
+  `learn_person_id` varchar(80) DEFAULT NULL,
+  PRIMARY KEY (`tt_student_set_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -131,4 +152,4 @@ CREATE TABLE `synchronisation_run` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2013-04-30 17:14:57
+-- Dump completed on 2013-05-02 13:56:28
