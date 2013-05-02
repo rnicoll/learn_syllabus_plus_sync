@@ -10,8 +10,8 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
 @Entity
-@Table(name="synchronization_run")
-public class SynchronizationRun extends Object implements Serializable {
+@Table(name="synchronisation_run")
+public class SynchronisationRun extends Object implements Serializable {
     private int runId;
     private int previousRunId;
     private Date startTime;

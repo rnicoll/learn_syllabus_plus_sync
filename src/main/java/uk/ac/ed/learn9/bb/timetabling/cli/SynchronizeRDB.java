@@ -12,6 +12,12 @@ public class SynchronizeRDB extends Object {
         final ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
         final SynchronizationService service = context.getBean(SynchronizationService.class);
         
+        final long startTime = System.currentTimeMillis();
+        
         service.syncModulesAndActivities();
+        service.generateDiff();
+        
+        System.out.println("Sync took "
+                + ((System.currentTimeMillis() - startTime) / 1000L) + " seconds.");
     }
 }
