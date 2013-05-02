@@ -118,9 +118,10 @@ public class SynchronisationService extends Object {
     public SynchronisationRun startNewRun(final Connection destination)
             throws SQLException {
         final int runId;
-        final PreparedStatement statement = destination.prepareStatement("INSERT INTO synchronization_run "
+        final PreparedStatement statement = destination.prepareStatement("INSERT INTO synchronisation_run "
                 + "(previous_run_id, start_time) "
-                + "(SELECT MAX(run_id), NOW() FROM synchronization_run WHERE end_time IS NOT NULL)");
+                + "(SELECT MAX(run_id), NOW() FROM synchronisation_run WHERE end_time IS NOT NULL)",
+                PreparedStatement.RETURN_GENERATED_KEYS);
 
         try {
             statement.executeUpdate();
@@ -149,8 +150,8 @@ public class SynchronisationService extends Object {
     /**
      * @param runDao the runDao to set
      */
-    public void setRunDao(SynchronisationRunDao runDao) {
-        this.runDao = runDao;
+    public void setRunDao(final SynchronisationRunDao newRunDao) {
+        this.runDao = newRunDao;
     }
 
     private void copyStudentSetActivities(final SynchronisationRun run,
@@ -158,10 +159,10 @@ public class SynchronisationService extends Object {
         throws SQLException {
         // Check the condition on this, I haven't had an opportunity to check
         // it with real data.
-        final PreparedStatement sourceStatement = source.prepareStatement("SELECT A.ID ACTIVITY_ID, S.ID STUDENT_SET_ID "
+        final PreparedStatement sourceStatement = source.prepareStatement("SELECT DISTINCT A.ID ACTIVITY_ID, S.ID STUDENT_SET_ID "
             + "FROM ACTIVITY A "
-            + "JOIN ACTIVITIES_STUDENTSET REL ON REL.ID=A.ID"
-            + "JOIN STUDENT_SET S ON REL.STUDENT_SET=S.ID"
+                + "JOIN ACTIVITIES_STUDENTSET REL ON REL.ID=A.ID "
+                + "JOIN STUDENT_SET S ON REL.STUDENT_SET=S.ID "
             + "WHERE SUBSTR(S.HOST_KEY, 0, 6)!='#SPLUS'");
         try {
             final PreparedStatement destinationStatement = destination.prepareStatement("INSERT INTO cache_enrolment "
