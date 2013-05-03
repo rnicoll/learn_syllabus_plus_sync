@@ -26,6 +26,12 @@ DROP TABLE IF EXISTS `module`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `module` (
   `tt_module_id` varchar(32) NOT NULL,
+  `tt_course_code` VARCHAR(20) DEFAULT NULL,
+  `tt_academic_year` VARCHAR(12) DEFAULT NULL,
+  `cache_semester` VARCHAR(6) DEFAULT NULL,
+  `course_code` VARCHAR(20) DEFAULT NULL,
+  `merge_course_code` VARCHAR(20) DEFAULT NULL,
+  `learn_course_code` VARCHAR(20) DEFAULT NULL,
   `learn_course_id` varchar(80) DEFAULT NULL,
   PRIMARY KEY (`tt_module_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -42,6 +48,7 @@ CREATE TABLE `activity` (
   `tt_activity_id` varchar(32) NOT NULL,
   `tt_module_id` varchar(32) DEFAULT NULL,
   `learn_group_id` varchar(80) DEFAULT NULL,
+  `tt_jta_activity_id` VARCHAR(32) DEFAULT NULL,
   `description` text,
   PRIMARY KEY (`tt_activity_id`),
   KEY `tt_module_id` (`tt_module_id`),
