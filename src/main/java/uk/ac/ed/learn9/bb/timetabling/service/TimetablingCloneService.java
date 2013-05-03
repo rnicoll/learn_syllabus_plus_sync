@@ -14,15 +14,34 @@ import org.springframework.stereotype.Service;
 public class TimetablingCloneService extends AbstractCloneService {
 
     public static final String REPORTING_ACTIVITY_TABLE = "ACTIVITY";
+    public static final String REPORTING_ACTIVITY_TYPE_TABLE = "ACTIVITYTYPES";
+    public static final String REPORTING_ACTIVITY_TEMPLATE_TABLE = "TEMPLATE";
     public static final String REPORTING_MODULE_TABLE = "MODULE";
     public static final String REPORTING_STUDENT_SET_TABLE = "STUDENT_SET";
+    
     public static final String CACHE_ACTIVITY_TABLE = "activity";
+    public static final String CACHE_ACTIVITY_TYPE_TABLE = "activity_type";
+    public static final String CACHE_ACTIVITY_TEMPLATE_TABLE = "activity_template";
     public static final String CACHE_MODULE_TABLE = "module";
     public static final String CACHE_STUDENT_SET_TABLE = "student_set";
+    
     public static final String CACHE_ACTIVITY_PRIMARY_KEY = "tt_activity_id";
+    public static final String CACHE_ACTIVITY_TEMPLATE_PRIMARY_KEY = "tt_template_id";
+    public static final String CACHE_ACTIVITY_TYPE_PRIMARY_KEY = "tt_type_id";
     public static final String CACHE_MODULE_PRIMARY_KEY = "tt_module_id";
+    public static final String CACHE_STUDENT_SET_PRIMARY_KEY = "tt_student_set_id";
+    
     public static final String[][] ACTIVITY_FIELD_MAPPINGS = {
-        {"MODUL", "tt_module_id"}
+        {"NAME", "tt_activity_name"},
+        {"MODUL", "tt_module_id"},
+        {"ACTIVITY_TMPL", "tt_template_id"},
+        {"ACTIVITY_TYPE", "tt_type_id"}
+    };
+    public static final String[][] ACTIVITY_TEMPLATE_FIELD_MAPPINGS = {
+        {"NAME", "tt_template_name"}
+    };
+    public static final String[][] ACTIVITY_TYPE_FIELD_MAPPINGS = {
+        {"NAME", "tt_type_name"}
     };
     public static final String[][] MODULE_FIELD_MAPPINGS = {
         {"HOST_KEY", "tt_course_code"},
@@ -31,7 +50,6 @@ public class TimetablingCloneService extends AbstractCloneService {
     public static final String[][] STUDENT_SET_FIELD_MAPPINGS = {
         {"HOST_KEY", "tt_host_key"}
     };
-    public static final String CACHE_STUDENT_SET_PRIMARY_KEY = "tt_student_set_id";
 
     public void cloneActivities(final Connection source, final Connection destination)
             throws SQLException {
@@ -44,6 +62,34 @@ public class TimetablingCloneService extends AbstractCloneService {
         cloneTable(source, destination,
                 REPORTING_ACTIVITY_TABLE, CACHE_ACTIVITY_TABLE,
                 "ID", CACHE_ACTIVITY_PRIMARY_KEY,
+                fieldMappings);
+    }
+
+    public void cloneActivityTemplates(final Connection source, final Connection destination)
+            throws SQLException {
+        final Map<String, String> fieldMappings = new HashMap<String, String>();
+
+        for (String[] mapping : ACTIVITY_TEMPLATE_FIELD_MAPPINGS) {
+            fieldMappings.put(mapping[0], mapping[1]);
+        }
+
+        cloneTable(source, destination,
+                REPORTING_ACTIVITY_TEMPLATE_TABLE, CACHE_ACTIVITY_TEMPLATE_TABLE,
+                "ID", CACHE_ACTIVITY_TEMPLATE_PRIMARY_KEY,
+                fieldMappings);
+    }
+
+    public void cloneActivityTypes(final Connection source, final Connection destination)
+            throws SQLException {
+        final Map<String, String> fieldMappings = new HashMap<String, String>();
+
+        for (String[] mapping : ACTIVITY_TYPE_FIELD_MAPPINGS) {
+            fieldMappings.put(mapping[0], mapping[1]);
+        }
+
+        cloneTable(source, destination,
+                REPORTING_ACTIVITY_TYPE_TABLE, CACHE_ACTIVITY_TYPE_TABLE,
+                "ID", CACHE_ACTIVITY_TYPE_PRIMARY_KEY,
                 fieldMappings);
     }
 

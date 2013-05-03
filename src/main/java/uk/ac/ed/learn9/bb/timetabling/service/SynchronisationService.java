@@ -1,5 +1,6 @@
 package uk.ac.ed.learn9.bb.timetabling.service;
 
+import blackboard.persist.PersistenceException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -22,6 +23,8 @@ public class SynchronisationService extends Object {
     private DataSource dataSource;
     @Autowired
     private DataSource rdbDataSource;
+    @Autowired
+    private BlackboardService blackboardService;
     @Autowired
     private MergedCoursesService mergedCoursesService;
     @Autowired
@@ -69,7 +72,7 @@ public class SynchronisationService extends Object {
      * @throws SQLException if there was a problem access one of the databases.
      */
     public void mapModulesToCourses()
-            throws SQLException {
+            throws PersistenceException, SQLException {
         final Connection destination = this.getDataSource().getConnection();
 
         try {
@@ -87,6 +90,25 @@ public class SynchronisationService extends Object {
         }
     }
     
+    /**
+     * Resolves the modules that activities belong to, to the courses they
+     * represent in Learn, where applicable. This also includes importing
+     * details of joint taught activities (so that the child activities can be
+     * mapped to the correct module and then onwards to the correct course).
+     * 
+     * @throws SQLException if there was a problem access one of the databases.
+     */
+    public void mapActivitiesToGroups()
+            throws PersistenceException, SQLException {
+        final Connection destination = this.getDataSource().getConnection();
+
+        try {
+            this.getBlackboardService().generateGroupsForActivities(destination);
+        } finally {
+            destination.close();
+        }
+    }
+    
     public void synchroniseData()
             throws SQLException {
         final Connection source = this.getRdbDataSource().getConnection();
@@ -96,6 +118,9 @@ public class SynchronisationService extends Object {
 
             try {
                 this.cloneService.cloneModules(source, destination);
+                this.cloneService.cloneActivityTypes(source, destination);
+                this.cloneService.cloneActivityTemplates(source, destination);
+                this.cloneService.cloneActivities(source, destination);
                 this.cloneService.cloneActivities(source, destination);
                 this.cloneService.cloneStudentSets(source, destination);
             } finally {
@@ -360,5 +385,19 @@ public class SynchronisationService extends Object {
      */
     public void setRunDao(final SynchronisationRunDao newRunDao) {
         this.runDao = newRunDao;
+    }
+
+    /**
+     * @return the blackboardService
+     */
+    public BlackboardService getBlackboardService() {
+        return blackboardService;
+    }
+
+    /**
+     * @param blackboardService the blackboardService to set
+     */
+    public void setBlackboardService(BlackboardService blackboardService) {
+        this.blackboardService = blackboardService;
     }
 }

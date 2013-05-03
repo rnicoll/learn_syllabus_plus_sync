@@ -1,14 +1,17 @@
 package uk.ac.ed.learn9.bb.timetabling.cli;
 
 import java.sql.SQLException;
+
+import blackboard.persist.PersistenceException;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+
 import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService;
 
 /**
  * Command-line client for synchronising the RDB
  */
 public class SynchroniseRDB extends Object {
-    public static void main(final String[] argv) throws SQLException {
+    public static void main(final String[] argv) throws SQLException, PersistenceException {
         final ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
         final SynchronisationService service = context.getBean(SynchronisationService.class);
         

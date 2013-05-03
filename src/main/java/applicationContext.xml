@@ -56,12 +56,15 @@
         <property name="sessionFactory" ref="sessionFactory"/>
     </bean>
     
+    <bean id="blackboardService" class="uk.ac.ed.learn9.bb.timetabling.service.BlackboardService" />
+    
     <bean id="timetablingCloneService" class="uk.ac.ed.learn9.bb.timetabling.service.TimetablingCloneService" />
     
     <bean id="synchronisationService" class="uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService">
         <property name="dataSource" ref="dataSource"/>
         <property name="runDao" ref="runDao"/>
         <property name="rdbDataSource" ref="rdbDataSource"/>
+        <property name="blackboardService" ref="blackboardService"/>
         <property name="cloneService" ref="timetablingCloneService"/>
     </bean>
 

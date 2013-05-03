@@ -6,7 +6,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import blackboard.data.course.Course;
 import blackboard.data.course.CourseCourse;
-import blackboard.persist.DataType;
 import blackboard.persist.Id;
 import blackboard.persist.KeyNotFoundException;
 import blackboard.persist.PersistenceException;
@@ -22,19 +21,21 @@ import org.springframework.stereotype.Service;
 @Service
 public class BlackboardService {
     /**
-     * 
+     * Generates groups for activities in timetabling that can be mapped to courses
+     * in Learn.
      */
     public void generateGroupsForActivities(final Connection connection)
             throws KeyNotFoundException, PersistenceException, SQLException {
-        final CourseDbLoader courseDbLoader = CourseDbLoader.Default.getInstance();
-        final GroupDbPersister groupDbPersister = GroupDbPersister.Default.getInstance();
+        //final CourseDbLoader courseDbLoader = CourseDbLoader.Default.getInstance();
+        //final GroupDbPersister groupDbPersister = GroupDbPersister.Default.getInstance();
         
         // First resolve all activities that have a Learn course, but no group,
         // and are not JTA child activities.
         final PreparedStatement statement = connection.prepareStatement(
-                "SELECT a.tt_activity_id, a.learn_group_id, m.learn_course_id "
+                "SELECT a.tt_activity_id, a.tt_activity_name, a.learn_group_id, a.learn_group_name, m.tt_module_name, m.learn_course_id, t.tt_type_name "
                     + "FROM activity a "
                         + "JOIN module m ON m.tt_module_id=a.tt_module_id "
+                        + "JOIN activity_type t ON t.tt_type_id=a.tt_type_id "
                     + "WHERE a.learn_group_id IS NULL "
                         + "AND a.tt_jta_activity_id IS NULL "
                         + "AND m.learn_course_id IS NOT NULL",
@@ -44,7 +45,18 @@ public class BlackboardService {
             final ResultSet rs = statement.executeQuery();
             try {
                 while (rs.next()) {
-                    final Id courseId = Id.generateId(Course.DATA_TYPE, rs.getString("learn_course_id"));
+                    final String activityName = rs.getString("tt_activity_name");
+                    final String moduleName = rs.getString("tt_module_name");
+                    final String activityType = rs.getString("tt_type_name");
+                    final String groupName = buildGroupName(activityName, moduleName, activityType);
+                    
+                    if (null == groupName) {
+                        continue;
+                    }
+                    
+                    rs.updateString("learn_group_name", groupName);
+                    
+                    /* final Id courseId = Id.generateId(Course.DATA_TYPE, rs.getString("learn_course_id"));
                     final Course course;
                     
                     try {
@@ -52,10 +64,9 @@ public class BlackboardService {
                     } catch(KeyNotFoundException e) {
                         // Course has been removed since this record was written.
                         // XXX: Should notify the user in some manner
-                    }
+                    } */                   
                     
-                    final String groupName;
-                    // FIXME: You are here
+                    rs.updateRow();
                 }
             } finally {
                 rs.close();
@@ -117,5 +128,61 @@ public class BlackboardService {
         } finally {
             statement.close();
         }
+    }
+
+    /**
+     * Builds a group name based the name of the activity and module, and the
+     * activity type.
+     * 
+     * @param activityName the name of the activity in timetabling.
+     * @param moduleName the name of the module the activity belongs to, in timetabling.
+     * @param activityType the name of the type of activity (lecture, tutorial, etc).
+     * @return a group name, or null if no name could be generated (for example
+     * missing data).
+     */
+    private String buildGroupName(String activityName, String moduleName, String activityType) {
+        if (null == activityName) {
+            return null;
+        }
+        
+        final StringBuilder groupName = new StringBuilder("TT_");
+        
+        // The ID of a group, for example a number to identify it within its
+        // set.
+        final String groupId;
+        
+        // In many cases, the activity name will have the module name at the
+        // start. In whic case, we strip the module name to give us a group
+        // ID.
+        //
+        // Failing that, we look for a sensible break point and hope!
+        if (null != moduleName
+            && activityName.startsWith(moduleName)) {
+            final String temp = activityName.substring(moduleName.length());
+            if (temp.startsWith("/")) {
+                groupId = temp.substring(1);
+            } else {
+                groupId = temp;
+            }
+        } else {
+            // If the activity name has a '/' in, split on the last '/'
+            // character.
+            if (activityName.lastIndexOf("/") >= 0) {
+                groupId = activityName.substring(activityName.lastIndexOf("/") + 1);
+            } else if (activityName.lastIndexOf(" ") >= 0) {
+                groupId = activityName.substring(activityName.lastIndexOf(" ") + 1);
+            } else {
+                groupId = activityName;
+            }
+        }
+        
+        if (null != activityType) {
+            groupName.append(activityType.trim())
+                .append("_");
+        }
+        
+        groupName.append(groupId.trim());
+        
+        return groupName.toString();
     }
 }
