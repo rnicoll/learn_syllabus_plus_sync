@@ -6,10 +6,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import blackboard.data.course.Course;
 import blackboard.data.course.CourseCourse;
+import blackboard.persist.DataType;
+import blackboard.persist.Id;
 import blackboard.persist.KeyNotFoundException;
 import blackboard.persist.PersistenceException;
 import blackboard.persist.course.CourseDbLoader;
 import blackboard.persist.course.CourseCourseDbLoader;
+import blackboard.persist.course.GroupDbPersister;
 import org.springframework.stereotype.Service;
 
 
@@ -18,6 +21,50 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class BlackboardService {
+    /**
+     * 
+     */
+    public void generateGroupsForActivities(final Connection connection)
+            throws KeyNotFoundException, PersistenceException, SQLException {
+        final CourseDbLoader courseDbLoader = CourseDbLoader.Default.getInstance();
+        final GroupDbPersister groupDbPersister = GroupDbPersister.Default.getInstance();
+        
+        // First resolve all activities that have a Learn course, but no group,
+        // and are not JTA child activities.
+        final PreparedStatement statement = connection.prepareStatement(
+                "SELECT a.tt_activity_id, a.learn_group_id, m.learn_course_id "
+                    + "FROM activity a "
+                        + "JOIN module m ON m.tt_module_id=a.tt_module_id "
+                    + "WHERE a.learn_group_id IS NULL "
+                        + "AND a.tt_jta_activity_id IS NULL "
+                        + "AND m.learn_course_id IS NOT NULL",
+                ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE
+        );
+        try {
+            final ResultSet rs = statement.executeQuery();
+            try {
+                while (rs.next()) {
+                    final Id courseId = Id.generateId(Course.DATA_TYPE, rs.getString("learn_course_id"));
+                    final Course course;
+                    
+                    try {
+                        course = courseDbLoader.loadById(courseId);
+                    } catch(KeyNotFoundException e) {
+                        // Course has been removed since this record was written.
+                        // XXX: Should notify the user in some manner
+                    }
+                    
+                    final String groupName;
+                    // FIXME: You are here
+                }
+            } finally {
+                rs.close();
+            }
+        } finally {
+            statement.close();
+        }
+    }
+    
     /**
      * Resolves modules from the timetabling system into the relevant course in
      * Learn, where applicable.
