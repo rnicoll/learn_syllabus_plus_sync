@@ -21,6 +21,8 @@ public class SynchronisationService extends Object {
     @Autowired
     private TimetablingCloneService cloneService;
     @Autowired
+    private TimetablingService timetablingService;
+    @Autowired
     private SynchronisationRunDao runDao;
 
     public SynchronisationRun generateDiff()
@@ -35,7 +37,7 @@ public class SynchronisationService extends Object {
                 
                 this.copyStudentSetActivities(run, source, destination);
                 this.doGenerateDiff(run, destination);
-
+                
                 return run;
             } finally {
                 destination.close();
@@ -45,7 +47,24 @@ public class SynchronisationService extends Object {
         }
     }
     
-    public void syncModulesAndActivities()
+    public void mapModulesToCourses()
+            throws SQLException {
+        final Connection destination = this.getDataSource().getConnection();
+
+        try {
+            final Connection source = this.getRdbDataSource().getConnection();
+
+            try {
+                this.cloneService.importJtaDetails(source, destination);
+            } finally {
+                source.close();
+            }
+        } finally {
+            destination.close();
+        }
+    }
+    
+    public void synchroniseData()
             throws SQLException {
         final Connection source = this.getRdbDataSource().getConnection();
 
@@ -55,6 +74,7 @@ public class SynchronisationService extends Object {
             try {
                 this.cloneService.cloneModules(source, destination);
                 this.cloneService.cloneActivities(source, destination);
+                this.cloneService.cloneStudentSets(source, destination);
             } finally {
                 destination.close();
             }
@@ -73,6 +93,8 @@ public class SynchronisationService extends Object {
     }
 
     /**
+     * Sets the reporting database data source.
+     * 
      * @param rdbDataSource the reporting database data source to set.
      */
     public void setRdbDataSource(DataSource rdbDataSource) {
@@ -108,11 +130,11 @@ public class SynchronisationService extends Object {
     }
 
     /**
-     * Starts a new run of the synchronization process and returns the ID for
+     * Starts a new run of the synchronisation process and returns the ID for
      * the run.
      *
      * @param destination the local database.
-     * @return the ID for the new synchronization run.
+     * @return the ID for the new synchronisation run.
      * @throws SQLException if there was a problem inserting the record.
      */
     public SynchronisationRun startNewRun(final Connection destination)
@@ -154,6 +176,12 @@ public class SynchronisationService extends Object {
         this.runDao = newRunDao;
     }
 
+    /**
+     * Copies student set/activity relationships to be synchronised to Learn,
+     * from the reporting database. This filters out variant activities as
+     * well as whole-course student sets, but does not provide filtering on
+     * courses to be mapped to Learn (from SITS).
+     */
     private void copyStudentSetActivities(final SynchronisationRun run,
         final Connection source, final Connection destination)
         throws SQLException {
@@ -163,7 +191,9 @@ public class SynchronisationService extends Object {
             + "FROM ACTIVITY A "
                 + "JOIN ACTIVITIES_STUDENTSET REL ON REL.ID=A.ID "
                 + "JOIN STUDENT_SET S ON REL.STUDENT_SET=S.ID "
-            + "WHERE SUBSTR(S.HOST_KEY, 0, 6)!='#SPLUS'");
+                + "LEFT JOIN VARIANTJTAACTS V ON V.ID=A.ID "
+            + "WHERE SUBSTR(S.HOST_KEY, 0, 6)!='#SPLUS' "
+                + "AND (V.ISVARIANTCHILD IS NULL OR V.ISVARIANTCHILD='0')");
         try {
             final PreparedStatement destinationStatement = destination.prepareStatement("INSERT INTO cache_enrolment "
                 + "(run_id, tt_student_set_id, tt_activity_id) "
@@ -240,5 +270,19 @@ public class SynchronisationService extends Object {
         } finally {
             removeStatement.close();
         }
+    }
+
+    /**
+     * @return the timetablingService
+     */
+    public TimetablingService getTimetablingService() {
+        return timetablingService;
+    }
+
+    /**
+     * @param timetablingService the timetablingService to set
+     */
+    public void setTimetablingService(TimetablingService timetablingService) {
+        this.timetablingService = timetablingService;
     }
 }

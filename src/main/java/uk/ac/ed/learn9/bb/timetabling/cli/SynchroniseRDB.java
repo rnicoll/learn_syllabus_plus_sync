@@ -5,7 +5,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService;
 
 /**
- * Command-line client for synchronizing the RDB
+ * Command-line client for synchronising the RDB
  */
 public class SynchroniseRDB extends Object {
     public static void main(final String[] argv) throws SQLException {
@@ -14,8 +14,9 @@ public class SynchroniseRDB extends Object {
         
         final long startTime = System.currentTimeMillis();
         
-        service.syncModulesAndActivities();
+        service.synchroniseData();
         service.generateDiff();
+        service.mapModulesToCourses();
         
         System.out.println("Sync took "
                 + ((System.currentTimeMillis() - startTime) / 1000L) + " seconds.");
