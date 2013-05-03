@@ -28,10 +28,8 @@ CREATE TABLE `module` (
   `tt_module_id` varchar(32) NOT NULL,
   `tt_course_code` VARCHAR(20) DEFAULT NULL,
   `tt_academic_year` VARCHAR(12) DEFAULT NULL,
-  `cache_semester` VARCHAR(6) DEFAULT NULL,
-  `course_code` VARCHAR(20) DEFAULT NULL,
-  `merge_course_code` VARCHAR(20) DEFAULT NULL,
-  `learn_course_code` VARCHAR(20) DEFAULT NULL,
+  `merge_course_code` VARCHAR(40) DEFAULT NULL,
+  `learn_course_code` VARCHAR(40) DEFAULT NULL,
   `learn_course_id` varchar(80) DEFAULT NULL,
   PRIMARY KEY (`tt_module_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
