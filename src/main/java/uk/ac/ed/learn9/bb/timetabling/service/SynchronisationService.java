@@ -21,8 +21,6 @@ public class SynchronisationService extends Object {
     @Autowired
     private TimetablingCloneService cloneService;
     @Autowired
-    private TimetablingService timetablingService;
-    @Autowired
     private SynchronisationRunDao runDao;
 
     public SynchronisationRun generateDiff()
@@ -270,19 +268,5 @@ public class SynchronisationService extends Object {
         } finally {
             removeStatement.close();
         }
-    }
-
-    /**
-     * @return the timetablingService
-     */
-    public TimetablingService getTimetablingService() {
-        return timetablingService;
-    }
-
-    /**
-     * @param timetablingService the timetablingService to set
-     */
-    public void setTimetablingService(TimetablingService timetablingService) {
-        this.timetablingService = timetablingService;
     }
 }
