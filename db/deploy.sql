@@ -44,9 +44,11 @@ DROP TABLE IF EXISTS `activity`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `activity` (
   `tt_activity_id` varchar(32) NOT NULL,
+  `tt_activity_name` varchar(120) DEFAULT NULL,
   `tt_module_id` varchar(32) DEFAULT NULL,
-  `learn_group_id` varchar(80) DEFAULT NULL,
   `tt_jta_activity_id` VARCHAR(32) DEFAULT NULL,
+  `learn_group_id` varchar(80) DEFAULT NULL,
+  `learn_group_name` VARCHAR(80) DEFAULT NULL,
   `description` text,
   PRIMARY KEY (`tt_activity_id`),
   KEY `tt_module_id` (`tt_module_id`),
