@@ -28,6 +28,7 @@ DROP TABLE IF EXISTS `module`;
 CREATE TABLE `module` (
   `tt_module_id` varchar(32) NOT NULL,
   `tt_course_code` VARCHAR(20) DEFAULT NULL,
+  `tt_module_name` VARCHAR(255) NULL,
   `tt_academic_year` VARCHAR(12) DEFAULT NULL,
   `merge_course_code` VARCHAR(40) DEFAULT NULL,
   `learn_course_code` VARCHAR(40) DEFAULT NULL,

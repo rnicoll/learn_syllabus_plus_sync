@@ -162,7 +162,9 @@
           <artifactId>bb-platform</artifactId>
           <version>1.0</version>
           <type>jar</type>
+          <!--
           <scope>provided</scope>
+          -->
         </dependency>
         <dependency>
           <groupId>blackboard</groupId>

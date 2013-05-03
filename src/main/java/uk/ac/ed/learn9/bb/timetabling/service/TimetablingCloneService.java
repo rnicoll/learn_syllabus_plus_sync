@@ -44,6 +44,7 @@ public class TimetablingCloneService extends AbstractCloneService {
         {"NAME", "tt_type_name"}
     };
     public static final String[][] MODULE_FIELD_MAPPINGS = {
+        {"NAME", "tt_module_name"},
         {"HOST_KEY", "tt_course_code"},
         {"USER_TEXT_2", "tt_academic_year"}
     };

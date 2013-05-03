@@ -5,6 +5,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 import javax.sql.DataSource;
 
 import org.springframework.stereotype.Service;
@@ -62,6 +64,119 @@ public class SynchronisationService extends Object {
             source.close();
         }
     }
+
+    /**
+     * Builds a group name based the name of the activity and module, and the
+     * activity type.
+     * 
+     * @param activityName the name of the activity in timetabling.
+     * @param moduleName the name of the module the activity belongs to, in timetabling.
+     * @param activityType the name of the type of activity (lecture, tutorial, etc).
+     * @return a group name, or null if no name could be generated (for example
+     * missing data).
+     */
+    private String buildGroupName(String activityName, String moduleName, String activityType) {
+        if (null == activityName) {
+            return null;
+        }
+        
+        final StringBuilder groupName = new StringBuilder("TT_");
+        
+        // The ID of a group, for example a number to identify it within its
+        // set.
+        final String groupId;
+        
+        // In many cases, the activity name will have the module name at the
+        // start. In whic case, we strip the module name to give us a group
+        // ID.
+        //
+        // Failing that, we look for a sensible break point and hope!
+        if (null != moduleName
+            && activityName.startsWith(moduleName)) {
+            final String temp = activityName.substring(moduleName.length());
+            if (temp.startsWith("/")) {
+                groupId = temp.substring(1);
+            } else {
+                groupId = temp;
+            }
+        } else {
+            // If the activity name has a '/' in, split on the last '/'
+            // character.
+            if (activityName.lastIndexOf("/") >= 0) {
+                groupId = activityName.substring(activityName.lastIndexOf("/") + 1);
+            } else if (activityName.lastIndexOf(" ") >= 0) {
+                groupId = activityName.substring(activityName.lastIndexOf(" ") + 1);
+            } else {
+                groupId = activityName;
+            }
+        }
+        
+        if (null != activityType) {
+            groupName.append(activityType.trim())
+                .append("_");
+        }
+        
+        groupName.append(groupId.trim());
+        
+        return groupName.toString();
+    }
+    
+    /**
+     * Generates names of groups, to be used in Learn where needed.
+     */
+    public void generateGroupNames(final Connection connection)
+            throws SQLException {
+        final Map<String, String> activityGroupNames = new HashMap<String, String>();
+        // Find groups that need their names completed.
+        final PreparedStatement queryStatement = connection.prepareStatement(
+                "SELECT a.tt_activity_id, a.tt_activity_name, a.learn_group_id, a.learn_group_name, m.tt_module_name, t.tt_type_name "
+                    + "FROM activity a "
+                        + "JOIN module m ON m.tt_module_id=a.tt_module_id "
+                        + "JOIN activity_type t ON t.tt_type_id=a.tt_type_id "
+                    + "WHERE a.learn_group_name IS NULL "
+                        + "AND m.learn_course_code IS NOT NULL "
+        );
+        try {
+            final ResultSet rs = queryStatement.executeQuery();
+            try {
+                while (rs.next()) {
+                    final String activityName = rs.getString("tt_activity_name");
+                    final String moduleName = rs.getString("tt_module_name");
+                    final String activityType = rs.getString("tt_type_name");
+                    final String groupName = buildGroupName(activityName, moduleName, activityType);
+                    
+                    if (null == groupName) {
+                        continue;
+                    }
+                    
+                    activityGroupNames.put(rs.getString("tt_activity_id"), groupName);
+                }
+            } finally {
+                rs.close();
+            }
+        } finally {
+            queryStatement.close();
+        }
+        
+        System.out.println("Group names:"
+            + activityGroupNames);
+        
+        // Write out the group names
+        final PreparedStatement updateStatement = connection.prepareStatement(
+                "UPDATE activity SET learn_group_name=? WHERE tt_activity_id=?"
+        );
+        try {
+            for (String activityId: activityGroupNames.keySet()) {
+                updateStatement.setString(1, activityGroupNames.get(activityId));
+                updateStatement.setString(2, activityId);
+                updateStatement.executeUpdate();
+            }
+        } finally {
+            updateStatement.close();
+        }
+        
+        connection.commit();
+    }
     
     /**
      * Resolves the modules that activities belong to, to the courses they
@@ -101,9 +216,9 @@ public class SynchronisationService extends Object {
     public void mapActivitiesToGroups()
             throws PersistenceException, SQLException {
         final Connection destination = this.getDataSource().getConnection();
-
         try {
-            this.getBlackboardService().generateGroupsForActivities(destination);
+            generateGroupNames(destination);
+            // this.getBlackboardService().generateGroupsForActivities(destination);
         } finally {
             destination.close();
         }

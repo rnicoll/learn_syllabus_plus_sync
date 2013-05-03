@@ -17,9 +17,10 @@ public class SynchroniseRDB extends Object {
         
         final long startTime = System.currentTimeMillis();
         
-        service.synchroniseData();
-        service.generateDiff();
-        service.mapModulesToCourses();
+        //service.synchroniseData();
+        //service.generateDiff();
+        //service.mapModulesToCourses();
+        service.mapActivitiesToGroups();
         
         System.out.println("Sync took "
                 + ((System.currentTimeMillis() - startTime) / 1000L) + " seconds.");
