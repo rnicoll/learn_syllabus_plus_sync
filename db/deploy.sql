@@ -1,3 +1,4 @@
+DROP DATABASE learn_group;
 CREATE DATABASE  IF NOT EXISTS `learn_group` /*!40100 DEFAULT CHARACTER SET utf8 */;
 USE `learn_group`;
 -- MySQL dump 10.13  Distrib 5.5.16, for Win32 (x86)
@@ -36,6 +37,34 @@ CREATE TABLE `module` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `activity_template`
+--
+
+DROP TABLE IF EXISTS `activity_template`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `activity_template` (
+  `tt_template_id` varchar(32) NOT NULL,
+  `tt_template_name` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`tt_template_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `activity_type`
+--
+
+DROP TABLE IF EXISTS `activity_type`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `activity_type` (
+  `tt_type_id` varchar(32) NOT NULL,
+  `tt_type_name` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`tt_type_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `activity`
 --
 
@@ -44,15 +73,18 @@ DROP TABLE IF EXISTS `activity`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `activity` (
   `tt_activity_id` varchar(32) NOT NULL,
-  `tt_activity_name` varchar(120) DEFAULT NULL,
+  `tt_activity_name` varchar(255) DEFAULT NULL,
   `tt_module_id` varchar(32) DEFAULT NULL,
+  `tt_template_id` varchar(32) DEFAULT NULL,
+  `tt_type_id` varchar(32) DEFAULT NULL,
   `tt_jta_activity_id` VARCHAR(32) DEFAULT NULL,
   `learn_group_id` varchar(80) DEFAULT NULL,
-  `learn_group_name` VARCHAR(80) DEFAULT NULL,
+  `learn_group_name` VARCHAR(255) DEFAULT NULL,
   `description` text,
   PRIMARY KEY (`tt_activity_id`),
   KEY `tt_module_id` (`tt_module_id`),
-  CONSTRAINT `activity_ibfk_1` FOREIGN KEY (`tt_module_id`) REFERENCES `module` (`tt_module_id`)
+  CONSTRAINT `activity_module` FOREIGN KEY (`tt_module_id`) REFERENCES `module` (`tt_module_id`),
+  CONSTRAINT `activity_template` FOREIGN KEY (`tt_template_id`) REFERENCES `activity_template` (`tt_template_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
