@@ -125,7 +125,8 @@ public class SynchronisationService extends Object {
     }
     
     /**
-     * Generates names of groups, to be used in Learn where needed.
+     * Generates names of groups, to be used in Learn where needed. These are
+     * written into the database so they can be inspected later if needed.
      */
     public void generateGroupNames(final Connection connection)
             throws SQLException {
@@ -195,7 +196,7 @@ public class SynchronisationService extends Object {
 
             try {
                 this.getCloneService().importJtaDetails(source, destination);
-                this.refreshLearnCourseCodes(destination);
+                this.generateLearnCourseCodes(destination);
                 // this.getMergedCoursesService().resolveMergedCourses(destination);
             } finally {
                 source.close();
@@ -377,12 +378,13 @@ public class SynchronisationService extends Object {
     }
 
     /**
-     * Recreates predicted Learn course codes based on the course codes listed
-     * against modules.
+     * Generates predicted Learn course codes based on the course codes listed
+     * against modules. These course codes can then be found to match modules
+     * to the corresponding course in Learn.
      * 
      * @param connection a connection to the cache database.
      */
-    private void refreshLearnCourseCodes(final Connection destination)
+    private void generateLearnCourseCodes(final Connection destination)
         throws SQLException {
         final PreparedStatement statement = destination.prepareStatement(
                 "SELECT tt_module_id, tt_course_code, tt_academic_year, learn_course_code "
