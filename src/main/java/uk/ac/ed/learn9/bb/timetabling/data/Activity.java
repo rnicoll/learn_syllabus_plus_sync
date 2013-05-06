@@ -4,6 +4,8 @@ import java.io.Serializable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 /**
@@ -19,7 +21,8 @@ public class Activity extends Object implements Serializable {
     private String description;
 
     /**
-     * @return the activityId
+     * @return the activity ID. This is a primary key copied from the Timetabling
+     * system.
      */
     @Id
     @Column(name="tt_activity_id", nullable=false, length=32)
@@ -28,8 +31,10 @@ public class Activity extends Object implements Serializable {
     }
 
     /**
-     * @return the module
+     * @return the module this activity belongs to.
      */
+    @OneToMany
+    @JoinColumn(name="tt_module_id")
     public Module getModule() {
         return module;
     }
