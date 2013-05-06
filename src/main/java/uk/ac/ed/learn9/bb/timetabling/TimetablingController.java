@@ -12,16 +12,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
-import uk.ac.ed.learn9.bb.timetabling.dao.EnrolmentAddDao;
-import uk.ac.ed.learn9.bb.timetabling.dao.EnrolmentRemoveDao;
+import uk.ac.ed.learn9.bb.timetabling.dao.EnrolmentChangeDao;
 import uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange;
 
 @Controller
 public class TimetablingController {
     @Autowired
-    private EnrolmentAddDao enrolmentAddDao;
-    @Autowired
-    private EnrolmentRemoveDao enrolmentRemoveDao;
+    private EnrolmentChangeDao enrolmentChangeDao;
     
     /**
      * Displays an audit log of when students were added/removed to/from groups
@@ -36,41 +33,40 @@ public class TimetablingController {
         
         // Log group creation?
         
-        changes.addAll(this.getEnrolmentAddDao().getByCourse(course));
-        changes.addAll(this.getEnrolmentRemoveDao().getByCourse(course));
-        
+        changes.addAll(this.getEnrolmentChangeDao().getByCourse(course));
         Collections.sort(changes);
         
         modelAndView.addObject("audit_log", changes);
         
         return modelAndView;
     }
-
+    
     /**
-     * @return the enrolmentAddDao
+     * Displays an audit log of when students were added/removed to/from groups
+     * for a single course.
      */
-    public EnrolmentAddDao getEnrolmentAddDao() {
-        return enrolmentAddDao;
+    @RequestMapping("/mergedCourses")
+    public ModelAndView getMergedCourses(final HttpServletRequest request, final HttpServletResponse response) {
+        final Context context = ContextManagerFactory.getInstance().getContext();
+        final ModelAndView modelAndView = new ModelAndView("mergedCourses");
+        final Course course = context.getCourse();
+        
+        // Load and add the merged courses list here.
+        
+        return modelAndView;
     }
 
     /**
-     * @return the enrolmentRemoveDao
+     * @return the enrolmentChangeDao
      */
-    public EnrolmentRemoveDao getEnrolmentRemoveDao() {
-        return enrolmentRemoveDao;
+    public EnrolmentChangeDao getEnrolmentChangeDao() {
+        return enrolmentChangeDao;
     }
 
     /**
-     * @param enrolmentAddDao the enrolmentAddDao to set
+     * @param enrolmentChangeDao the enrolmentChangeDao to set
      */
-    public void setEnrolmentAddDao(EnrolmentAddDao enrolmentAddDao) {
-        this.enrolmentAddDao = enrolmentAddDao;
-    }
-
-    /**
-     * @param enrolmentRemoveDao the enrolmentRemoveDao to set
-     */
-    public void setEnrolmentRemoveDao(EnrolmentRemoveDao enrolmentRemoveDao) {
-        this.enrolmentRemoveDao = enrolmentRemoveDao;
+    public void setEnrolmentChangeDao(EnrolmentChangeDao enrolmentChangeDao) {
+        this.enrolmentChangeDao = enrolmentChangeDao;
     }
 }

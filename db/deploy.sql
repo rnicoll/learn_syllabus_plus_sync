@@ -145,48 +145,43 @@ CREATE TABLE `cache_enrolment` (
 
 
 --
--- Table structure for table `enrolment_add`
+-- Table structure for table `change_type`
 --
 
-DROP TABLE IF EXISTS `enrolment_add`;
+DROP TABLE IF EXISTS `change_type`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `enrolment_add` (
-  `change_id` int(11) NOT NULL AUTO_INCREMENT,
-  `run_id` int(11) NOT NULL,
-  `tt_activity_id` varchar(32) NOT NULL,
-  `tt_student_set_id` varchar(32) NOT NULL,
-  `update_completed` datetime DEFAULT NULL,
-  PRIMARY KEY (`change_id`),
-  UNIQUE KEY `run_id` (`run_id`,`tt_activity_id`,`tt_student_set_id`),
-  KEY `enrolment_add_activ` (`tt_activity_id`),
-  KEY `enrolment_add_stu` (`tt_student_set_id`),
-  CONSTRAINT `enrolment_add_activ` FOREIGN KEY (`tt_activity_id`) REFERENCES `activity` (`tt_activity_id`),
-  CONSTRAINT `enrolment_add_stu` FOREIGN KEY (`tt_student_set_id`) REFERENCES `student_set` (`tt_student_set_id`),
-  CONSTRAINT `enrolment_add_run` FOREIGN KEY (`run_id`) REFERENCES `synchronisation_run` (`run_id`)
+CREATE TABLE `change_type` (
+  `change_type` VARCHAR(12) NOT NULL,
+  PRIMARY KEY (`change_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
+INSERT INTO change_type (change_type) VALUES ('add');
+INSERT INTO change_type (change_type) VALUES ('remove');
+
 --
--- Table structure for table `enrolment_remove`
+-- Table structure for table `enrolment_change`
 --
 
-DROP TABLE IF EXISTS `enrolment_remove`;
+DROP TABLE IF EXISTS `enrolment_change`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `enrolment_remove` (
+CREATE TABLE `enrolment_change` (
   `change_id` int(11) NOT NULL AUTO_INCREMENT,
   `run_id` int(11) NOT NULL,
   `tt_activity_id` varchar(32) NOT NULL,
   `tt_student_set_id` varchar(32) NOT NULL,
+  `change_type` VARCHAR(12) NOT NULL,
   `update_completed` datetime DEFAULT NULL,
   PRIMARY KEY (`change_id`),
   UNIQUE KEY `run_id` (`run_id`,`tt_activity_id`,`tt_student_set_id`),
-  KEY `enrolment_remove_activ` (`tt_activity_id`),
-  KEY `enrolment_remove_stu` (`tt_student_set_id`),
-  CONSTRAINT `enrolment_remove_activ` FOREIGN KEY (`tt_activity_id`) REFERENCES `activity` (`tt_activity_id`),
-  CONSTRAINT `enrolment_remove_stu` FOREIGN KEY (`tt_student_set_id`) REFERENCES `student_set` (`tt_student_set_id`),
-  CONSTRAINT `enrolment_remove_run` FOREIGN KEY (`run_id`) REFERENCES `synchronisation_run` (`run_id`)
+  KEY `enrolment_change_activ` (`tt_activity_id`),
+  KEY `enrolment_change_stu` (`tt_student_set_id`),
+  KEY `enrolment_change_type` (`change_type`),
+  CONSTRAINT `enrolment_change_activ` FOREIGN KEY (`tt_activity_id`) REFERENCES `activity` (`tt_activity_id`),
+  CONSTRAINT `enrolment_change_stu` FOREIGN KEY (`tt_student_set_id`) REFERENCES `student_set` (`tt_student_set_id`),
+  CONSTRAINT `enrolment_change_type` FOREIGN KEY (`change_type`) REFERENCES `change_type` (`change_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 

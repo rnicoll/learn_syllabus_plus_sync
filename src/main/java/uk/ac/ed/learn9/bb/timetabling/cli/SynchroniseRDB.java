@@ -22,10 +22,10 @@ public class SynchroniseRDB extends Object {
         
         service.synchroniseData();
         final SynchronisationRun run = service.generateDiff();
-        service.mapModulesToCourses();
-        service.createGroupsForActivities(run);
-        service.mapStudentSetsToUsers(run);
-        service.applyEnrolmentChanges(run);
+        //service.mapModulesToCourses();
+        //service.createGroupsForActivities(run);
+        //service.mapStudentSetsToUsers(run);
+        //service.applyEnrolmentChanges(run);
         
         // XXX: Mark the run completed
         

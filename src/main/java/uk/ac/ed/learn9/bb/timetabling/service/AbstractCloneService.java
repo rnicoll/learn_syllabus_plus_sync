@@ -12,7 +12,7 @@ import java.util.Set;
 /**
  * Abstract service for cloning tables from one database to another. Intended
  * for copying data from the timetabling database, to the local copy used by the
- * synchronization service, but could be used for other tasks if desired.
+ * synchronisation service, but could be used for other tasks if desired.
  */
 public abstract class AbstractCloneService extends Object {
 

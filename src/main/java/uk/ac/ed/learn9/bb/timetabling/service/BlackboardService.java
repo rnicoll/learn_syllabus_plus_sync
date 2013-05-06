@@ -24,6 +24,7 @@ import blackboard.persist.course.GroupMembershipDbLoader;
 import blackboard.persist.course.GroupMembershipDbPersister;
 import blackboard.persist.user.UserDbLoader;
 import org.springframework.stereotype.Service;
+import uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 
 
@@ -39,7 +40,7 @@ public class BlackboardService {
         final GroupMembershipDbPersister groupMembershipDbPersister = getGroupMembershipDbPersister();
         
         final PreparedStatement updateStatement = connection.prepareStatement(
-            "UPDATE enrolment_remove "
+            "UPDATE enrolment_change "
                 + "SET update_completed=NOW() "
                 + "WHERE change_id=? "
                     + "AND update_completed IS NULL"
@@ -48,11 +49,12 @@ public class BlackboardService {
         try {
             final PreparedStatement queryStatement = connection.prepareStatement(
                 "SELECT c.change_id, m.learn_course_id, a.learn_group_id, s.learn_user_id "
-                    + "FROM enrolment_remove c "
+                    + "FROM enrolment_change c "
                         + "JOIN activity a on a.tt_activity_id=c.tt_activity_id "
                         + "JOIN module m ON m.tt_module_id=a.tt_module_id "
                         + "JOIN student_set s ON s.tt_student_set_id=c.tt_student_set_id "
                     + "WHERE c.run_id=? "
+                        + "AND c.change_type=? "
                         + "AND m.learn_course_id IS NOT NULL "
                         + "AND a.learn_group_id IS NOT NULL "
                         + "AND s.learn_user_id IS NOT NULL "
@@ -60,6 +62,7 @@ public class BlackboardService {
             );
             try {
                 queryStatement.setInt(1, run.getRunId());
+                queryStatement.setString(2, EnrolmentChange.CHANGE_TYPE_REMOVE);
                 
                 final ResultSet rs = queryStatement.executeQuery();
                 try {
@@ -103,7 +106,7 @@ public class BlackboardService {
         final GroupMembershipDbPersister groupMembershipDbPersister = getGroupMembershipDbPersister();
         
         final PreparedStatement updateStatement = connection.prepareStatement(
-            "UPDATE enrolment_add "
+            "UPDATE enrolment_change "
                 + "SET update_completed=NOW() "
                 + "WHERE change_id=? "
                     + "AND update_completed IS NULL"
@@ -112,11 +115,12 @@ public class BlackboardService {
         try {
             final PreparedStatement queryStatement = connection.prepareStatement(
                 "SELECT c.change_id, m.learn_course_id, a.learn_group_id, s.learn_user_id "
-                    + "FROM enrolment_add c "
+                    + "FROM enrolment_change c "
                         + "JOIN activity a on a.tt_activity_id=c.tt_activity_id "
                         + "JOIN module m ON m.tt_module_id=a.tt_module_id "
                         + "JOIN student_set s ON s.tt_student_set_id=c.tt_student_set_id "
                     + "WHERE c.run_id=? "
+                        + "AND c.change_type=? "
                         + "AND m.learn_course_id IS NOT NULL "
                         + "AND a.learn_group_id IS NOT NULL "
                         + "AND s.learn_user_id IS NOT NULL "
@@ -125,6 +129,7 @@ public class BlackboardService {
             );
             try {
                 queryStatement.setInt(1, run.getRunId());
+                queryStatement.setString(2, EnrolmentChange.CHANGE_TYPE_REMOVE);
                 
                 Id currentCourseId = null;
                 Map<Id, CourseMembership> studentCourseMemberships = null;

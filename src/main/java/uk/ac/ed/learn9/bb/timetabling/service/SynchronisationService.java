@@ -350,9 +350,9 @@ public class SynchronisationService extends Object {
         // version.
         
         final PreparedStatement addStatement = connection.prepareStatement(
-            "INSERT INTO enrolment_add "
-                + "(run_id, tt_student_set_id, tt_activity_id) "
-                + "(SELECT a.run_id, a.tt_student_set_id, a.tt_activity_id "
+            "INSERT INTO enrolment_change "
+                + "(run_id, change_type, tt_student_set_id, tt_activity_id) "
+                + "(SELECT a.run_id, 'add', a.tt_student_set_id, a.tt_activity_id "
                     + "FROM synchronisation_run r "
                     + "JOIN cache_enrolment a ON a.run_id=r.run_id "
                     + "LEFT JOIN cache_enrolment b ON b.run_id=r.previous_run_id "
@@ -370,9 +370,9 @@ public class SynchronisationService extends Object {
         
         // XXX: This should check for a previously successful "add" operation
         final PreparedStatement removeStatement = connection.prepareStatement(
-            "INSERT INTO enrolment_remove "
-                + "(run_id, tt_student_set_id, tt_activity_id) "
-                + "(SELECT a.run_id, a.tt_student_set_id, a.tt_activity_id "
+            "INSERT INTO enrolment_change "
+                + "(run_id, change_type, tt_student_set_id, tt_activity_id) "
+                + "(SELECT a.run_id, 'remove', a.tt_student_set_id, a.tt_activity_id "
                     + "FROM synchronisation_run r "
                     + "JOIN cache_enrolment a ON a.run_id=r.previous_run_id "
                     + "LEFT JOIN cache_enrolment b ON b.run_id=r.run_id "
