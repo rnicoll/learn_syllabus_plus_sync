@@ -21,6 +21,7 @@ import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
  */
 @Service
 public class SynchronisationService extends Object {
+    public static final String GROUP_NAME_PREFIX = "TT_";
     @Autowired
     private DataSource dataSource;
     @Autowired
@@ -79,25 +80,25 @@ public class SynchronisationService extends Object {
         if (null == activityName) {
             return null;
         }
-        
-        final StringBuilder groupName = new StringBuilder("TT_");
-        
+                
         // The ID of a group, for example a number to identify it within its
         // set.
         final String groupId;
         
         // In many cases, the activity name will have the module name at the
-        // start. In whic case, we strip the module name to give us a group
-        // ID.
-        //
-        // Failing that, we look for a sensible break point and hope!
+        // start. In which case, we strip the module name to give us a group
+        // name.
         if (null != moduleName
             && activityName.startsWith(moduleName)) {
-            final String temp = activityName.substring(moduleName.length());
-            if (temp.startsWith("/")) {
-                groupId = temp.substring(1);
+            final String temp = activityName.substring(moduleName.length()).trim();
+            
+            // If the remainder of the activity name starts with a "/",
+            // it's likely to be something like "/1", and need more context.
+            // Otherwise we presume it's safe to use by itself.
+            if (!temp.startsWith("/")) {
+                return GROUP_NAME_PREFIX + temp;
             } else {
-                groupId = temp;
+                groupId = temp.substring(1);
             }
         } else {
             // If the activity name has a '/' in, split on the last '/'
@@ -110,6 +111,8 @@ public class SynchronisationService extends Object {
                 groupId = activityName;
             }
         }
+        
+        final StringBuilder groupName = new StringBuilder(GROUP_NAME_PREFIX);
         
         if (null != activityType) {
             groupName.append(activityType.trim())
@@ -157,9 +160,6 @@ public class SynchronisationService extends Object {
         } finally {
             queryStatement.close();
         }
-        
-        System.out.println("Group names:"
-            + activityGroupNames);
         
         // Write out the group names
         final PreparedStatement updateStatement = connection.prepareStatement(
