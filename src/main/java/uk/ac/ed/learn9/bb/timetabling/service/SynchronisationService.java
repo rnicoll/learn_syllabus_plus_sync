@@ -1,5 +1,6 @@
 package uk.ac.ed.learn9.bb.timetabling.service;
 
+import blackboard.data.ValidationException;
 import blackboard.persist.PersistenceException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -125,6 +126,23 @@ public class SynchronisationService extends Object {
     }
     
     /**
+     * Creates groups in Learn to match activities which have student enrolments
+     * to be synchronised.
+     * 
+     * @throws SQLException if there was a problem access one of the databases.
+     */
+    public void createGroupsForActivities(final SynchronisationRun run)
+            throws PersistenceException, SQLException, ValidationException {
+        final Connection destination = this.getDataSource().getConnection();
+        try {
+            generateGroupNames(destination);
+            this.getBlackboardService().generateGroupsForActivities(run, destination);
+        } finally {
+            destination.close();
+        }
+    }
+    
+    /**
      * Generates names of groups, to be used in Learn where needed. These are
      * written into the database so they can be inspected later if needed.
      */
@@ -201,25 +219,6 @@ public class SynchronisationService extends Object {
             } finally {
                 source.close();
             }
-        } finally {
-            destination.close();
-        }
-    }
-    
-    /**
-     * Resolves the modules that activities belong to, to the courses they
-     * represent in Learn, where applicable. This also includes importing
-     * details of joint taught activities (so that the child activities can be
-     * mapped to the correct module and then onwards to the correct course).
-     * 
-     * @throws SQLException if there was a problem access one of the databases.
-     */
-    public void mapActivitiesToGroups()
-            throws PersistenceException, SQLException {
-        final Connection destination = this.getDataSource().getConnection();
-        try {
-            generateGroupNames(destination);
-            // this.getBlackboardService().generateGroupsForActivities(destination);
         } finally {
             destination.close();
         }
