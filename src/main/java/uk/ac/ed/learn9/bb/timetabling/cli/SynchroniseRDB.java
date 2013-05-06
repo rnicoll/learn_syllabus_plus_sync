@@ -24,6 +24,10 @@ public class SynchroniseRDB extends Object {
         final SynchronisationRun run = service.generateDiff();
         service.mapModulesToCourses();
         service.createGroupsForActivities(run);
+        service.mapStudentSetsToUsers(run);
+        service.applyEnrolmentChanges(run);
+        
+        // XXX: Mark the run completed
         
         System.out.println("Sync took "
                 + ((System.currentTimeMillis() - startTime) / 1000L) + " seconds.");

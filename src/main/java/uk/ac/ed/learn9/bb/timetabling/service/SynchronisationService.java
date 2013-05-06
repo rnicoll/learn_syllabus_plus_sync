@@ -18,7 +18,8 @@ import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 
 /**
  * Service for synchronising activities and enrolments from Timetabling
- * to groups in Learn.
+ * to groups in Learn. This mostly wraps around other services to provide
+ * a higher level API.
  */
 @Service
 public class SynchronisationService extends Object {
@@ -35,6 +36,18 @@ public class SynchronisationService extends Object {
     private TimetablingCloneService cloneService;
     @Autowired
     private SynchronisationRunDao runDao;
+    
+    public void applyEnrolmentChanges(final SynchronisationRun run)
+        throws SQLException, ValidationException {
+        final Connection connection = this.getDataSource().getConnection();
+        
+        try {
+            this.getBlackboardService().applyAddEnrolmentChanges(connection, run);
+            this.getBlackboardService().applyRemoveEnrolmentChanges(connection, run);
+        } finally {
+            connection.close();
+        }
+    }
 
     /**
      * Generates an up to date difference set between the last time the
@@ -429,6 +442,21 @@ public class SynchronisationService extends Object {
         }
     }
 
+    /**
+     * Identifies students sets with group enrolments to be copied to Learn,
+     * and maps them to their IDs in Learn.
+     * @param run 
+     */
+    public void mapStudentSetsToUsers(SynchronisationRun run)
+        throws PersistenceException, SQLException {
+        final Connection connection = this.getDataSource().getConnection();
+        try {
+            this.getBlackboardService().mapStudentSetsToUsers(connection, run);
+        } finally {
+            connection.close();
+        }
+    }
+    
     /**
      * Returns the reporting database data source.
      *
