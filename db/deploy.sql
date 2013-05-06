@@ -157,9 +157,6 @@ CREATE TABLE `change_type` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
-INSERT INTO change_type (change_type) VALUES ('add');
-INSERT INTO change_type (change_type) VALUES ('remove');
-
 --
 -- Table structure for table `enrolment_change`
 --
