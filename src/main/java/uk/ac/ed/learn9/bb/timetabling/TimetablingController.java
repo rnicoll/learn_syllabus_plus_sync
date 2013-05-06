@@ -23,12 +23,18 @@ public class TimetablingController {
     @Autowired
     private EnrolmentRemoveDao enrolmentRemoveDao;
     
+    /**
+     * Displays an audit log of when students were added/removed to/from groups
+     * for a single course.
+     */
     @RequestMapping("/auditLog")
     public ModelAndView getAuditLog(final HttpServletRequest request, final HttpServletResponse response) {
         final Context context = ContextManagerFactory.getInstance().getContext();
         final ModelAndView modelAndView = new ModelAndView("auditLog");
         final Course course = context.getCourse();
         final List<EnrolmentChange> changes = new ArrayList<EnrolmentChange>();
+        
+        // Log group creation?
         
         changes.addAll(this.getEnrolmentAddDao().getByCourse(course));
         changes.addAll(this.getEnrolmentRemoveDao().getByCourse(course));

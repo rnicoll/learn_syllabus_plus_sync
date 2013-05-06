@@ -1,4 +1,3 @@
-
 package uk.ac.ed.learn9.bb.timetabling.service;
 
 import java.sql.Connection;

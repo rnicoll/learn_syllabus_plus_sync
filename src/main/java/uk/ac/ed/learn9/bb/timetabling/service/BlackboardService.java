@@ -67,16 +67,12 @@ public class BlackboardService {
                         final int changeId = rs.getInt("change_id");
                         final Id groupId = Id.generateId(Course.DATA_TYPE, rs.getString("learn_group_id"));
                         final Id studentId = Id.generateId(User.DATA_TYPE, rs.getString("learn_student_id"));
-                        final GroupMembership groupMembership;
                         
                         try {
-                            groupMembership = groupMembershipLoader.loadByGroupAndUserId(groupId, studentId);
+                            removeUserFromGroup(groupId, studentId, groupMembershipLoader, groupMembershipDbPersister);
                         } catch(KeyNotFoundException e) {
-                            // XXX: Record in the database.
                             continue;
                         }
-                        
-                        groupMembershipDbPersister.deleteById(groupMembership.getId());
                         
                         updateStatement.setInt(1, changeId);
                         updateStatement.executeUpdate();
@@ -156,13 +152,7 @@ public class BlackboardService {
                             continue;
                         }
                         
-                        final GroupMembership groupMembership = new GroupMembership();
-                        
-                        groupMembership.setCourseMembershipId(courseMembership.getId());
-                        groupMembership.setGroupId(groupId);
-                        // FIXME: groupMembership.setGroupRoleIdentifier(???);
-                        
-                        groupMembershipDbPersister.persist(groupMembership);
+                        persistGroupMembership(courseMembership, groupId, groupMembershipDbPersister);
                         
                         updateStatement.setInt(1, changeId);
                         updateStatement.executeUpdate();
@@ -371,7 +361,7 @@ public class BlackboardService {
      * @throws ValidationException 
      * @throws PersistenceException 
      */
-    private Group persistGroup(final Id courseId, final String groupName, final GroupDbPersister groupDbPersister)
+    public Group persistGroup(final Id courseId, final String groupName, final GroupDbPersister groupDbPersister)
             throws ValidationException, PersistenceException {
         // Create the new group
         final Group group = new Group();
@@ -382,6 +372,30 @@ public class BlackboardService {
         // FIXME: Generate and set a group descriotion
         groupDbPersister.persist(group);
         return group;
+    }
+
+    /**
+     * Constructs a user's membership on a group and persists it in Learn.
+     * 
+     * @param courseMembership
+     * @param groupId
+     * @param groupMembershipDbPersister
+     * @return the group membership.
+     * @throws PersistenceException
+     * @throws ValidationException 
+     */
+    public GroupMembership persistGroupMembership(final CourseMembership courseMembership,
+        final Id groupId, final GroupMembershipDbPersister groupMembershipDbPersister)
+            throws PersistenceException, ValidationException {
+        final GroupMembership groupMembership = new GroupMembership();
+        
+        groupMembership.setCourseMembershipId(courseMembership.getId());
+        groupMembership.setGroupId(groupId);
+        // FIXME: groupMembership.setGroupRoleIdentifier(???);
+        
+        groupMembershipDbPersister.persist(groupMembership);
+        
+        return groupMembership;
     }
 
     /**
@@ -404,6 +418,22 @@ public class BlackboardService {
         }
         
         return studentCourseMemberships;
+    }
+
+    /**
+     * Removes a user from a group in Learn.
+     * 
+     * @param groupId
+     * @param studentId
+     * @param groupMembershipLoader
+     * @param groupMembershipDbPersister
+     * @throws PersistenceException 
+     */
+    public void removeUserFromGroup(final Id groupId, final Id studentId, final GroupMembershipDbLoader groupMembershipLoader, final GroupMembershipDbPersister groupMembershipDbPersister)
+            throws KeyNotFoundException, PersistenceException {
+        final GroupMembership groupMembership = groupMembershipLoader.loadByGroupAndUserId(groupId, studentId);
+
+        groupMembershipDbPersister.deleteById(groupMembership.getId());
     }
 
     private CourseMembershipDbLoader getCourseMembershipDbLoader() throws PersistenceException {
