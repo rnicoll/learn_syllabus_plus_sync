@@ -16,6 +16,7 @@ import javax.persistence.Table;
 @Table(name="activity")
 public class Activity extends Object implements Serializable {
     private String activityId;
+    private String activityName;
     private Module module;
     private String learnGroupId;
     private String description;
@@ -28,6 +29,16 @@ public class Activity extends Object implements Serializable {
     @Column(name="tt_activity_id", nullable=false, length=32)
     public String getActivityId() {
         return activityId;
+    }
+
+    /**
+     * Returns the name of the activity.
+     * 
+     * @return the name of the activity.
+     */
+    @Column(name="tt_activity_name", nullable=true, length=255)
+    public String getActivityName() {
+        return activityName;
     }
 
     /**
@@ -67,6 +78,13 @@ public class Activity extends Object implements Serializable {
      */
     public void setActivityId(String activityId) {
         this.activityId = activityId;
+    }
+
+    /**
+     * @param activityName the activityName to set
+     */
+    public void setActivityName(String activityName) {
+        this.activityName = activityName;
     }
 
     /**

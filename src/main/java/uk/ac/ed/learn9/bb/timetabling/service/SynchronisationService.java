@@ -1,7 +1,5 @@
 package uk.ac.ed.learn9.bb.timetabling.service;
 
-import blackboard.data.ValidationException;
-import blackboard.persist.PersistenceException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,8 +9,10 @@ import java.util.Map;
 import javax.sql.DataSource;
 
 import org.springframework.stereotype.Service;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import blackboard.data.ValidationException;
+import blackboard.persist.PersistenceException;
+
 import uk.ac.ed.learn9.bb.timetabling.dao.SynchronisationRunDao;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 
@@ -38,7 +38,7 @@ public class SynchronisationService extends Object {
     private SynchronisationRunDao runDao;
     
     public void applyEnrolmentChanges(final SynchronisationRun run)
-        throws SQLException, ValidationException {
+        throws PersistenceException, SQLException, ValidationException {
         final Connection connection = this.getDataSource().getConnection();
         
         try {

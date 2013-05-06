@@ -35,8 +35,8 @@ public class BlackboardService {
 
     public void applyRemoveEnrolmentChanges(final Connection connection, final SynchronisationRun run)
         throws SQLException, PersistenceException, ValidationException {
-        final GroupMembershipDbLoader groupMembershipLoader = GroupMembershipDbLoader.Default.getInstance();
-        final GroupMembershipDbPersister groupMembershipDbPersister = GroupMembershipDbPersister.Default.getInstance();
+        final GroupMembershipDbLoader groupMembershipLoader = getGroupMembershipDbLoader();
+        final GroupMembershipDbPersister groupMembershipDbPersister = getGroupMembershipDbPersister();
         
         final PreparedStatement updateStatement = connection.prepareStatement(
             "UPDATE enrolment_remove "
@@ -92,10 +92,19 @@ public class BlackboardService {
         }
     }
 
+    /**
+     * Applies pending 'add' changes to Learn.
+     * 
+     * @param connection a connection to the local database.
+     * @param run the synchronisation run to take changes from.
+     * @throws SQLException if there was a problem with the local database.
+     * @throws PersistenceException
+     * @throws ValidationException 
+     */
     public void applyAddEnrolmentChanges(final Connection connection, final SynchronisationRun run)
         throws SQLException, PersistenceException, ValidationException {
-        final CourseMembershipDbLoader courseMembershipLoader = CourseMembershipDbLoader.Default.getInstance();
-        final GroupMembershipDbPersister groupMembershipDbPersister = GroupMembershipDbPersister.Default.getInstance();
+        final CourseMembershipDbLoader courseMembershipLoader = getCourseMembershipDbLoader();
+        final GroupMembershipDbPersister groupMembershipDbPersister = getGroupMembershipDbPersister();
         
         final PreparedStatement updateStatement = connection.prepareStatement(
             "UPDATE enrolment_add "
@@ -175,7 +184,7 @@ public class BlackboardService {
      */
     public void generateGroupsForActivities(final SynchronisationRun run, final Connection connection)
             throws KeyNotFoundException, PersistenceException, SQLException, ValidationException {
-        final GroupDbPersister groupDbPersister = GroupDbPersister.Default.getInstance();
+        final GroupDbPersister groupDbPersister = getGroupDbPersister();
         
         final PreparedStatement updateStatement = connection.prepareStatement(
             "UPDATE activity a "
@@ -266,8 +275,8 @@ public class BlackboardService {
      */
     public void mapModulesToCourses(final Connection connection)
             throws KeyNotFoundException, PersistenceException, SQLException {
-        final CourseDbLoader courseDbLoader = CourseDbLoader.Default.getInstance();
-        final CourseCourseDbLoader courseCourseDbLoader = CourseCourseDbLoader.Default.getInstance();
+        final CourseDbLoader courseDbLoader = getCourseDbLoader();
+        final CourseCourseDbLoader courseCourseDbLoader = getCourseCourseDbLoader();
         
         final PreparedStatement statement = connection.prepareStatement(
                 "SELECT tt_module_id, learn_course_code, learn_course_id "
@@ -314,7 +323,7 @@ public class BlackboardService {
      */
     public void mapStudentSetsToUsers(final Connection connection, final SynchronisationRun run)
         throws PersistenceException, SQLException {
-        final UserDbLoader userDbLoader = UserDbLoader.Default.getInstance();
+        final UserDbLoader userDbLoader = getUserDbLoader();
         
         // First resolve all activities that have a Learn course, but no group,
         // and are not JTA child activities.
@@ -352,7 +361,18 @@ public class BlackboardService {
         }
     }
 
-    private Group persistGroup(final Id courseId, final String groupName, final GroupDbPersister groupDbPersister) throws ValidationException, PersistenceException {
+    /**
+     * Constructs a new group and persists it in Learn.
+     * 
+     * @param courseId the course that the group will belong to.
+     * @param groupName the name of the group.
+     * @param groupDbPersister the group persister to use.
+     * @return the new group.
+     * @throws ValidationException 
+     * @throws PersistenceException 
+     */
+    private Group persistGroup(final Id courseId, final String groupName, final GroupDbPersister groupDbPersister)
+            throws ValidationException, PersistenceException {
         // Create the new group
         final Group group = new Group();
         group.setCourseId(courseId);
@@ -364,6 +384,17 @@ public class BlackboardService {
         return group;
     }
 
+    /**
+     * Get a mapping from user IDs to course memberships for students on a single
+     * course in Learn.
+     * 
+     * @param courseMembershipLoader the course membership loader to use.
+     * @param courseId the course to load course memberships from.
+     * @return a mapping from user IDs to course memberships for students on a single
+     * course in Learn.
+     * @throws PersistenceException if there was a problem loading the
+     * course memberships.
+     */
     private Map<Id, CourseMembership> getStudentCourseMemberships(final CourseMembershipDbLoader courseMembershipLoader, final Id courseId)
             throws PersistenceException {
         Map<Id, CourseMembership> studentCourseMemberships = new HashMap<Id, CourseMembership>();
@@ -373,5 +404,33 @@ public class BlackboardService {
         }
         
         return studentCourseMemberships;
+    }
+
+    private CourseMembershipDbLoader getCourseMembershipDbLoader() throws PersistenceException {
+        return CourseMembershipDbLoader.Default.getInstance();
+    }
+
+    private CourseDbLoader getCourseDbLoader() throws PersistenceException {
+        return CourseDbLoader.Default.getInstance();
+    }
+
+    private CourseCourseDbLoader getCourseCourseDbLoader() throws PersistenceException {
+        return CourseCourseDbLoader.Default.getInstance();
+    }
+
+    private GroupMembershipDbLoader getGroupMembershipDbLoader() throws PersistenceException {
+        return GroupMembershipDbLoader.Default.getInstance();
+    }
+
+    private GroupMembershipDbPersister getGroupMembershipDbPersister() throws PersistenceException {
+        return GroupMembershipDbPersister.Default.getInstance();
+    }
+
+    private GroupDbPersister getGroupDbPersister() throws PersistenceException {
+        return GroupDbPersister.Default.getInstance();
+    }
+
+    private UserDbLoader getUserDbLoader() throws PersistenceException {
+        return UserDbLoader.Default.getInstance();
     }
 }
