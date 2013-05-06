@@ -10,6 +10,14 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
+/**
+ * Service for cloning data from the Timetabling reporting database (RDB)
+ * to the local ("cache") database.
+ * 
+ * This is done so that we're not doing data joins in memory between
+ * independent databases (which is both memory consuming, and adds significant
+ * complexity to ensuring transaction safety).
+ */
 @Service
 public class TimetablingCloneService extends AbstractCloneService {
 
@@ -52,6 +60,17 @@ public class TimetablingCloneService extends AbstractCloneService {
         {"HOST_KEY", "tt_host_key"}
     };
 
+    /**
+     * Clone activities from reporting to the local database. This copies all
+     * activities, not just those that are relevant to Learn, as it's a lot
+     * simpler and avoids unneeded complexity. Activities are generally mapped
+     * to groups in Learn.
+     * 
+     * @param source a connection to the reporting database.
+     * @param destination a connection to the cache database.
+     * @throws SQLException if there was a problem accessing one of the
+     * databases.
+     */
     public void cloneActivities(final Connection source, final Connection destination)
             throws SQLException {
         final Map<String, String> fieldMappings = new HashMap<String, String>();
@@ -66,6 +85,16 @@ public class TimetablingCloneService extends AbstractCloneService {
                 fieldMappings);
     }
 
+    /**
+     * Clone activity templates from reporting to the local database. Activity
+     * templates are used to group activities together (for example associating
+     * all tutorials in a set of tutorial groups).
+     * 
+     * @param source a connection to the reporting database.
+     * @param destination a connection to the cache database.
+     * @throws SQLException if there was a problem accessing one of the
+     * databases.
+     */
     public void cloneActivityTemplates(final Connection source, final Connection destination)
             throws SQLException {
         final Map<String, String> fieldMappings = new HashMap<String, String>();
@@ -80,6 +109,15 @@ public class TimetablingCloneService extends AbstractCloneService {
                 fieldMappings);
     }
 
+    /**
+     * Clone activity types from reporting to the local database. Activity
+     * types are used to generate the description of a group in Learn.
+     * 
+     * @param source a connection to the reporting database.
+     * @param destination a connection to the cache database.
+     * @throws SQLException if there was a problem accessing one of the
+     * databases.
+     */
     public void cloneActivityTypes(final Connection source, final Connection destination)
             throws SQLException {
         final Map<String, String> fieldMappings = new HashMap<String, String>();
@@ -94,6 +132,15 @@ public class TimetablingCloneService extends AbstractCloneService {
                 fieldMappings);
     }
 
+    /**
+     * Clone modules from reporting to the local database. Modules are equivalent
+     * to courses in Learn.
+     * 
+     * @param source a connection to the reporting database.
+     * @param destination a connection to the cache database.
+     * @throws SQLException if there was a problem accessing one of the
+     * databases.
+     */
     public void cloneModules(final Connection source, final Connection destination)
             throws SQLException {
         final Map<String, String> fieldMappings = new HashMap<String, String>();
