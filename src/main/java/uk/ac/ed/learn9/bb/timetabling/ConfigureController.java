@@ -4,15 +4,16 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.ModelAndView;
 
 @Controller
-public class ConfigureController {    
+public class ConfigureController extends Object {
     /**
      * Displays an audit log of when students were added/removed to/from groups
      * for a single course.
      */
-    @RequestMapping("/configure")
+    @RequestMapping(value="/configure", method=RequestMethod.GET)
     public ModelAndView getConfigure(final HttpServletRequest request, final HttpServletResponse response) {
         final ModelAndView modelAndView = new ModelAndView("configure");
         

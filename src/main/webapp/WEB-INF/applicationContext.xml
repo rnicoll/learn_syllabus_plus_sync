@@ -52,6 +52,9 @@
     <tx:annotation-driven transaction-manager="transactionManager" />
     
     <!-- Service beans -->
+    <bean id="enrolmentChangeDao" class="uk.ac.ed.learn9.bb.timetabling.dao.impl.EnrolmentChangeDaoImpl">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
     <bean id="runDao" class="uk.ac.ed.learn9.bb.timetabling.dao.impl.SynchronisationRunDaoImpl">
         <property name="sessionFactory" ref="sessionFactory"/>
     </bean>

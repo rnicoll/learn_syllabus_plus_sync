@@ -4,38 +4,22 @@
        xmlns:p="http://www.springframework.org/schema/p"
        xmlns:aop="http://www.springframework.org/schema/aop"
        xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.5.xsd
-       http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd">
+       http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd
+       http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.1.xsd">
 
-    <bean name="auditLogController"
-          class="uk.ac.ed.learn9.bb.timetabling.AuditLogController" />
-    <bean name="configureController"
-          class="uk.ac.ed.learn9.bb.timetabling.ConfigureController" />
-    <bean name="mergedCoursesController"
-          class="uk.ac.ed.learn9.bb.timetabling.MergedCoursesController" />
-    
-    <bean id="urlMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
-        <property name="mappings">
-            <props>
-                <prop key="index.htm">indexController</prop>
-                <prop key="auditLog">auditLogController</prop>
-                <prop key="configure">configureController</prop>
-                <prop key="mergedCourses">mergedCoursesController</prop>
-            </props>
-        </property>
-    </bean>
+    <import resource="applicationContext.xml" />
+
+    <context:component-scan base-package="uk.ac.ed.learn9.bb.timetabling"/>
+
+    <mvc:annotation-driven />
 
     <bean id="viewResolver"
           class="org.springframework.web.servlet.view.InternalResourceViewResolver"
           p:prefix="/WEB-INF/jsp/"
           p:suffix=".jsp" />
-
-    <!--
-    The index controller.
-    -->
-    <bean name="indexController"
-          class="org.springframework.web.servlet.mvc.ParameterizableViewController"
-          p:viewName="index" />
-
 </beans>
