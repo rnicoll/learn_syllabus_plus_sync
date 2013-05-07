@@ -16,7 +16,7 @@ import uk.ac.ed.learn9.bb.timetabling.dao.EnrolmentChangeDao;
 import uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange;
 
 @Controller
-public class TimetablingController {
+public class AuditLogController {
     @Autowired
     private EnrolmentChangeDao enrolmentChangeDao;
     
@@ -24,7 +24,7 @@ public class TimetablingController {
      * Displays an audit log of when students were added/removed to/from groups
      * for a single course.
      */
-    @RequestMapping("/auditLog")
+    @RequestMapping("/index")
     public ModelAndView getAuditLog(final HttpServletRequest request, final HttpServletResponse response) {
         final Context context = ContextManagerFactory.getInstance().getContext();
         final ModelAndView modelAndView = new ModelAndView("auditLog");
@@ -37,21 +37,6 @@ public class TimetablingController {
         Collections.sort(changes);
         
         modelAndView.addObject("audit_log", changes);
-        
-        return modelAndView;
-    }
-    
-    /**
-     * Displays an audit log of when students were added/removed to/from groups
-     * for a single course.
-     */
-    @RequestMapping("/mergedCourses")
-    public ModelAndView getMergedCourses(final HttpServletRequest request, final HttpServletResponse response) {
-        final Context context = ContextManagerFactory.getInstance().getContext();
-        final ModelAndView modelAndView = new ModelAndView("mergedCourses");
-        final Course course = context.getCourse();
-        
-        // Load and add the merged courses list here.
         
         return modelAndView;
     }
