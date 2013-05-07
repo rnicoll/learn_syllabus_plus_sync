@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<manifest>
+    <!-- core extension information -->
+    <plugin>
+        <name value= "University of Edinburgh Timetabling/Learn Sync Tool"/>
+        <handle value= "uoe-learn-timetabling"/>
+        <description value= "Creates course groups in Learn and assigns students based on timetabling data"/>
+        <version value= "1.0.0"/>
+        <webapp-type value="javaext" />
+        <requires>
+            <bbversion value="9.1"/>
+        </requires>
+        <vendor>
+            <id value="uoe"/>
+            <name value="University of Edinburgh"/>
+            <url value="http://www.ed.ac.uk/" />
+            <description value="The University of Edinburgh" />
+        </vendor>
+        
+        <http-actions>
+            <!-- <config value="/adminSettings"/> -->
+        </http-actions>  
+        
+        <!--
+        <schema-dirs>
+            <schema-dir dir-name="schema" />
+       	</schema-dirs>
+        -->
+  
+        <application-defs>
+            <application handle="uoe-learn-timetabling" type="shared" use-ssl="false" 
+                         name="Timetabling Group Sync" can-allow-guest="false">
+                <description lang="en_US">Creates course groups in Learn and assigns students based on timetabling data</description>
+                <links>
+                    <link>
+                        <type value="learn-timetabling"/>
+                        <name value="Timetabling Sync"/>
+                        <url value="index.jsp" />
+                        <description value="Examine synchronisation of groups from timetabling" />
+                    </link>
+                </links>
+            </application>
+        </application-defs>
+
+        <!-- Portal Module Definitions -->
+        <module-defs>
+        </module-defs>
+     
+        <!--  Custom Content Types -->
+        <!--
+        <content-handlers>
+            <content-handler>
+                <name value="University of Edinburgh Form Tool" />
+                <handle value="resource/uoe-webformtool" />
+                <http-actions>
+                    <create value="createEditForm" />
+                    <modify value="createEditForm" />
+                    <view value="view" />
+                    <cpview value="cpview" />
+                </http-actions>
+                <icons>
+                    <toolbar value="/images/add_ch1.gif" />
+                    <listitem value="/images/filetype_artifact_t.png" />
+                </icons>
+            </content-handler>
+        </content-handlers>
+        -->
+
+        <!-- code permissions required for proper operation -->
+        <permissions>
+            <permission type="attribute" name="user.authinfo" actions="get,set" />
+            <permission type="attribute" name="user.personalinfo" actions="get,set" />
+            <permission type="attribute" name="user.personalinfo" actions="get,set"/>
+            <permission type="persist" name="*" actions="create,modify,delete,persist"/>
+            <!-- <permission type="attribute" name="user.*" actions="get,set"/>-->
+            <permission type="java.util.PropertyPermission" name="*" actions="read,write"/>
+            <permission type="socket" name="*" actions="connect"/>
+            <!--Windows Path-->
+            <permission type="java.io.FilePermission" name="..\..\..\..\blackboard\logs\-" actions="read,write,delete"/>
+            <!--Unix Path-->
+            <permission type="java.io.FilePermission" name="../../../../blackboard/logs/-" actions="read,write,delete" />
+            <permission type="java.io.FilePermission" name="../../../../blackboard/apps/tomcat/logs/-" actions="read,write,delete" />
+            <!--Allow tomcat clustering-->
+            <permission type="java.io.FilePermission" name="../../../../blackboard/apps/tomcat/cluster/-" actions="read,write,delete"/>
+            <permission type="java.lang.RuntimePermission" name="*"/>
+            <permission type="java.security.SecurityPermission" name="insertProvider.SUN"/>
+            <permission type="java.security.SecurityPermission" name="insertProvider.SunJSSE"/>
+            <permission type="persist" name="user" actions="create,modify" />
+            <permission type="persist" name="userlifecycleeventimpl"
+                        actions="create" />
+            <permission type="persist" name="userlifecycleeventpropertyimpl"
+                        actions="create" />
+
+            <permission type="persist" name="coursemembership" actions="create,modify" />
+            <permission type="persist" name="content" actions="create,modify" />
+            
+            <permission type="java.io.FilePermission"
+                        name="&amp;lt;&amp;lt;ALL FILES&amp;gt;&amp;gt;" actions="read,write" />
+            <permission type="java.util.PropertyPermission" name="*"
+                        actions="read,write" />
+            <permission type="runtime" name="accessClassInPackage.*" />
+            <permission type="runtime" name="accessDeclaredMembers" />
+            <permission type="runtime" name="db.connection.*" />
+            <permission type="runtime" name="getClassLoader" />
+            <permission type="runtime" name="createClassLoader" />
+            <permission type="runtime" name="getProtectionDomain" />
+            <permission type="java.lang.reflect.ReflectPermission"
+                        name="suppressAccessChecks" />
+            <permission type="java.net.SocketPermission" name="*"
+                        actions="connect,resolve,listen" />
+        </permissions>
+
+    </plugin>
+
+</manifest>
