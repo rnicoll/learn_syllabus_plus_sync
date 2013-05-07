@@ -8,17 +8,20 @@
        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.5.xsd
        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd">
 
-    <bean class="org.springframework.web.servlet.mvc.support.ControllerClassNameHandlerMapping"/>
-
-    <!--
-    Most controllers will use the ControllerClassNameHandlerMapping above, but
-    for the index controller we are using ParameterizableViewController, so we must
-    define an explicit mapping for it.
-    -->
+    <bean name="auditLogController"
+          class="uk.ac.ed.learn9.bb.timetabling.AuditLogController" />
+    <bean name="configureController"
+          class="uk.ac.ed.learn9.bb.timetabling.ConfigureController" />
+    <bean name="mergedCoursesController"
+          class="uk.ac.ed.learn9.bb.timetabling.MergedCoursesController" />
+    
     <bean id="urlMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
         <property name="mappings">
             <props>
                 <prop key="index.htm">indexController</prop>
+                <prop key="auditLog">auditLogController</prop>
+                <prop key="configure">configureController</prop>
+                <prop key="mergedCourses">mergedCoursesController</prop>
             </props>
         </property>
     </bean>
@@ -34,11 +37,5 @@
     <bean name="indexController"
           class="org.springframework.web.servlet.mvc.ParameterizableViewController"
           p:viewName="index" />
-    <bean name="configureController"
-          class="uk.ac.ed.learn9.bb.timetabling.ConfigureController"
-          p:viewName="configure" />
-    <bean name="auditLogController"
-          class="uk.ac.ed.learn9.bb.timetabling.AuditLogController"
-          p:viewName="auditLog" />
 
 </beans>
