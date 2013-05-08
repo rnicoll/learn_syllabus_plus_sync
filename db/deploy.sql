@@ -31,6 +31,7 @@ CREATE TABLE `module` (
   `tt_module_name` VARCHAR(255) NULL,
   `tt_academic_year` VARCHAR(12) DEFAULT NULL,
   `merge_course_code` VARCHAR(40) DEFAULT NULL,
+  `euclid_sync_enabled` TINYINT(1) NOT NULL DEFAULT '0',
   `learn_course_code` VARCHAR(40) DEFAULT NULL,
   `learn_course_id` varchar(80) DEFAULT NULL,
   PRIMARY KEY (`tt_module_id`)
@@ -79,6 +80,7 @@ CREATE TABLE `activity` (
   `tt_template_id` varchar(32) DEFAULT NULL,
   `tt_type_id` varchar(32) DEFAULT NULL,
   `tt_jta_activity_id` VARCHAR(32) DEFAULT NULL,
+  `cache_set_size` INTEGER DEFAULT NULL,
   `learn_group_id` varchar(80) DEFAULT NULL,
   `learn_group_name` VARCHAR(255) DEFAULT NULL,
   `description` text,
@@ -86,9 +88,9 @@ CREATE TABLE `activity` (
   KEY `tt_module_id` (`tt_module_id`),
   KEY `tt_type_id` (`tt_type_id`),
   CONSTRAINT `activity_module` FOREIGN KEY (`tt_module_id`) REFERENCES `module` (`tt_module_id`),
-  CONSTRAINT `activity_template` FOREIGN KEY (`tt_template_id`) REFERENCES `activity_template` (`tt_template_id`),
-  CONSTRAINT `activity_type` FOREIGN KEY (`tt_type_id`) REFERENCES `activity_type` (`tt_type_id`),
   CONSTRAINT `activity_template` FOREIGN KEY (`tt_template_id`) REFERENCES `activity_template` (`tt_template_id`)
+  /* We can't enforce the constraint below as it's not enforced on the source data */
+  /* CONSTRAINT `activity_type` FOREIGN KEY (`tt_type_id`) REFERENCES `activity_type` (`tt_type_id`) */
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -190,10 +192,12 @@ CREATE TABLE `enrolment_change` (
   `update_completed` datetime DEFAULT NULL,
   PRIMARY KEY (`change_id`),
   UNIQUE KEY `run_id` (`run_id`,`tt_activity_id`,`tt_student_set_id`),
+  KEY `enrolment_change_run` (`run_id`),
   KEY `enrolment_change_activ` (`tt_activity_id`),
   KEY `enrolment_change_stu` (`tt_student_set_id`),
   KEY `enrolment_change_type` (`change_type`),
   KEY `enrolment_change_res` (`result_code`),
+  CONSTRAINT `enrolment_change_run` FOREIGN KEY (`run_id`) REFERENCES `synchronisation_run` (`run_id`),
   CONSTRAINT `enrolment_change_activ` FOREIGN KEY (`tt_activity_id`) REFERENCES `activity` (`tt_activity_id`),
   CONSTRAINT `enrolment_change_stu` FOREIGN KEY (`tt_student_set_id`) REFERENCES `student_set` (`tt_student_set_id`),
   CONSTRAINT `enrolment_change_type` FOREIGN KEY (`change_type`) REFERENCES `change_type` (`change_type`),
