@@ -84,7 +84,10 @@ CREATE TABLE `activity` (
   `description` text,
   PRIMARY KEY (`tt_activity_id`),
   KEY `tt_module_id` (`tt_module_id`),
+  KEY `tt_type_id` (`tt_type_id`),
   CONSTRAINT `activity_module` FOREIGN KEY (`tt_module_id`) REFERENCES `module` (`tt_module_id`),
+  CONSTRAINT `activity_template` FOREIGN KEY (`tt_template_id`) REFERENCES `activity_template` (`tt_template_id`),
+  CONSTRAINT `activity_type` FOREIGN KEY (`tt_type_id`) REFERENCES `activity_type` (`tt_type_id`),
   CONSTRAINT `activity_template` FOREIGN KEY (`tt_template_id`) REFERENCES `activity_template` (`tt_template_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -142,7 +145,20 @@ CREATE TABLE `cache_enrolment` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
+--
+-- Table structure for table `change_result`
+--
 
+DROP TABLE IF EXISTS `change_result`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `change_result` (
+  `result_code` varchar(20) NOT NULL,
+  `label` varchar(80) NOT NULL,
+  `retry` tinyint(1) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`result_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `change_type`
@@ -169,16 +185,19 @@ CREATE TABLE `enrolment_change` (
   `run_id` int(11) NOT NULL,
   `tt_activity_id` varchar(32) NOT NULL,
   `tt_student_set_id` varchar(32) NOT NULL,
-  `change_type` VARCHAR(12) NOT NULL,
+  `change_type` varchar(12) NOT NULL,
+  `result_code` varchar(20) NOT NULL,
   `update_completed` datetime DEFAULT NULL,
   PRIMARY KEY (`change_id`),
   UNIQUE KEY `run_id` (`run_id`,`tt_activity_id`,`tt_student_set_id`),
   KEY `enrolment_change_activ` (`tt_activity_id`),
   KEY `enrolment_change_stu` (`tt_student_set_id`),
   KEY `enrolment_change_type` (`change_type`),
+  KEY `enrolment_change_res` (`result_code`),
   CONSTRAINT `enrolment_change_activ` FOREIGN KEY (`tt_activity_id`) REFERENCES `activity` (`tt_activity_id`),
   CONSTRAINT `enrolment_change_stu` FOREIGN KEY (`tt_student_set_id`) REFERENCES `student_set` (`tt_student_set_id`),
-  CONSTRAINT `enrolment_change_type` FOREIGN KEY (`change_type`) REFERENCES `change_type` (`change_type`)
+  CONSTRAINT `enrolment_change_type` FOREIGN KEY (`change_type`) REFERENCES `change_type` (`change_type`),
+  CONSTRAINT `enrolment_change_res` FOREIGN KEY (`result_code`) REFERENCES `change_result` (`result_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
