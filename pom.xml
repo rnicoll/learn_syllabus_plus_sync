@@ -162,14 +162,18 @@
           <artifactId>bb-platform</artifactId>
           <version>1.0</version>
           <type>jar</type>
+          <!--
           <scope>provided</scope>
+          -->
         </dependency>
         <dependency>
           <groupId>blackboard</groupId>
           <artifactId>bb-taglibs</artifactId>
           <version>1.0</version>
           <type>jar</type>
+          <!--
           <scope>provided</scope>
+          -->
         </dependency>
         <dependency>
             <groupId>org.hibernate</groupId>

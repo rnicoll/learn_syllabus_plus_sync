@@ -94,7 +94,6 @@ CREATE TABLE `activity` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
-
 --
 -- Table structure for table `student_set`
 --
@@ -216,3 +215,9 @@ CREATE TABLE `enrolment_change` (
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2013-05-02 15:51:11
+
+CREATE OR REPLACE VIEW activity_set_size AS (SELECT a.tt_activity_id, COUNT(b.tt_activity_id) set_size
+	FROM activity a
+		LEFT JOIN activity_template t ON t.tt_template_id=a.tt_template_id
+		LEFT JOIN activity b ON t.tt_template_id=b.tt_template_id
+	GROUP BY a.tt_activity_id);

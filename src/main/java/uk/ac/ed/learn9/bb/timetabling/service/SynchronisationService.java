@@ -70,7 +70,6 @@ public class SynchronisationService extends Object {
                 
                 this.copyStudentSetActivities(run, source, destination);
                 // FIXME: Update records of which courses are synced EUCLID->LEARN
-                this.refreshActivitySetSizes(destination);
                 this.doGenerateDiff(run, destination);
                 
                 return run;
@@ -355,14 +354,16 @@ public class SynchronisationService extends Object {
         final PreparedStatement addStatement = connection.prepareStatement(
             "INSERT INTO enrolment_change "
                 + "(run_id, change_type, tt_student_set_id, tt_activity_id) "
-                + "(SELECT a.run_id, 'add', a.tt_student_set_id, a.tt_activity_id "
+                + "(SELECT e.run_id, 'add', e.tt_student_set_id, e.tt_activity_id "
                     + "FROM synchronisation_run r "
-                    + "JOIN cache_enrolment a ON a.run_id=r.run_id "
+                    + "JOIN cache_enrolment e ON e.run_id=r.run_id "
+                    + "JOIN activity_set_size s ON s.tt_activity_id=e.tt_activity_id "
                     + "LEFT JOIN cache_enrolment b ON b.run_id=r.previous_run_id "
                         + "AND b.tt_student_set_id=a.tt_student_set_id "
                         + "AND b.tt_activity_id=a.tt_activity_id "
                     + "WHERE r.run_id=? "
-                        + "AND b.run_id IS NULL)"
+                        + "AND b.run_id IS NULL "
+                        + "AND s.set_size>1)" // BRD requirement #1.2
         );
         try {
             addStatement.setInt(1, run.getRunId());
@@ -375,14 +376,16 @@ public class SynchronisationService extends Object {
         final PreparedStatement removeStatement = connection.prepareStatement(
             "INSERT INTO enrolment_change "
                 + "(run_id, change_type, tt_student_set_id, tt_activity_id) "
-                + "(SELECT a.run_id, 'remove', a.tt_student_set_id, a.tt_activity_id "
+                + "(SELECT e.run_id, 'remove', e.tt_student_set_id, e.tt_activity_id "
                     + "FROM synchronisation_run r "
-                    + "JOIN cache_enrolment a ON a.run_id=r.previous_run_id "
+                    + "JOIN cache_enrolment e ON e.run_id=r.previous_run_id "
+                    + "JOIN activity_set_size s ON s.tt_activity_id=e.tt_activity_id "
                     + "LEFT JOIN cache_enrolment b ON b.run_id=r.run_id "
-                        + "AND b.tt_student_set_id=a.tt_student_set_id "
-                        + "AND b.tt_activity_id=a.tt_activity_id "
+                        + "AND b.tt_student_set_id=e.tt_student_set_id "
+                        + "AND b.tt_activity_id=e.tt_activity_id "
                     + "WHERE r.run_id=? "
-                        + "AND b.run_id IS NULL)"
+                        + "AND b.run_id IS NULL "
+                        + "AND s.set_size>1)"  // BRD requirement #1.2
         );
         try {
             removeStatement.setInt(1, run.getRunId());
@@ -546,16 +549,5 @@ public class SynchronisationService extends Object {
      */
     public void setBlackboardService(BlackboardService blackboardService) {
         this.blackboardService = blackboardService;
-    }
-
-    /**
-     * Updates the cached copy of the activity set sizes on the activity
-     * table. These are derived from the number of activities sharing a common
-     * template.
-     * 
-     * @param destination a connection to the cache database.
-     */
-    public void refreshActivitySetSizes(Connection destination) {
-        return;
     }
 }
