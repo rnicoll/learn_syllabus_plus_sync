@@ -188,7 +188,7 @@ CREATE TABLE `enrolment_change` (
   `tt_activity_id` varchar(32) NOT NULL,
   `tt_student_set_id` varchar(32) NOT NULL,
   `change_type` varchar(12) NOT NULL,
-  `result_code` varchar(20) NOT NULL,
+  `result_code` varchar(20) DEFAULT NULL,
   `update_completed` datetime DEFAULT NULL,
   PRIMARY KEY (`change_id`),
   UNIQUE KEY `run_id` (`run_id`,`tt_activity_id`,`tt_student_set_id`),
