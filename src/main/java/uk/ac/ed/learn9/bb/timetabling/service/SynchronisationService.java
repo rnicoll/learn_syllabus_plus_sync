@@ -69,6 +69,8 @@ public class SynchronisationService extends Object {
                 final SynchronisationRun run = this.startNewRun(destination);
                 
                 this.copyStudentSetActivities(run, source, destination);
+                // FIXME: Update records of which courses are synced EUCLID->LEARN
+                this.refreshActivitySetSizes(destination);
                 this.doGenerateDiff(run, destination);
                 
                 return run;
@@ -308,8 +310,9 @@ public class SynchronisationService extends Object {
                 + "JOIN ACTIVITIES_STUDENTSET REL ON REL.ID=A.ID "
                 + "JOIN STUDENT_SET S ON REL.STUDENT_SET=S.ID "
                 + "LEFT JOIN VARIANTJTAACTS V ON V.ID=A.ID "
-            + "WHERE SUBSTR(S.HOST_KEY, 0, 6)!='#SPLUS' "
-                + "AND (V.ISVARIANTCHILD IS NULL OR V.ISVARIANTCHILD='0')");
+            + "WHERE SUBSTR(S.HOST_KEY, 0, 6)!='#SPLUS' " // BRD requirement #1.6
+                + "AND (V.ISVARIANTCHILD IS NULL OR V.ISVARIANTCHILD='0')"  // BRD requirement #1.3
+        );
         try {
             final PreparedStatement destinationStatement = destination.prepareStatement("INSERT INTO cache_enrolment "
                 + "(run_id, tt_student_set_id, tt_activity_id) "
@@ -543,5 +546,16 @@ public class SynchronisationService extends Object {
      */
     public void setBlackboardService(BlackboardService blackboardService) {
         this.blackboardService = blackboardService;
+    }
+
+    /**
+     * Updates the cached copy of the activity set sizes on the activity
+     * table. These are derived from the number of activities sharing a common
+     * template.
+     * 
+     * @param destination a connection to the cache database.
+     */
+    public void refreshActivitySetSizes(Connection destination) {
+        return;
     }
 }
