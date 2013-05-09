@@ -18,7 +18,7 @@
         </vendor>
         
         <http-actions>
-            <config value="config"/>
+            <config value="/config"/>
         </http-actions>  
         
         <!--
