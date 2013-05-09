@@ -18,7 +18,7 @@
         </vendor>
         
         <http-actions>
-            <config value="/config"/>
+            <config value="config"/>
         </http-actions>  
         
         <!--
@@ -73,6 +73,10 @@
             <permission type="runtime" name="getProtectionDomain" />
             <permission type="java.net.SocketPermission" name="*"
                         actions="connect,resolve" />
+            
+            <!-- Reflect permission needed by Spring -->
+            <permission type="java.lang.reflect.ReflectPermission"
+                                    name="suppressAccessChecks" />
         </permissions>
 
     </plugin>
