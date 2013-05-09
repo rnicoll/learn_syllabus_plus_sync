@@ -3,7 +3,7 @@
     <!-- core extension information -->
     <plugin>
         <name value= "Timetabling Group Import"/>
-        <handle value= "plgn-timetabling-group"/>
+        <handle value= "plgn-timetabling"/>
         <description value= "Creates course groups in Learn and assigns students based on timetabling data"/>
         <version value= "1.0.0"/>
         <webapp-type value="javaext" />
@@ -18,7 +18,7 @@
         </vendor>
         
         <http-actions>
-            <config value="config"/>
+            <config value="configure"/>
         </http-actions>  
         
         <!--
@@ -28,7 +28,7 @@
         -->
   
         <application-defs>
-            <application handle="timetabling-group" type="shared" use-ssl="false" 
+            <application handle="timetabling" type="shared" use-ssl="false" 
                          name="Timetabling Group Sync" can-allow-guest="false">
                 <description lang="en_US">Creates course groups in Learn and assigns students based on timetabling data</description>
                 <links>

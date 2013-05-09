@@ -1,4 +1,4 @@
-package uk.ac.ed.learn9.bb.timetabling;
+package uk.ac.ed.learn9.bb.timetabling.controller;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;

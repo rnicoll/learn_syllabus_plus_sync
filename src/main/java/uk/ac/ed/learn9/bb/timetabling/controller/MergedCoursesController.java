@@ -1,8 +1,5 @@
-package uk.ac.ed.learn9.bb.timetabling;
+package uk.ac.ed.learn9.bb.timetabling.controller;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import blackboard.data.course.Course;
@@ -13,10 +10,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 import uk.ac.ed.learn9.bb.timetabling.dao.EnrolmentChangeDao;
-import uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange;
 
 @Controller
-public class AuditLogController {
+public class MergedCoursesController {
     @Autowired
     private EnrolmentChangeDao enrolmentChangeDao;
     
@@ -24,19 +20,13 @@ public class AuditLogController {
      * Displays an audit log of when students were added/removed to/from groups
      * for a single course.
      */
-    @RequestMapping("/index")
-    public ModelAndView getAuditLog(final HttpServletRequest request, final HttpServletResponse response) {
+    @RequestMapping("/mergedCourses")
+    public ModelAndView getMergedCourses(final HttpServletRequest request, final HttpServletResponse response) {
         final Context context = ContextManagerFactory.getInstance().getContext();
-        final ModelAndView modelAndView = new ModelAndView("auditLog");
+        final ModelAndView modelAndView = new ModelAndView("mergedCourses");
         final Course course = context.getCourse();
-        final List<EnrolmentChange> changes = new ArrayList<EnrolmentChange>();
         
-        // Log group creation?
-        
-        changes.addAll(this.getEnrolmentChangeDao().getByCourse(course));
-        Collections.sort(changes);
-        
-        modelAndView.addObject("audit_log", changes);
+        // Load and add the merged courses list here.
         
         return modelAndView;
     }
