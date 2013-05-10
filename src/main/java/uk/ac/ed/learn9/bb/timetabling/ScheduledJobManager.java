@@ -114,33 +114,46 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
     public class Task extends TimerTask {
         @Override
         public void run() {
-            if (ScheduledJobManager.this.cancelled) {
-                return;
-            }
-            
             ScheduledJobManager.this.logService.logInfo("Running Learn/Timetabling synchronisation.");
             
             /* final SynchronisationService service = ScheduledJobManager.this.getService();
             try {
                 doSynchronisation(service);
             } catch(PersistenceException e) {
-                // FIXME: Handle
+                ScheduledJobManager.this.logService.logError("Error while persisting/loading entities in Learn.", e);
             } catch(SQLException e) {
-                // FIXME: Handle
+                ScheduledJobManager.this.logService.logError("Database error while synchronising groups from Timetabling.", e);
             } catch(ValidationException e) {
-                // FIXME: Handle
+                ScheduledJobManager.this.logService.logError("Error validating entities to be persisted in Learn.", e);
             } */
             
-            ScheduledJobManager.this.scheduleRun();
+            if (!ScheduledJobManager.this.cancelled) {
+                ScheduledJobManager.this.scheduleRun();
+            }
         }
 
         private void doSynchronisation(final SynchronisationService service)
             throws PersistenceException, SQLException, ValidationException {
             service.synchroniseData();
+            if (ScheduledJobManager.this.cancelled) {
+                return;
+            }
             final SynchronisationRun run = service.generateDiff();
+            if (ScheduledJobManager.this.cancelled) {
+                return;
+            }
             service.mapModulesToCourses();
+            if (ScheduledJobManager.this.cancelled) {
+                return;
+            }
             service.createGroupsForActivities(run);
+            if (ScheduledJobManager.this.cancelled) {
+                return;
+            }
             service.mapStudentSetsToUsers(run);
+            if (ScheduledJobManager.this.cancelled) {
+                return;
+            }
             service.applyEnrolmentChanges(run);
         }
     }
