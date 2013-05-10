@@ -5,43 +5,49 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
+
 import blackboard.data.ValidationException;
 import blackboard.persist.PersistenceException;
 import blackboard.platform.log.LogService;
 import blackboard.platform.log.LogServiceFactory;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ApplicationContextEvent;
+import org.springframework.context.event.ContextStartedEvent;
+import org.springframework.context.event.ContextStoppedEvent;
+
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService;
 
-public class ScheduledJobManager extends Object implements ServletContextListener {
+public class ScheduledJobManager extends Object implements ApplicationListener<ApplicationContextEvent> {
     public static final int START_HOUR_OF_DAY = 6;
     public static final int START_MINUTE = 0;
     public static final long RUN_INTERVAL = 24 * 60 * 60 * 1000L;
     
+    @Autowired
+    private SynchronisationService service;
+    
     private final Timer timer = new Timer("Timetabling Group Sync", true);
     private boolean cancelled = false;
     private Task task = new Task();
-    private SynchronisationService service;
     private LogService logService;
     
-    @Override
-    public void contextInitialized(ServletContextEvent sce) {
-        this.logService = LogServiceFactory.getInstance();
-        this.scheduleRun();
+    public              ScheduledJobManager() {
+        
     }
 
-    @Override
-    public void contextDestroyed(ServletContextEvent sce) {
-        this.cancel();
-    }
-
+    /**
+     * Cancels any scheduled synchronisation.
+     */
     public void cancel() {
         this.cancelled = true;
         this.timer.cancel();
     }
 
+    /**
+     * Schedules the synchronisation task.
+     */
     public void scheduleRun() {
         final long delay = calculateDelay();
         
@@ -51,6 +57,12 @@ public class ScheduledJobManager extends Object implements ServletContextListene
         this.timer.schedule(this.task, delay);
     }
 
+    /**
+     * Calculates the delay (in milliseconds) before running the synchronisation
+     * again.
+     * 
+     * @return the delay in milliseconds.
+     */
     public long calculateDelay() {
         final Date now = new Date();
         final Calendar calendar = Calendar.getInstance();
@@ -74,7 +86,9 @@ public class ScheduledJobManager extends Object implements ServletContextListene
     }
 
     /**
-     * @return the service
+     * Retrieves the synchronisation service for this task.
+     * 
+     * @return the synchronisation service
      */
     public SynchronisationService getService() {
         return service;
@@ -85,6 +99,16 @@ public class ScheduledJobManager extends Object implements ServletContextListene
      */
     public void setService(SynchronisationService service) {
         this.service = service;
+    }
+
+    @Override
+    public void onApplicationEvent(final ApplicationContextEvent e) {
+        if (e instanceof ContextStartedEvent) {
+            this.logService = LogServiceFactory.getInstance();
+            this.scheduleRun();
+        } else if (e instanceof ContextStoppedEvent) {
+            this.cancel();
+        }
     }
     
     public class Task extends TimerTask {

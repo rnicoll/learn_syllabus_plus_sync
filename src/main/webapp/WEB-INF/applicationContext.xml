@@ -51,6 +51,10 @@
     
     <tx:annotation-driven transaction-manager="transactionManager" />
     
+    <!-- Event listener to start/stop the scheduled synchronisation job -->
+    <bean id="scheduledJobManager" 
+         class="uk.ac.ed.learn9.bb.timetabling.ScheduledJobManager"/>
+    
     <!-- Service beans -->
     <bean id="enrolmentChangeDao" class="uk.ac.ed.learn9.bb.timetabling.dao.impl.EnrolmentChangeDaoImpl">
         <property name="sessionFactory" ref="sessionFactory"/>
