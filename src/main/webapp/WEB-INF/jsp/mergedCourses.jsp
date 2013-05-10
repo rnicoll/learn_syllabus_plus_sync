@@ -5,15 +5,15 @@
 <%@ taglib uri="/bbUI" prefix="bbUI" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
-<bbNG:learningSystemPage title="Merged Courses" authentication="Y" entitlement="course.content.VIEW">
+<bbNG:learningSystemPage title="Timetabling Groups" authentication="Y" entitlement="course.content.VIEW">
 
- <bbNG:pageHeader>
-   <bbNG:pageTitleBar title="Merged Courses"/>
+ <bbNG:pageHeader instructions="Timetabling Groups Merged Courses">
+   <bbNG:pageTitleBar title="Timetabling Groups"/>
    <bbNG:breadcrumbBar>
-     <bbNG:breadcrumb title="Merged Courses"/>
+     <bbNG:breadcrumb title="Timetabling Groups"/>
    </bbNG:breadcrumbBar>
   </bbNG:pageHeader>
     
-  <!-- Display audit log here -->
+    <p>The following is a list of merged and child courses of this course:</p>
 
 </bbNG:learningSystemPage>
