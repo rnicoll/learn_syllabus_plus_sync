@@ -77,6 +77,10 @@
             <!-- Reflect permission needed by Spring -->
             <permission type="java.lang.reflect.ReflectPermission"
                                     name="suppressAccessChecks" />
+            
+            <!-- Used by the connection cleanup thread -->
+            <permission type="java.lang.RuntimePermission"
+                                    name="setContextClassLoader" />
         </permissions>
 
     </plugin>

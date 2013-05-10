@@ -1,7 +1,5 @@
 package uk.ac.ed.learn9.bb.timetabling;
 
-import blackboard.data.ValidationException;
-import blackboard.persist.PersistenceException;
 import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.Date;
@@ -9,6 +7,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+import blackboard.data.ValidationException;
+import blackboard.persist.PersistenceException;
+import blackboard.platform.log.LogService;
+import blackboard.platform.log.LogServiceFactory;
 
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService;
@@ -22,9 +24,11 @@ public class ScheduledJobManager extends Object implements ServletContextListene
     private boolean cancelled = false;
     private Task task = new Task();
     private SynchronisationService service;
+    private LogService logService;
     
     @Override
     public void contextInitialized(ServletContextEvent sce) {
+        this.logService = LogServiceFactory.getInstance();
         this.scheduleRun();
     }
 
@@ -40,6 +44,9 @@ public class ScheduledJobManager extends Object implements ServletContextListene
 
     public void scheduleRun() {
         final long delay = calculateDelay();
+        
+        this.logService.logInfo("Scheduling synchronisation job after a delay of "
+            + delay + "ms.");
         
         this.timer.schedule(this.task, delay);
     }
@@ -87,7 +94,9 @@ public class ScheduledJobManager extends Object implements ServletContextListene
                 return;
             }
             
-            final SynchronisationService service = ScheduledJobManager.this.getService();
+            ScheduledJobManager.this.logService.logInfo("Running Learn/Timetabling synchronisation.");
+            
+            /* final SynchronisationService service = ScheduledJobManager.this.getService();
             try {
                 doSynchronisation(service);
             } catch(PersistenceException e) {
@@ -96,7 +105,7 @@ public class ScheduledJobManager extends Object implements ServletContextListene
                 // FIXME: Handle
             } catch(ValidationException e) {
                 // FIXME: Handle
-            }
+            } */
             
             ScheduledJobManager.this.scheduleRun();
         }

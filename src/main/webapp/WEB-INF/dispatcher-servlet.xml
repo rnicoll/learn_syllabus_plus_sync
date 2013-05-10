@@ -14,7 +14,7 @@
 
     <import resource="applicationContext.xml" />
 
-    <context:component-scan base-package="uk.ac.ed.learn9.bb.timetabling.controller"/>
+    <context:component-scan base-package="uk.ac.ed.learn9.bb.timetabling"/>
 
     <mvc:annotation-driven />
 
