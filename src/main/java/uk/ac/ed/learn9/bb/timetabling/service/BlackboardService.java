@@ -1,5 +1,6 @@
 package uk.ac.ed.learn9.bb.timetabling.service;
 
+import blackboard.base.FormattedText;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -19,6 +20,7 @@ import blackboard.persist.PersistenceException;
 import blackboard.persist.course.CourseDbLoader;
 import blackboard.persist.course.CourseCourseDbLoader;
 import blackboard.persist.course.CourseMembershipDbLoader;
+import blackboard.persist.course.GroupDbLoader;
 import blackboard.persist.course.GroupDbPersister;
 import blackboard.persist.course.GroupMembershipDbLoader;
 import blackboard.persist.course.GroupMembershipDbPersister;
@@ -358,20 +360,17 @@ public class BlackboardService {
      * 
      * @param courseId the course that the group will belong to.
      * @param groupName the name of the group.
-     * @param groupDbPersister the group persister to use.
      * @return the new group.
-     * @throws ValidationException 
-     * @throws PersistenceException 
      */
-    public Group buildCourseGroup(final Id courseId, final String groupName)
-            throws ValidationException, PersistenceException {
+    public Group buildCourseGroup(final Id courseId, final String groupName, final FormattedText description)
+         {
         // Create the new group
         final Group group = new Group();
         group.setCourseId(courseId);
         group.setTitle(groupName);
         group.setIsAvailable(false);
         group.setSelfEnrolledAllowed(false);
-        // FIXME: Generate and set a group descriotion
+        group.setDescription(description);
         return group;
     }
 
@@ -431,6 +430,18 @@ public class BlackboardService {
         groupMembershipDbPersister.deleteById(groupMembership.getId());
     }
 
+    public void updateGroupDescription(Id groupId, String description)
+        throws KeyNotFoundException, PersistenceException, ValidationException {
+        final GroupDbLoader groupLoader = GroupDbLoader.Default.getInstance();
+        final Group group = groupLoader.loadById(groupId);
+        
+        final GroupDbPersister groupPersister = GroupDbPersister.Default.getInstance();
+        
+        group.setDescription(new FormattedText(description, FormattedText.Type.PLAIN_TEXT));
+        
+        groupPersister.persist(group);
+    }
+
     private CourseMembershipDbLoader getCourseMembershipDbLoader() throws PersistenceException {
         return CourseMembershipDbLoader.Default.getInstance();
     }
@@ -476,10 +487,20 @@ public class BlackboardService {
      * @throws ValidationException
      * @throws SQLException 
      */
-    private void doCreateCourseGroupAndStoreId(final ResultSet rs, final GroupDbPersister groupDbPersister, final PreparedStatement updateStatement)
+    private void doCreateCourseGroupAndStoreId(final ResultSet rs, final GroupDbPersister groupDbPersister,
+            final PreparedStatement updateStatement)
             throws PersistenceException, ValidationException, SQLException {
         final Id courseId = Id.generateId(Course.DATA_TYPE, rs.getString("learn_course_id"));
-        final Group group = buildCourseGroup(courseId, rs.getString("learn_group_name"));
+        final String descriptionText = rs.getString("description");
+        final FormattedText description;
+        
+        if (null == descriptionText) {
+            description = null;
+        } else {
+            description = new FormattedText(descriptionText, FormattedText.Type.PLAIN_TEXT);
+        }
+        
+        final Group group = buildCourseGroup(courseId, rs.getString("learn_group_name"), description);
         
         groupDbPersister.persist(group);
         
@@ -488,5 +509,12 @@ public class BlackboardService {
         updateStatement.setString(1, group.getId().toExternalString());
         updateStatement.setString(2, activityId);
         updateStatement.executeUpdate();
+    }
+
+    public static class GroupDoesNotExistException extends Exception {
+        private         GroupDoesNotExistException(final Id groupId) {
+            super("There is no group \""
+                + groupId.getExternalString() + "\".");
+        }
     }
 }

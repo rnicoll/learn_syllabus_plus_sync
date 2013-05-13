@@ -11,6 +11,9 @@ import javax.sql.DataSource;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import blackboard.data.ValidationException;
+import blackboard.data.course.Group;
+import blackboard.persist.Id;
+import blackboard.persist.KeyNotFoundException;
 import blackboard.persist.PersistenceException;
 
 import uk.ac.ed.learn9.bb.timetabling.dao.SynchronisationRunDao;
@@ -90,6 +93,42 @@ public class SynchronisationService extends Object {
         } finally {
             source.close();
         }
+    }
+
+    /**
+     * Builds a description for a group based on the activity name, group type
+     * and the number of activities in the set.
+     * 
+     * @param activityName
+     * @param groupType
+     * @param activitiesInSet
+     * @return 
+     */
+    private String buildDescription(final String activityName, final String groupType, int activitiesInSet) {
+        // First see if the activity name ends in a number, preceeded by a '/'
+        // character, for example "/3". This can frequently indicate the number
+        // in a set, and gives us a more meaningful description.
+        
+        if (activityName.contains("/")) {
+            final String[] nameParts = activityName.split("/");
+            final String lastNamePart = nameParts[nameParts.length - 1];
+            final int groupOrdinalNumber;
+            
+            try {
+                groupOrdinalNumber = Integer.valueOf(lastNamePart);
+                
+                return groupType + " #" + groupOrdinalNumber + " of "
+                    + activitiesInSet;
+            } catch(NumberFormatException e) {
+                // Just fall through to the default algorithm
+            }
+        }
+        
+        // If that doesn't match, we'll have to leave the group description
+        // a bit more vague...
+        
+        return groupType + " in a set of "
+            + activitiesInSet;
     }
 
     /**
@@ -289,7 +328,8 @@ public class SynchronisationService extends Object {
     public SynchronisationRun startNewRun(final Connection destination)
             throws SQLException {
         final int runId;
-        final PreparedStatement statement = destination.prepareStatement("INSERT INTO synchronisation_run "
+        final PreparedStatement statement = destination.prepareStatement(
+            "INSERT INTO synchronisation_run "
                 + "(previous_run_id, start_time) "
                 + "(SELECT MAX(run_id), NOW() FROM synchronisation_run WHERE end_time IS NOT NULL)",
                 PreparedStatement.RETURN_GENERATED_KEYS);
@@ -322,7 +362,8 @@ public class SynchronisationService extends Object {
         throws SQLException {
         // Check the condition on this, I haven't had an opportunity to check
         // it with real data.
-        final PreparedStatement sourceStatement = source.prepareStatement("SELECT DISTINCT A.ID ACTIVITY_ID, S.ID STUDENT_SET_ID "
+        final PreparedStatement sourceStatement = source.prepareStatement(
+            "SELECT DISTINCT A.ID ACTIVITY_ID, S.ID STUDENT_SET_ID "
             + "FROM ACTIVITY A "
                 + "JOIN ACTIVITIES_STUDENTSET REL ON REL.ID=A.ID "
                 + "JOIN STUDENT_SET S ON REL.STUDENT_SET=S.ID "
@@ -478,6 +519,58 @@ public class SynchronisationService extends Object {
         } finally {
             connection.close();
         }
+    }
+
+    /**
+     * Updates the descriptions of activities in the database and in Learn.
+     */
+    public void updateGroupDescriptions() 
+            throws SQLException, PersistenceException, ValidationException {
+        final Connection connection = this.getDataSource().getConnection();
+        final PreparedStatement updateStatement = connection.prepareStatement(
+                "UPDATE activity SET description=? WHERE tt_activity_id=?"
+        );
+        try {
+            final PreparedStatement selectStatement = connection.prepareStatement(
+                "SELECT a.tt_activity_id, a.tt_activity_name, a.learn_group_id, t.tt_type_name, COUNT(b.tt_activity_id) set_size, a.description "
+                    + "FROM activity a "
+                        + "JOIN activity_type t ON t.tt_type_id=a.tt_type_id "
+                        + "JOIN activity_template m ON m.tt_template_id=a.tt_template_id "
+                        + "JOIN activity b ON b.tt_template_id=m.tt_template_id "
+                + "GROUP BY a.tt_activity_id, t.tt_type_name");
+            try {
+                final ResultSet rs = selectStatement.executeQuery();
+                while (rs.next()) {
+                    final String description = buildDescription(rs.getString("tt_activity_name"),
+                            rs.getString("tt_type_name"), rs.getInt("set_size"));
+                    final String previousDescription = rs.getString("description");
+                    
+                    if (null == previousDescription
+                        || !description.equals(previousDescription)) {
+                        updateStatement.setString(1, rs.getString("tt_activity_id"));
+                        updateStatement.setString(2, description);
+                        updateStatement.executeUpdate();
+                        
+                        final String learnGroupId = rs.getString("learn_group_type");
+                        
+                        if (null != learnGroupId) {
+                            try {
+                                this.getBlackboardService().updateGroupDescription(Id.generateId(Group.DATA_TYPE, learnGroupId),
+                                    description);
+                            } catch(KeyNotFoundException e) {
+                                // Remove the ID from the database?
+                            }
+                        }
+                    }
+                }
+            } finally {
+                selectStatement.close();
+            }
+        } finally {
+            updateStatement.close();
+        }
+                
+        return;
     }
     
     /**

@@ -22,6 +22,7 @@ public class SynchroniseRDB extends Object {
         
         service.synchroniseData();
         final SynchronisationRun run = service.generateDiff();
+        service.updateGroupDescriptions();
         //service.mapModulesToCourses();
         //service.createGroupsForActivities(run);
         //service.mapStudentSetsToUsers(run);

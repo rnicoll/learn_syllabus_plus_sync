@@ -5,16 +5,19 @@ import javax.servlet.http.HttpServletResponse;
 import blackboard.data.course.Course;
 import blackboard.platform.context.Context;
 import blackboard.platform.context.ContextManagerFactory;
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
-import uk.ac.ed.learn9.bb.timetabling.dao.EnrolmentChangeDao;
+import uk.ac.ed.learn9.bb.timetabling.data.BlackboardCourseCode;
+import uk.ac.ed.learn9.bb.timetabling.service.MergedCoursesService;
 
 @Controller
 public class MergedCoursesController {
     @Autowired
-    private EnrolmentChangeDao enrolmentChangeDao;
+    private MergedCoursesService mergedCoursesService;
     
     /**
      * Displays an audit log of when students were added/removed to/from groups
@@ -26,22 +29,29 @@ public class MergedCoursesController {
         final ModelAndView modelAndView = new ModelAndView("mergedCourses");
         final Course course = context.getCourse();
         
-        // Load and add the merged courses list here.
+        final BlackboardCourseCode courseCode = new BlackboardCourseCode(course.getCourseId());
+        final List<BlackboardCourseCode> mergedCourseCodes = new ArrayList<BlackboardCourseCode>();
+        
+        mergedCourseCodes.addAll(this.getMergedCoursesService().getMergedCourses(courseCode));
+        
+        // XXX: Resolve JTA activities here.
+        
+        modelAndView.addObject("mergedCourseCodes", mergedCourseCodes);
         
         return modelAndView;
     }
 
     /**
-     * @return the enrolmentChangeDao
+     * @return the mergedCoursesService
      */
-    public EnrolmentChangeDao getEnrolmentChangeDao() {
-        return enrolmentChangeDao;
+    public MergedCoursesService getMergedCoursesService() {
+        return mergedCoursesService;
     }
 
     /**
-     * @param enrolmentChangeDao the enrolmentChangeDao to set
+     * @param mergedCoursesService the mergedCoursesService to set
      */
-    public void setEnrolmentChangeDao(EnrolmentChangeDao enrolmentChangeDao) {
-        this.enrolmentChangeDao = enrolmentChangeDao;
+    public void setMergedCoursesService(MergedCoursesService mergedCoursesService) {
+        this.mergedCoursesService = mergedCoursesService;
     }
 }

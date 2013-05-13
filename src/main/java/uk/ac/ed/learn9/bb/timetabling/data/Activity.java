@@ -51,7 +51,11 @@ public class Activity extends Object implements Serializable {
     }
 
     /**
-     * @return the learnGroupId
+     * Returns the ID of the group in Learn that this activity maps to,
+     * where applicable.
+     * 
+     * @return the ID of the group in Learn that this activity maps to,
+     * or null if no mapping has been established yet.
      */
     @Column(name="learn_group_id", nullable=true, length=80)
     public String getLearnGroupId() {
@@ -59,7 +63,8 @@ public class Activity extends Object implements Serializable {
     }
 
     /**
-     * @return the description
+     * @return the description of the group, as generated automatically from
+     * the activity data.
      */
     @Column(name="description", nullable=true, length=400)
     public String getDescription() {

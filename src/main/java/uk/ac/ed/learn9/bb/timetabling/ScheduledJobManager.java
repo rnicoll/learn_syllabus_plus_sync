@@ -142,6 +142,10 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
             if (ScheduledJobManager.this.cancelled) {
                 return;
             }
+            service.updateGroupDescriptions();
+            if (ScheduledJobManager.this.cancelled) {
+                return;
+            }
             service.mapModulesToCourses();
             if (ScheduledJobManager.this.cancelled) {
                 return;
