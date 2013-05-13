@@ -14,7 +14,9 @@ import blackboard.data.ValidationException;
 import blackboard.persist.PersistenceException;
 
 import uk.ac.ed.learn9.bb.timetabling.dao.SynchronisationRunDao;
+import uk.ac.ed.learn9.bb.timetabling.data.BlackboardCourseCode;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
+import uk.ac.ed.learn9.bb.timetabling.data.TimetablingCourseCode;
 
 /**
  * Service for synchronising activities and enrolments from Timetabling
@@ -413,16 +415,17 @@ public class SynchronisationService extends Object {
             final ResultSet rs = statement.executeQuery();
             try {
                 while (rs.next()) {
-                    final String courseCode = rs.getString("tt_course_code");
+                    final TimetablingCourseCode courseCode;
                     
-                    // Split the course code into the course, semester and occurrence
-                    final String[] courseCodeParts = courseCode.split("_");
-                    
-                    if (courseCodeParts.length != 3) {
+                    try {
+                        courseCode = new TimetablingCourseCode(rs.getString("tt_course_code"));
+                    } catch(IllegalArgumentException e) {
+                        // Log the invalid code perhaps?
                         continue;
                     }
                     
-                    // Rewrite the URL into the form used in Learn course codes
+                    // Split the course code into the course, semester and occurrence
+                    final String[] courseCodeParts = courseCode.splitCode();
                     final String academicYear = rs.getString("tt_academic_year");
                     
                     if (null == academicYear) {
@@ -430,14 +433,12 @@ public class SynchronisationService extends Object {
                         continue;
                     }
                     
-                    final String learnAyr = academicYear.replace('/', '-');
-                    
                     // Build the Learn course code from the parts of the original
                     // course code, with the academic year added in.
-                    final String learnCourseCode = courseCodeParts[0]
-                        + learnAyr + courseCodeParts[1] + courseCodeParts[2];
+                    final BlackboardCourseCode blackboardCourseCode = BlackboardCourseCode.buildCode(courseCodeParts[0],
+                        academicYear, courseCodeParts[1], courseCodeParts[2]);
                     
-                    rs.updateString("learn_course_code", learnCourseCode);
+                    rs.updateString("learn_course_code", blackboardCourseCode.toString());
                     rs.updateRow();
                 }
             } finally {
