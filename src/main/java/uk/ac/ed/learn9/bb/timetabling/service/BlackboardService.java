@@ -33,6 +33,7 @@ import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
  */
 @Service
 public class BlackboardService {
+    public static final String GROUP_ROLE_IDENTIFIER_STUDENT = "student";
 
     public void applyRemoveEnrolmentChanges(final Connection connection, final SynchronisationRun run)
         throws SQLException, PersistenceException, ValidationException {
@@ -157,7 +158,7 @@ public class BlackboardService {
                             continue;
                         }
                         
-                        persistGroupMembership(courseMembership, groupId, groupMembershipDbPersister);
+                        groupMembershipDbPersister.persist(buildGroupMembership(courseMembership, groupId));
                         
                         updateStatement.setInt(1, changeId);
                         updateStatement.executeUpdate();
@@ -204,14 +205,7 @@ public class BlackboardService {
                 final ResultSet rs = queryStatement.executeQuery();
                 try {
                     while (rs.next()) {
-                        final Id courseId = Id.generateId(Course.DATA_TYPE, rs.getString("learn_course_id"));
-                        final Group group = persistGroup(courseId, rs.getString("learn_group_name"), groupDbPersister);
-                        
-                        final String activityId = rs.getString("tt_activity_id");
-                        
-                        updateStatement.setString(1, group.getId().toExternalString());
-                        updateStatement.setString(2, activityId);
-                        updateStatement.executeUpdate();
+                        doCreateCourseGroupAndStoreId(rs, groupDbPersister, updateStatement);
                     }
                 } finally {
                     rs.close();
@@ -237,14 +231,7 @@ public class BlackboardService {
                 final ResultSet rs = queryStatement.executeQuery();
                 try {
                     while (rs.next()) {
-                        final Id courseId = Id.generateId(Course.DATA_TYPE, rs.getString("learn_course_id"));
-                        final Group group = persistGroup(courseId, rs.getString("learn_group_name"), groupDbPersister);
-                        
-                        final String activityId = rs.getString("tt_activity_id");
-                        
-                        updateStatement.setString(1, group.getId().toExternalString());
-                        updateStatement.setString(2, activityId);
-                        updateStatement.executeUpdate();
+                        doCreateCourseGroupAndStoreId(rs, groupDbPersister, updateStatement);
                     }
                 } finally {
                     rs.close();
@@ -357,7 +344,7 @@ public class BlackboardService {
     }
 
     /**
-     * Constructs a new group and persists it in Learn.
+     * Constructs a new course group and returns it.
      * 
      * @param courseId the course that the group will belong to.
      * @param groupName the name of the group.
@@ -366,7 +353,7 @@ public class BlackboardService {
      * @throws ValidationException 
      * @throws PersistenceException 
      */
-    public Group persistGroup(final Id courseId, final String groupName, final GroupDbPersister groupDbPersister)
+    public Group buildCourseGroup(final Id courseId, final String groupName)
             throws ValidationException, PersistenceException {
         // Create the new group
         final Group group = new Group();
@@ -375,30 +362,23 @@ public class BlackboardService {
         group.setIsAvailable(false);
         group.setSelfEnrolledAllowed(false);
         // FIXME: Generate and set a group descriotion
-        groupDbPersister.persist(group);
         return group;
     }
 
     /**
-     * Constructs a user's membership on a group and persists it in Learn.
+     * Constructs a user's membership on a group and returns it.
      * 
      * @param courseMembership
      * @param groupId
-     * @param groupMembershipDbPersister
      * @return the group membership.
-     * @throws PersistenceException
-     * @throws ValidationException 
      */
-    public GroupMembership persistGroupMembership(final CourseMembership courseMembership,
-        final Id groupId, final GroupMembershipDbPersister groupMembershipDbPersister)
-            throws PersistenceException, ValidationException {
+    public GroupMembership buildGroupMembership(final CourseMembership courseMembership,
+        final Id groupId) {
         final GroupMembership groupMembership = new GroupMembership();
         
         groupMembership.setCourseMembershipId(courseMembership.getId());
         groupMembership.setGroupId(groupId);
-        // FIXME: groupMembership.setGroupRoleIdentifier(???);
-        
-        groupMembershipDbPersister.persist(groupMembership);
+        groupMembership.setGroupRoleIdentifier(GROUP_ROLE_IDENTIFIER_STUDENT);
         
         return groupMembership;
     }
@@ -467,5 +447,36 @@ public class BlackboardService {
 
     private UserDbLoader getUserDbLoader() throws PersistenceException {
         return UserDbLoader.Default.getInstance();
+    }
+
+    /**
+     * Internal method that fetches Learn course ID and group name from a
+     * result set, creates a suitable group and persists it, then writes the
+     * group ID back into the database. This is only intended for use by
+     * the {@link #generateGroupsForActivities(SynchronisationRun, Connection)}
+     * method.
+     * 
+     * @param rs the result set to extract data from. Must have "tt_activity_id",
+     * "learn_course_id" and "learn_group_name" fields.
+     * @param groupDbPersister the group persister for Learn.
+     * @param updateStatement the update statement to use to write changes back.
+     * First parameter must be group ID (to set), the second the activity ID
+     * (as primary key).
+     * @throws PersistenceException
+     * @throws ValidationException
+     * @throws SQLException 
+     */
+    private void doCreateCourseGroupAndStoreId(final ResultSet rs, final GroupDbPersister groupDbPersister, final PreparedStatement updateStatement)
+            throws PersistenceException, ValidationException, SQLException {
+        final Id courseId = Id.generateId(Course.DATA_TYPE, rs.getString("learn_course_id"));
+        final Group group = buildCourseGroup(courseId, rs.getString("learn_group_name"));
+        
+        groupDbPersister.persist(group);
+        
+        final String activityId = rs.getString("tt_activity_id");
+        
+        updateStatement.setString(1, group.getId().toExternalString());
+        updateStatement.setString(2, activityId);
+        updateStatement.executeUpdate();
     }
 }
