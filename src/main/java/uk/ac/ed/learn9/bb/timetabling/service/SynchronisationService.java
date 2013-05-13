@@ -39,6 +39,15 @@ public class SynchronisationService extends Object {
     @Autowired
     private SynchronisationRunDao runDao;
     
+    /**
+     * Apply student/course group enrolment changes in the cache database,
+     * into Learn.
+     * 
+     * @param run
+     * @throws PersistenceException
+     * @throws SQLException
+     * @throws ValidationException 
+     */
     public void applyEnrolmentChanges(final SynchronisationRun run)
         throws PersistenceException, SQLException, ValidationException {
         final Connection connection = this.getDataSource().getConnection();
@@ -240,6 +249,13 @@ public class SynchronisationService extends Object {
         }
     }
     
+    /**
+     * Clones data from Timetabling into the cache database. These provide a
+     * cached copy of the data to use without resorting to trying to perform
+     * in-memory joins across two distinct databases.
+     * 
+     * @throws SQLException 
+     */
     public void synchroniseData()
             throws SQLException {
         final Connection source = this.getRdbDataSource().getConnection();

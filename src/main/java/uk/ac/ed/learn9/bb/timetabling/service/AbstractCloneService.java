@@ -176,6 +176,8 @@ public abstract class AbstractCloneService extends Object {
                     final String sourceVal = sourceRs.getString(sourceFieldName);
                     final String destinationVal = destinationRs.getString(destinationFieldName);
 
+                    // Delibrately testing two objects being the same, not just
+                    // equal. Equality tests come later.
                     if (sourceVal == destinationVal) {
                         // Handle both sides are null
                         continue;
@@ -195,7 +197,7 @@ public abstract class AbstractCloneService extends Object {
             }
         }
 
-        // Now insert new records
+        // Now insert new records into the database
         sourceRs.first();
         destinationRs.moveToInsertRow();
 
@@ -221,6 +223,12 @@ public abstract class AbstractCloneService extends Object {
 
     /**
      * Builds a select statement against a single table.
+     * 
+     * @param table the name of the table to access.
+     * @param pkField the name of the primary key field in the table. Multiple/no
+     * primary key fields are not supported.
+     * @param otherFields a collection of the names of other fields to be accessed.
+     * @return a select statement to select the named fields from the table.
      */
     public String buildQuery(final String table, final String pkField, final Collection<String> otherFields) {
         final StringBuilder query = new StringBuilder("SELECT ")
