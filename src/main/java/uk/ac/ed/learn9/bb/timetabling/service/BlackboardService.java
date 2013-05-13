@@ -35,6 +35,16 @@ import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 public class BlackboardService {
     public static final String GROUP_ROLE_IDENTIFIER_STUDENT = "student";
 
+    /**
+     * Applies all changes that remove an enrolment of a student on a course
+     * group.
+     * 
+     * @param connection a connection to the cache database.
+     * @param run the synchronisation run to pull changes to be actioned, from.
+     * @throws SQLException
+     * @throws PersistenceException
+     * @throws ValidationException 
+     */
     public void applyRemoveEnrolmentChanges(final Connection connection, final SynchronisationRun run)
         throws SQLException, PersistenceException, ValidationException {
         final GroupMembershipDbLoader groupMembershipLoader = getGroupMembershipDbLoader();

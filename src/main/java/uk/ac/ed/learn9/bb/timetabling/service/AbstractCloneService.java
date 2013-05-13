@@ -84,7 +84,7 @@ public abstract class AbstractCloneService extends Object {
         try {
             final ResultSet sourceRs = sourceStatement.executeQuery();
             try {
-                doClone(sourceRs, destinationRs, sourcePkField, destinationPkField, fieldMappings);
+                cloneResultSet(sourceRs, destinationRs, sourcePkField, destinationPkField, fieldMappings);
             } finally {
                 sourceRs.close();
             }
@@ -107,10 +107,36 @@ public abstract class AbstractCloneService extends Object {
      * @param fieldMappings a mapping from source field names to destination
      * fields, for non-primary key fields to be cloned.
      */
-    private void doClone(final ResultSet sourceRs, final ResultSet destinationRs,
+    public void cloneResultSet(final ResultSet sourceRs, final ResultSet destinationRs,
             final String sourcePkField, final String destinationPkField,
             final Map<String, String> fieldMappings)
             throws SQLException {
+        // Verify the result sets are set up correctly.
+        switch (sourceRs.getType()) {
+            case ResultSet.TYPE_SCROLL_INSENSITIVE:
+            case ResultSet.TYPE_SCROLL_SENSITIVE:
+                // That's fine
+                break;
+            case ResultSet.TYPE_FORWARD_ONLY:
+                throw new IllegalArgumentException("Source result set must be set to be scrollable; result set is set to forward only.");
+            default:
+                // Errr... can't tell. Rather than exploding just on unexpected
+                // input, we'll leave the JDBC driver to handle this.
+                break;
+        }
+        
+        switch (destinationRs.getConcurrency()) {
+            case ResultSet.CONCUR_UPDATABLE:
+                // That's what we want
+                break;
+            case ResultSet.CONCUR_READ_ONLY:
+                throw new IllegalArgumentException("Destination result set must be set to be updatable; result set is set to read-only.");
+            default:
+                // Errr... can't tell. Rather than exploding just on unexpected
+                // input, we'll leave the JDBC driver to handle this.
+                break;
+        }
+        
         String destinationPk = null;
         final Set<String> existingPks = new HashSet<String>();
 
