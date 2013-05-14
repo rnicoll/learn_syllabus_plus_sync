@@ -99,12 +99,17 @@ public class SynchronisationService extends Object {
      * Builds a description for a group based on the activity name, group type
      * and the number of activities in the set.
      * 
-     * @param activityName
-     * @param groupType
-     * @param activitiesInSet
+     * @param activityName the name of the activity for which to derive a group
+     * description.
+     * @param groupType the type of group, for example "Lecture", "Tutorial",
+     * "Lab".
+     * @param activitiesInSet the number of activities in the set.
      * @return 
      */
-    private String buildDescription(final String activityName, final String groupType, int activitiesInSet) {
+    public String buildGroupDescription(final String activityName, final String groupType,
+            final Integer activitiesInSet) {
+        Integer groupOrdinalNumber;
+        
         // First see if the activity name ends in a number, preceeded by a '/'
         // character, for example "/3". This can frequently indicate the number
         // in a set, and gives us a more meaningful description.
@@ -112,23 +117,33 @@ public class SynchronisationService extends Object {
         if (activityName.contains("/")) {
             final String[] nameParts = activityName.split("/");
             final String lastNamePart = nameParts[nameParts.length - 1];
-            final int groupOrdinalNumber;
             
             try {
                 groupOrdinalNumber = Integer.valueOf(lastNamePart);
-                
-                return groupType + " #" + groupOrdinalNumber + " of "
-                    + activitiesInSet;
             } catch(NumberFormatException e) {
-                // Just fall through to the default algorithm
+                groupOrdinalNumber = null;
+            }
+        } else {
+            groupOrdinalNumber = null;
+        }
+        
+        final StringBuilder groupDescription = new StringBuilder(groupType);
+        
+        if (null != groupOrdinalNumber) {
+            groupDescription.append(" ")
+                .append(Integer.toString(groupOrdinalNumber));
+            if (null != activitiesInSet) {
+                groupDescription.append(" of ")
+                    .append(activitiesInSet.toString());
+            }
+        } else {
+            if (null != activitiesInSet) {
+                groupDescription.append(" in a set of ")
+                    .append(activitiesInSet.toString());
             }
         }
         
-        // If that doesn't match, we'll have to leave the group description
-        // a bit more vague...
-        
-        return groupType + " in a set of "
-            + activitiesInSet;
+        return groupDescription.toString();
     }
 
     /**
@@ -541,7 +556,7 @@ public class SynchronisationService extends Object {
             try {
                 final ResultSet rs = selectStatement.executeQuery();
                 while (rs.next()) {
-                    final String description = buildDescription(rs.getString("tt_activity_name"),
+                    final String description = buildGroupDescription(rs.getString("tt_activity_name"),
                             rs.getString("tt_type_name"), rs.getInt("set_size"));
                     final String previousDescription = rs.getString("description");
                     

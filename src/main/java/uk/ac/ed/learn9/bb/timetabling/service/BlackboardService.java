@@ -430,7 +430,18 @@ public class BlackboardService {
         groupMembershipDbPersister.deleteById(groupMembership.getId());
     }
 
-    public void updateGroupDescription(Id groupId, String description)
+    /**
+     * Loads a group from the Blackboard database, changes its description then
+     * writes it back out again.
+     * 
+     * @param groupId the Blackboard ID for the group.
+     * @param description a plain-text description for the group.
+     * @throws KeyNotFoundException if the group could not be found.
+     * @throws PersistenceException if there was a problem loading/saving the
+     * group.
+     * @throws ValidationException if the change was invalid.
+     */
+    public void updateGroupDescription(final Id groupId, final String description)
         throws KeyNotFoundException, PersistenceException, ValidationException {
         final GroupDbLoader groupLoader = GroupDbLoader.Default.getInstance();
         final Group group = groupLoader.loadById(groupId);
@@ -509,12 +520,5 @@ public class BlackboardService {
         updateStatement.setString(1, group.getId().toExternalString());
         updateStatement.setString(2, activityId);
         updateStatement.executeUpdate();
-    }
-
-    public static class GroupDoesNotExistException extends Exception {
-        private         GroupDoesNotExistException(final Id groupId) {
-            super("There is no group \""
-                + groupId.getExternalString() + "\".");
-        }
     }
 }
