@@ -134,7 +134,7 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
 
         private void doSynchronisation(final SynchronisationService service)
             throws PersistenceException, SQLException, ValidationException {
-            service.synchroniseData();
+            service.synchroniseTimetablingData();
             if (ScheduledJobManager.this.cancelled) {
                 return;
             }

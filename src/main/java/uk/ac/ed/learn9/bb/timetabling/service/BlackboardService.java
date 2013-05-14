@@ -210,7 +210,8 @@ public class BlackboardService {
                         + "AND a.tt_jta_activity_id IS NULL "
                         + "AND a.learn_group_name IS NOT NULL "
                         + "AND m.learn_course_id IS NOT NULL "
-                        + "AND a.tt_activity_id IN (SELECT DISTINCT tt_activity_id FROM enrolment_add WHERE run_id=?)"
+                        // Only work on activites to be added
+                        + "AND a.tt_activity_id IN (SELECT DISTINCT tt_activity_id FROM enrolment_add WHERE run_id=?);"
             );
             try {
                 queryStatement.setInt(1, run.getRunId());

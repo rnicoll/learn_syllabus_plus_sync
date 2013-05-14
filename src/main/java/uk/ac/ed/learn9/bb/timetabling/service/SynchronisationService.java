@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 import javax.sql.DataSource;
@@ -15,7 +16,6 @@ import blackboard.data.course.Group;
 import blackboard.persist.Id;
 import blackboard.persist.KeyNotFoundException;
 import blackboard.persist.PersistenceException;
-import java.sql.Statement;
 
 import uk.ac.ed.learn9.bb.timetabling.dao.SynchronisationRunDao;
 import uk.ac.ed.learn9.bb.timetabling.data.BlackboardCourseCode;
@@ -34,11 +34,13 @@ public class SynchronisationService extends Object {
     public static final String COURSE_CODE_REGEXP = "^[A-Z][A-Z0-9]+_[A-Z][A-Z0-9]+_[A-Z][A-Z0-9]+$";
     
     @Autowired
-    private DataSource dataSource;
+    private DataSource cacheDataSource;
     @Autowired
     private DataSource rdbDataSource;
     @Autowired
     private BlackboardService blackboardService;
+    @Autowired
+    private EugexService eugexService;
     @Autowired
     private MergedCoursesService mergedCoursesService;
     @Autowired
@@ -57,7 +59,7 @@ public class SynchronisationService extends Object {
      */
     public void applyEnrolmentChanges(final SynchronisationRun run)
         throws PersistenceException, SQLException, ValidationException {
-        final Connection connection = this.getDataSource().getConnection();
+        final Connection connection = this.getCacheDataSource().getConnection();
         
         try {
             this.getBlackboardService().applyAddEnrolmentChanges(connection, run);
@@ -81,7 +83,7 @@ public class SynchronisationService extends Object {
         final Connection source = this.getRdbDataSource().getConnection();
 
         try {
-            final Connection destination = this.getDataSource().getConnection();
+            final Connection destination = this.getCacheDataSource().getConnection();
 
             try {
                 final SynchronisationRun run = this.startNewRun(destination);
@@ -216,7 +218,7 @@ public class SynchronisationService extends Object {
      */
     public void createGroupsForActivities(final SynchronisationRun run)
             throws PersistenceException, SQLException, ValidationException {
-        final Connection destination = this.getDataSource().getConnection();
+        final Connection destination = this.getCacheDataSource().getConnection();
         try {
             generateGroupNames(destination);
             this.getBlackboardService().generateGroupsForActivities(run, destination);
@@ -290,7 +292,7 @@ public class SynchronisationService extends Object {
      */
     public void mapModulesToCourses()
             throws PersistenceException, SQLException {
-        final Connection destination = this.getDataSource().getConnection();
+        final Connection destination = this.getCacheDataSource().getConnection();
 
         try {
             final Connection source = this.getRdbDataSource().getConnection();
@@ -314,12 +316,12 @@ public class SynchronisationService extends Object {
      * 
      * @throws SQLException 
      */
-    public void synchroniseData()
+    public void synchroniseTimetablingData()
             throws SQLException {
         final Connection source = this.getRdbDataSource().getConnection();
 
         try {
-            final Connection destination = this.getDataSource().getConnection();
+            final Connection destination = this.getCacheDataSource().getConnection();
 
             try {
                 this.cloneService.cloneModules(source, destination);
@@ -417,7 +419,7 @@ public class SynchronisationService extends Object {
 
     /**
      * Does the actual production of differences between the last time the process
-     * ran, and this time.
+     * ran, and this time. This process handles excluding whole-class activities.
      * 
      * @param run the synchronisation run to attribute changes to.
      * @param connection a connection to the cache database.
@@ -532,7 +534,7 @@ public class SynchronisationService extends Object {
      */
     public void mapStudentSetsToUsers(SynchronisationRun run)
         throws PersistenceException, SQLException {
-        final Connection connection = this.getDataSource().getConnection();
+        final Connection connection = this.getCacheDataSource().getConnection();
         try {
             this.getBlackboardService().mapStudentSetsToUsers(connection, run);
         } finally {
@@ -556,7 +558,7 @@ public class SynchronisationService extends Object {
      */
     public void refreshModuleCacheFields()
             throws SQLException {
-        final Connection cacheDatabase = this.getDataSource().getConnection();
+        final Connection cacheDatabase = this.getCacheDataSource().getConnection();
         
         try {
             final Statement statement = cacheDatabase.createStatement();
@@ -594,13 +596,22 @@ public class SynchronisationService extends Object {
             cacheDatabase.close();
         }
     }
+
+    /**
+     * Copies data from EUGEX. In this case, this is just the "WEBCT_ACTIVE"
+     * field, but if there was more data to be imported later it would go
+     * here.
+     */
+    public void synchroniseEugexData() {        
+        this.getEugexService().synchroniseVleActiveCourses();
+    }
     
     /**
      * Updates the descriptions of activities in the database and in Learn.
      */
     public void updateGroupDescriptions() 
             throws SQLException, PersistenceException, ValidationException {
-        final Connection connection = this.getDataSource().getConnection();
+        final Connection connection = this.getCacheDataSource().getConnection();
         final PreparedStatement updateStatement = connection.prepareStatement(
                 "UPDATE activity SET description=? WHERE tt_activity_id=?"
         );
@@ -646,6 +657,20 @@ public class SynchronisationService extends Object {
                 
         return;
     }
+
+    /**
+     * @return the local database data source.
+     */
+    public DataSource getCacheDataSource() {
+        return cacheDataSource;
+    }
+
+    /**
+     * @return the eugexService
+     */
+    public EugexService getEugexService() {
+        return eugexService;
+    }
     
     /**
      * Returns the reporting database data source.
@@ -657,26 +682,26 @@ public class SynchronisationService extends Object {
     }
 
     /**
+     * @param dataSource the local database data source to set.
+     */
+    public void setCacheDataSource(DataSource dataSource) {
+        this.cacheDataSource = dataSource;
+    }
+
+    /**
+     * @param eugexService the eugexService to set
+     */
+    public void setEugexService(EugexService eugexService) {
+        this.eugexService = eugexService;
+    }
+
+    /**
      * Sets the reporting database data source.
      * 
      * @param rdbDataSource the reporting database data source to set.
      */
     public void setRdbDataSource(DataSource rdbDataSource) {
         this.rdbDataSource = rdbDataSource;
-    }
-
-    /**
-     * @return the local database data source.
-     */
-    public DataSource getDataSource() {
-        return dataSource;
-    }
-
-    /**
-     * @param dataSource the local database data source to set.
-     */
-    public void setDataSource(DataSource dataSource) {
-        this.dataSource = dataSource;
     }
 
     /**

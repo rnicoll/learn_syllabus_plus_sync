@@ -20,8 +20,10 @@ public class SynchroniseRDB extends Object {
         
         final long startTime = System.currentTimeMillis();
         
-        // service.synchroniseData();
+        service.synchroniseTimetablingData();
         service.refreshModuleCacheFields();
+        service.synchroniseEugexData();
+        // XXX: Handle merged courses here
         final SynchronisationRun run = service.generateDiff();
         service.updateGroupDescriptions();
         //service.mapModulesToCourses();
