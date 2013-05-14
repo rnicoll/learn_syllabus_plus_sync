@@ -1,4 +1,3 @@
-DROP DATABASE learn_group;
 CREATE DATABASE  IF NOT EXISTS `learn_group` /*!40100 DEFAULT CHARACTER SET utf8 */;
 USE `learn_group`;
 -- MySQL dump 10.13  Distrib 5.5.16, for Win32 (x86)
@@ -19,24 +18,45 @@ USE `learn_group`;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `module`
+-- Table structure for table `activity`
 --
 
-DROP TABLE IF EXISTS `module`;
+DROP TABLE IF EXISTS `activity`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `module` (
-  `tt_module_id` varchar(32) NOT NULL,
-  `tt_course_code` VARCHAR(20) DEFAULT NULL,
-  `tt_module_name` VARCHAR(255) NULL,
-  `tt_academic_year` VARCHAR(12) DEFAULT NULL,
-  `merge_course_code` VARCHAR(40) DEFAULT NULL,
-  `euclid_sync_enabled` TINYINT(1) NOT NULL DEFAULT '0',
-  `learn_course_code` VARCHAR(40) DEFAULT NULL,
-  `learn_course_id` varchar(80) DEFAULT NULL,
-  PRIMARY KEY (`tt_module_id`)
+CREATE TABLE `activity` (
+  `tt_activity_id` varchar(32) NOT NULL,
+  `tt_activity_name` varchar(255) DEFAULT NULL,
+  `tt_module_id` varchar(32) DEFAULT NULL,
+  `tt_template_id` varchar(32) DEFAULT NULL,
+  `tt_type_id` varchar(32) DEFAULT NULL,
+  `tt_jta_activity_id` varchar(32) DEFAULT NULL,
+  `cache_set_size` int(11) DEFAULT NULL,
+  `learn_group_id` varchar(80) DEFAULT NULL,
+  `learn_group_name` varchar(255) DEFAULT NULL,
+  `description` text,
+  PRIMARY KEY (`tt_activity_id`),
+  KEY `tt_module_id` (`tt_module_id`),
+  KEY `tt_type_id` (`tt_type_id`),
+  KEY `activity_template` (`tt_template_id`),
+  CONSTRAINT `activity_module` FOREIGN KEY (`tt_module_id`) REFERENCES `module` (`tt_module_id`),
+  CONSTRAINT `activity_template` FOREIGN KEY (`tt_template_id`) REFERENCES `activity_template` (`tt_template_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Temporary table structure for view `activity_set_size`
+--
+
+DROP TABLE IF EXISTS `activity_set_size`;
+/*!50001 DROP VIEW IF EXISTS `activity_set_size`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `activity_set_size` (
+  `tt_activity_id` varchar(32),
+  `set_size` bigint(21)
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
 
 --
 -- Table structure for table `activity_template`
@@ -63,68 +83,6 @@ CREATE TABLE `activity_type` (
   `tt_type_id` varchar(32) NOT NULL,
   `tt_type_name` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`tt_type_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `activity`
---
-
-DROP TABLE IF EXISTS `activity`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `activity` (
-  `tt_activity_id` varchar(32) NOT NULL,
-  `tt_activity_name` varchar(255) DEFAULT NULL,
-  `tt_module_id` varchar(32) DEFAULT NULL,
-  `tt_template_id` varchar(32) DEFAULT NULL,
-  `tt_type_id` varchar(32) DEFAULT NULL,
-  `tt_jta_activity_id` VARCHAR(32) DEFAULT NULL,
-  `cache_set_size` INTEGER DEFAULT NULL,
-  `learn_group_id` varchar(80) DEFAULT NULL,
-  `learn_group_name` VARCHAR(255) DEFAULT NULL,
-  `description` text,
-  PRIMARY KEY (`tt_activity_id`),
-  KEY `tt_module_id` (`tt_module_id`),
-  KEY `tt_type_id` (`tt_type_id`),
-  CONSTRAINT `activity_module` FOREIGN KEY (`tt_module_id`) REFERENCES `module` (`tt_module_id`),
-  CONSTRAINT `activity_template` FOREIGN KEY (`tt_template_id`) REFERENCES `activity_template` (`tt_template_id`)
-  /* We can't enforce the constraint below as it's not enforced on the source data */
-  /* CONSTRAINT `activity_type` FOREIGN KEY (`tt_type_id`) REFERENCES `activity_type` (`tt_type_id`) */
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `student_set`
---
-
-DROP TABLE IF EXISTS `student_set`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `student_set` (
-  `tt_student_set_id` varchar(32) NOT NULL,
-  `tt_host_key` varchar(32) NOT NULL,
-  `learn_person_id` varchar(80) DEFAULT NULL,
-  PRIMARY KEY (`tt_student_set_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `synchronisation_run`
---
-
-DROP TABLE IF EXISTS `synchronisation_run`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `synchronisation_run` (
-  `run_id` int(11) NOT NULL AUTO_INCREMENT,
-  `previous_run_id` int(11) DEFAULT NULL,
-  `start_time` datetime NOT NULL,
-  `cache_copy_completed` datetime DEFAULT NULL,
-  `diff_completed` datetime DEFAULT NULL,
-  `end_time` datetime DEFAULT NULL,
-  PRIMARY KEY (`run_id`),
-  UNIQUE KEY `synchronisation_previous_run` (`previous_run_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -169,7 +127,7 @@ DROP TABLE IF EXISTS `change_type`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `change_type` (
-  `change_type` VARCHAR(12) NOT NULL,
+  `change_type` varchar(12) NOT NULL,
   PRIMARY KEY (`change_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -196,14 +154,91 @@ CREATE TABLE `enrolment_change` (
   KEY `enrolment_change_stu` (`tt_student_set_id`),
   KEY `enrolment_change_type` (`change_type`),
   KEY `enrolment_change_res` (`result_code`),
-  CONSTRAINT `enrolment_change_run` FOREIGN KEY (`run_id`) REFERENCES `synchronisation_run` (`run_id`),
   CONSTRAINT `enrolment_change_activ` FOREIGN KEY (`tt_activity_id`) REFERENCES `activity` (`tt_activity_id`),
+  CONSTRAINT `enrolment_change_res` FOREIGN KEY (`result_code`) REFERENCES `change_result` (`result_code`),
+  CONSTRAINT `enrolment_change_run` FOREIGN KEY (`run_id`) REFERENCES `synchronisation_run` (`run_id`),
   CONSTRAINT `enrolment_change_stu` FOREIGN KEY (`tt_student_set_id`) REFERENCES `student_set` (`tt_student_set_id`),
-  CONSTRAINT `enrolment_change_type` FOREIGN KEY (`change_type`) REFERENCES `change_type` (`change_type`),
-  CONSTRAINT `enrolment_change_res` FOREIGN KEY (`result_code`) REFERENCES `change_result` (`result_code`)
+  CONSTRAINT `enrolment_change_type` FOREIGN KEY (`change_type`) REFERENCES `change_type` (`change_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
+--
+-- Table structure for table `module`
+--
+
+DROP TABLE IF EXISTS `module`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `module` (
+  `tt_module_id` varchar(32) NOT NULL,
+  `tt_course_code` varchar(20) DEFAULT NULL,
+  `tt_module_name` varchar(255) DEFAULT NULL,
+  `tt_academic_year` varchar(12) DEFAULT NULL,
+  `cache_semester_code` varchar(6) DEFAULT NULL,
+  `cache_occurrence_code` varchar(6) DEFAULT NULL,
+  `cache_course_code` varchar(12) DEFAULT NULL,
+  `merge_course_code` varchar(40) DEFAULT NULL,
+  `learn_academic_year` varchar(6) DEFAULT NULL,
+  `learn_course_code` varchar(40) DEFAULT NULL,
+  `learn_course_id` varchar(80) DEFAULT NULL,
+  `webct_active` char(1) DEFAULT NULL,
+  PRIMARY KEY (`tt_module_id`),
+  KEY `euclid_course` (`cache_course_code`,`cache_semester_code`,`cache_occurrence_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `student_set`
+--
+
+DROP TABLE IF EXISTS `student_set`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `student_set` (
+  `tt_student_set_id` varchar(32) NOT NULL,
+  `tt_host_key` varchar(32) NOT NULL,
+  `learn_person_id` varchar(80) DEFAULT NULL,
+  PRIMARY KEY (`tt_student_set_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `synchronisation_run`
+--
+
+DROP TABLE IF EXISTS `synchronisation_run`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `synchronisation_run` (
+  `run_id` int(11) NOT NULL AUTO_INCREMENT,
+  `previous_run_id` int(11) DEFAULT NULL,
+  `start_time` datetime NOT NULL,
+  `cache_copy_completed` datetime DEFAULT NULL,
+  `diff_completed` datetime DEFAULT NULL,
+  `end_time` datetime DEFAULT NULL,
+  PRIMARY KEY (`run_id`),
+  UNIQUE KEY `synchronisation_previous_run` (`previous_run_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Final view structure for view `activity_set_size`
+--
+
+/*!50001 DROP TABLE IF EXISTS `activity_set_size`*/;
+/*!50001 DROP VIEW IF EXISTS `activity_set_size`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8 */;
+/*!50001 SET character_set_results     = utf8 */;
+/*!50001 SET collation_connection      = utf8_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
+/*!50001 VIEW `activity_set_size` AS (select `a`.`tt_activity_id` AS `tt_activity_id`,count(`b`.`tt_activity_id`) AS `set_size` from ((`activity` `a` left join `activity_template` `t` on((`t`.`tt_template_id` = `a`.`tt_template_id`))) left join `activity` `b` on((`t`.`tt_template_id` = `b`.`tt_template_id`))) group by `a`.`tt_activity_id`) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -214,10 +249,4 @@ CREATE TABLE `enrolment_change` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2013-05-02 15:51:11
-
-CREATE OR REPLACE VIEW activity_set_size AS (SELECT a.tt_activity_id, COUNT(b.tt_activity_id) set_size
-	FROM activity a
-		LEFT JOIN activity_template t ON t.tt_template_id=a.tt_template_id
-		LEFT JOIN activity b ON t.tt_template_id=b.tt_template_id
-	GROUP BY a.tt_activity_id);
+-- Dump completed on 2013-05-14 14:41:36
