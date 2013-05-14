@@ -38,6 +38,8 @@ public class SynchronisationService extends Object {
     @Autowired
     private DataSource rdbDataSource;
     @Autowired
+    private DataSource eugexDataSource;
+    @Autowired
     private BlackboardService blackboardService;
     @Autowired
     private EugexService eugexService;
@@ -670,6 +672,20 @@ public class SynchronisationService extends Object {
      */
     public EugexService getEugexService() {
         return eugexService;
+    }
+
+    /**
+     * @return the eugexDataSource
+     */
+    public DataSource getEugexDataSource() {
+        return eugexDataSource;
+    }
+
+    /**
+     * @param eugexDataSource the eugexDataSource to set
+     */
+    public void setEugexDataSource(DataSource eugexDataSource) {
+        this.eugexDataSource = eugexDataSource;
     }
     
     /**

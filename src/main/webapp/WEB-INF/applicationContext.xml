@@ -37,7 +37,7 @@
     <!-- Hibernate persistence support -->
 
     <bean id="sessionFactory" class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
-        <property name="dataSource" ref="dataSource"/>
+        <property name="dataSource" ref="cacheDataSource"/>
         <property name="annotatedClasses">
             <list>
                 <value>uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun</value>
@@ -79,12 +79,12 @@
     
     <bean id="synchronisationService" class="uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService">
         <property name="cacheDataSource" ref="cacheDataSource"/>
-        <property name="eugexDataSource" ref="eugexDataSource"/>
-        <property name="runDao" ref="runDao"/>
-        <property name="rdbDataSource" ref="rdbDataSource"/>
         <property name="blackboardService" ref="blackboardService"/>
+        <property name="eugexDataSource" ref="eugexDataSource"/>
         <property name="eugexService" ref="eugexService"/>
         <property name="cloneService" ref="timetablingCloneService"/>
+        <property name="runDao" ref="runDao"/>
+        <property name="rdbDataSource" ref="rdbDataSource"/>
     </bean>
 
 </beans>

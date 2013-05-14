@@ -1,11 +1,8 @@
 package uk.ac.ed.learn9.bb.timetabling.service;
 
-import java.io.File;
-import java.util.List;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import uk.ac.ed.learn9.bb.timetabling.data.BlackboardCourseCode;
 
 /**
  * Service for monitoring which courses in Learn are synchronised from EUGEX.
@@ -18,7 +15,7 @@ public class EugexService {
     private DataSource eugexDataSource;
 
     void synchroniseVleActiveCourses() {
-        throw new UnsupportedOperationException("Not yet implemented");
+        // throw new UnsupportedOperationException("Not yet implemented");
     }
 
     /**
