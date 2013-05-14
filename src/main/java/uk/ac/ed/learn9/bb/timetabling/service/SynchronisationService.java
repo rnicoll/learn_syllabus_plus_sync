@@ -604,7 +604,7 @@ public class SynchronisationService extends Object {
      * field, but if there was more data to be imported later it would go
      * here.
      */
-    public void synchroniseEugexData() {        
+    public void synchroniseEugexData() throws SQLException {        
         this.getEugexService().synchroniseVleActiveCourses();
     }
     

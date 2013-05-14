@@ -71,7 +71,10 @@
     </bean>
     
     <bean id="blackboardService" class="uk.ac.ed.learn9.bb.timetabling.service.BlackboardService" />
-    <bean id="eugexService" class="uk.ac.ed.learn9.bb.timetabling.service.EugexService" />
+    <bean id="eugexService" class="uk.ac.ed.learn9.bb.timetabling.service.EugexService">
+        <property name="cacheDataSource" ref="cacheDataSource"/>
+        <property name="eugexDataSource" ref="eugexDataSource"/>
+    </bean>
     
     <bean id="timetablingCloneService" class="uk.ac.ed.learn9.bb.timetabling.service.TimetablingCloneService" />
     
