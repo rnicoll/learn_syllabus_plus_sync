@@ -15,6 +15,7 @@ import blackboard.data.course.Group;
 import blackboard.persist.Id;
 import blackboard.persist.KeyNotFoundException;
 import blackboard.persist.PersistenceException;
+import java.sql.Statement;
 
 import uk.ac.ed.learn9.bb.timetabling.dao.SynchronisationRunDao;
 import uk.ac.ed.learn9.bb.timetabling.data.BlackboardCourseCode;
@@ -29,6 +30,9 @@ import uk.ac.ed.learn9.bb.timetabling.data.TimetablingCourseCode;
 @Service
 public class SynchronisationService extends Object {
     public static final String GROUP_NAME_PREFIX = "TT_";
+    
+    public static final String COURSE_CODE_REGEXP = "'^[A-Z][A-Z0-9]+_[A-Z][A-Z0-9]+_[A-Z][A-Z0-9]+$'";
+    
     @Autowired
     private DataSource dataSource;
     @Autowired
@@ -536,6 +540,61 @@ public class SynchronisationService extends Object {
         }
     }
 
+    /**
+     * Refreshes local copies of various bits of data about a course, based
+     * on a Timetabling module. Specifically this updates:
+     * 
+     * <ul>
+     * <li>cache_course_code</li>
+     * <li>cache_occurrence_code</li>
+     * <li>cache_semester_code</li>
+     * <li>learn_academic_year</li>
+     * <li>learn_course_code</li>
+     * </ul>
+     * 
+     * @throws SQLException 
+     */
+    public void refreshModuleCacheFields()
+            throws SQLException {
+        final Connection cacheDatabase = this.getDataSource().getConnection();
+        
+        try {
+            final Statement statement = cacheDatabase.createStatement();
+            
+            try {
+                // First of all, where the timetabling course code is in a suitable
+                // form, split it into three separate parts.
+                statement.executeUpdate("UPDATE module SET cache_course_code=LEFT(tt_course_code, LOCATE('_', tt_course_code)-1) "
+                    + "WHERE tt_course_code RLIKE '"
+                    + COURSE_CODE_REGEXP + "'");
+                // Null any cached course codes for modules that don't match a course
+                // code any more
+                statement.executeUpdate("UPDATE module SET cache_course_code=NULL "
+                    + "WHERE tt_course_code NOT RLIKE '"
+                    + COURSE_CODE_REGEXP + "'");
+                
+                // Split out semester (last part of a timetabling course code)
+                statement.executeUpdate("UPDATE module SET cache_semester_code=SUBSTR(tt_course_code FROM LOCATE('_', tt_course_code, LENGTH(cache_course_code)+2)+1) "
+                    + "WHERE cache_course_code IS NOT NULL");
+                
+                // Split out occurrence (middle of a timetabling course code)
+                statement.executeUpdate("UPDATE module SET cache_occurrence_code=SUBSTR(tt_course_code FROM LENGTH(cache_course_code)+2 FOR (LENGTH(tt_course_code) - LENGTH(cache_course_code) - LENGTH(cache_semester_code) - 2)) "
+                    + "	WHERE cache_course_code IS NOT NULL");
+                
+                // Convert the academic year to the form used by Learn
+                statement.executeUpdate("UPDATE module SET learn_academic_year=REPLACE(tt_academic_year, '/', '-') "
+                    + "WHERE LENGTH(tt_academic_year)='6'");
+                
+                // Build a course code as used in Learn
+                statement.executeUpdate("UPDATE module SET learn_course_code=CONCAT(cache_course_code, learn_academic_year, cache_occurrence_code, cache_semester_code)");
+            } finally {
+                statement.close();
+            }
+        } finally {
+            cacheDatabase.close();
+        }
+    }
+    
     /**
      * Updates the descriptions of activities in the database and in Learn.
      */

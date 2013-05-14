@@ -1,7 +1,6 @@
 package uk.ac.ed.learn9.bb.timetabling.service;
 
 import java.sql.Connection;
-import javax.sql.DataSource;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
