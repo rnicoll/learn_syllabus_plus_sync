@@ -20,7 +20,8 @@ public class SynchroniseRDB extends Object {
         
         final long startTime = System.currentTimeMillis();
         
-        service.synchroniseData();
+        // service.synchroniseData();
+        service.refreshModuleCacheFields();
         final SynchronisationRun run = service.generateDiff();
         service.updateGroupDescriptions();
         //service.mapModulesToCourses();

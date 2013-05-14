@@ -31,7 +31,7 @@ import uk.ac.ed.learn9.bb.timetabling.data.TimetablingCourseCode;
 public class SynchronisationService extends Object {
     public static final String GROUP_NAME_PREFIX = "TT_";
     
-    public static final String COURSE_CODE_REGEXP = "'^[A-Z][A-Z0-9]+_[A-Z][A-Z0-9]+_[A-Z][A-Z0-9]+$'";
+    public static final String COURSE_CODE_REGEXP = "^[A-Z][A-Z0-9]+_[A-Z][A-Z0-9]+_[A-Z][A-Z0-9]+$";
     
     @Autowired
     private DataSource dataSource;
@@ -437,8 +437,8 @@ public class SynchronisationService extends Object {
                     + "JOIN cache_enrolment e ON e.run_id=r.run_id "
                     + "JOIN activity_set_size s ON s.tt_activity_id=e.tt_activity_id "
                     + "LEFT JOIN cache_enrolment b ON b.run_id=r.previous_run_id "
-                        + "AND b.tt_student_set_id=a.tt_student_set_id "
-                        + "AND b.tt_activity_id=a.tt_activity_id "
+                        + "AND b.tt_student_set_id=e.tt_student_set_id "
+                        + "AND b.tt_activity_id=e.tt_activity_id "
                     + "WHERE r.run_id=? "
                         + "AND b.run_id IS NULL "
                         + "AND s.set_size>1)" // BRD requirement #1.2
@@ -606,12 +606,12 @@ public class SynchronisationService extends Object {
         );
         try {
             final PreparedStatement selectStatement = connection.prepareStatement(
-                "SELECT a.tt_activity_id, a.tt_activity_name, a.learn_group_id, t.tt_type_name, COUNT(b.tt_activity_id) set_size, a.description "
+                "SELECT a.tt_activity_id, a.tt_activity_name, a.learn_group_id, t.tt_type_name, a.description, COUNT(b.tt_activity_id) set_size "
                     + "FROM activity a "
                         + "JOIN activity_type t ON t.tt_type_id=a.tt_type_id "
                         + "JOIN activity_template m ON m.tt_template_id=a.tt_template_id "
                         + "JOIN activity b ON b.tt_template_id=m.tt_template_id "
-                + "GROUP BY a.tt_activity_id, t.tt_type_name");
+                + "GROUP BY a.tt_activity_id, t.tt_type_name, a.learn_group_id, a.description, t.tt_type_name");
             try {
                 final ResultSet rs = selectStatement.executeQuery();
                 while (rs.next()) {
@@ -625,7 +625,7 @@ public class SynchronisationService extends Object {
                         updateStatement.setString(2, description);
                         updateStatement.executeUpdate();
                         
-                        final String learnGroupId = rs.getString("learn_group_type");
+                        final String learnGroupId = rs.getString("learn_group_id");
                         
                         if (null != learnGroupId) {
                             try {
