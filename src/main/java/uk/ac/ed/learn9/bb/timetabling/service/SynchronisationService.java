@@ -427,10 +427,9 @@ public class SynchronisationService extends Object {
      */
     private void doGenerateDiff(final SynchronisationRun run, final Connection connection)
         throws SQLException {
-        // We generate a difference list in the database using two very similar
-        // statements; the first retrieves associations only present in the
-        // most recent data sync, the last only associations in the previous
-        // version.
+        // Two views exist in the database to determine added and removed enrolments,
+        // we only have to insert a copy into the relevant table so we can track
+        // outcomes.
         
         final PreparedStatement addStatement = connection.prepareStatement(
             "INSERT INTO enrolment_change "
@@ -442,6 +441,7 @@ public class SynchronisationService extends Object {
         );
         try {
             addStatement.setInt(1, run.getRunId());
+            addStatement.setInt(2, run.getRunId());
             addStatement.executeUpdate();
         } finally {
             addStatement.close();

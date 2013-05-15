@@ -203,7 +203,7 @@ public class BlackboardService {
             // and are not JTA child activities.
             PreparedStatement queryStatement = connection.prepareStatement(
                 "SELECT a.tt_activity_id, a.tt_activity_name, a.learn_group_id, a.learn_group_name, m.learn_course_id "
-                    + "FROM activity a "
+                    + "FROM sync_activities a "
                         + "JOIN module m ON m.tt_module_id=a.tt_module_id "
                         + "JOIN activity_type t ON t.tt_type_id=a.tt_type_id "
                     + "WHERE a.learn_group_id IS NULL "
@@ -231,7 +231,7 @@ public class BlackboardService {
             queryStatement = connection.prepareStatement(
                 "SELECT p.tt_activity_id, p.tt_activity_name, p.learn_group_id, p.learn_group_name, m.learn_course_id "
                     + "FROM activity a "
-                        + "JOIN activity p ON p.tt_activity_id=a.tt_jta_activity_id "
+                        + "JOIN sync_activities p ON p.tt_activity_id=a.tt_jta_activity_id "
                         + "JOIN module m ON m.tt_module_id=p.tt_module_id "
                         + "JOIN activity_type t ON t.tt_type_id=p.tt_type_id "
                     + "WHERE p.learn_group_id IS NULL "
