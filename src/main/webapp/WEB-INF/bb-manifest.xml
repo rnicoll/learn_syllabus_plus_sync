@@ -77,6 +77,11 @@
             <!-- Reflect permission needed by Spring -->
             <permission type="java.lang.reflect.ReflectPermission"
                                     name="suppressAccessChecks" />
+            <!-- Log4J file paths -->
+            <permission type="java.io.FilePermission" name="..\..\..\..\blackboard\logs\-" actions="read,write,delete"/>
+            <permission type="java.io.FilePermission" name="../../../../blackboard/logs/-" actions="read,write,delete" />
+            <permission type="java.io.FilePermission" name="../../../../blackboard/apps/tomcat/logs/-" actions="read,write,delete" />
+            <permission type="java.io.FilePermission" name="../../../../blackboard/apps/tomcat/cluster/-" actions="read,write,delete"/>
             
             <!-- Used by the connection cleanup thread -->
             <permission type="java.lang.RuntimePermission"
