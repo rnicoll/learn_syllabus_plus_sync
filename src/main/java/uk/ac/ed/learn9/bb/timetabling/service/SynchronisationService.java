@@ -18,9 +18,7 @@ import blackboard.persist.KeyNotFoundException;
 import blackboard.persist.PersistenceException;
 
 import uk.ac.ed.learn9.bb.timetabling.dao.SynchronisationRunDao;
-import uk.ac.ed.learn9.bb.timetabling.data.BlackboardCourseCode;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
-import uk.ac.ed.learn9.bb.timetabling.data.TimetablingCourseCode;
 
 /**
  * Service for synchronising activities and enrolments from Timetabling
@@ -301,7 +299,6 @@ public class SynchronisationService extends Object {
 
             try {
                 this.getCloneService().importJtaDetails(source, destination);
-                this.generateLearnCourseCodes(destination);
                 // this.getMergedCoursesService().resolveMergedCourses(destination);
             } finally {
                 source.close();
@@ -338,6 +335,9 @@ public class SynchronisationService extends Object {
         } finally {
             source.close();
         }
+        
+        // Refresh the fields on modules derived from Timetabling data
+        this.refreshModuleCacheFields();
     }
 
     /**
@@ -391,8 +391,7 @@ public class SynchronisationService extends Object {
                 + "JOIN ACTIVITIES_STUDENTSET REL ON REL.ID=A.ID "
                 + "JOIN STUDENT_SET S ON REL.STUDENT_SET=S.ID "
                 + "LEFT JOIN VARIANTJTAACTS V ON V.ID=A.ID "
-            + "WHERE SUBSTR(S.HOST_KEY, 0, 6)!='#SPLUS' " // BRD requirement #1.6
-                + "AND (V.ISVARIANTCHILD IS NULL OR V.ISVARIANTCHILD='0')"  // BRD requirement #1.3
+            + "WHERE (V.ISVARIANTCHILD IS NULL OR V.ISVARIANTCHILD='0')"  // BRD requirement #1.3
         );
         try {
             final PreparedStatement destinationStatement = destination.prepareStatement("INSERT INTO cache_enrolment "
@@ -436,96 +435,16 @@ public class SynchronisationService extends Object {
         final PreparedStatement addStatement = connection.prepareStatement(
             "INSERT INTO enrolment_change "
                 + "(run_id, change_type, tt_student_set_id, tt_activity_id) "
-                + "(SELECT e.run_id, 'add', e.tt_student_set_id, e.tt_activity_id "
-                    + "FROM synchronisation_run r "
-                    + "JOIN cache_enrolment e ON e.run_id=r.run_id "
-                    + "JOIN activity_set_size s ON s.tt_activity_id=e.tt_activity_id "
-                    + "LEFT JOIN cache_enrolment b ON b.run_id=r.previous_run_id "
-                        + "AND b.tt_student_set_id=e.tt_student_set_id "
-                        + "AND b.tt_activity_id=e.tt_activity_id "
-                    + "WHERE r.run_id=? "
-                        + "AND b.run_id IS NULL "
-                        + "AND s.set_size>1)" // BRD requirement #1.2
+                + "(SELECT a.run_id, a.change_type, a.tt_student_set_id, a.tt_activity_id "
+                    + "FROM added_enrolment_vw a WHERE a.run_id=?) "
+                + "UNION (SELECT r.run_id, r.tt_student_set_id, r.tt_activity_id, r.change_type "
+		+ "FROM removed_enrolment_vw r  WHERE r.run_id=?)"
         );
         try {
             addStatement.setInt(1, run.getRunId());
             addStatement.executeUpdate();
         } finally {
             addStatement.close();
-        }
-        
-        // XXX: This should check for a previously successful "add" operation
-        final PreparedStatement removeStatement = connection.prepareStatement(
-            "INSERT INTO enrolment_change "
-                + "(run_id, change_type, tt_student_set_id, tt_activity_id) "
-                + "(SELECT e.run_id, 'remove', e.tt_student_set_id, e.tt_activity_id "
-                    + "FROM synchronisation_run r "
-                    + "JOIN cache_enrolment e ON e.run_id=r.previous_run_id "
-                    + "JOIN activity_set_size s ON s.tt_activity_id=e.tt_activity_id "
-                    + "LEFT JOIN cache_enrolment b ON b.run_id=r.run_id "
-                        + "AND b.tt_student_set_id=e.tt_student_set_id "
-                        + "AND b.tt_activity_id=e.tt_activity_id "
-                    + "WHERE r.run_id=? "
-                        + "AND b.run_id IS NULL "
-                        + "AND s.set_size>1)"  // BRD requirement #1.2
-        );
-        try {
-            removeStatement.setInt(1, run.getRunId());
-            removeStatement.executeUpdate();
-        } finally {
-            removeStatement.close();
-        }
-    }
-
-    /**
-     * Generates predicted Learn course codes based on the course codes listed
-     * against modules. These course codes can then be found to match modules
-     * to the corresponding course in Learn.
-     * 
-     * @param connection a connection to the cache database.
-     */
-    private void generateLearnCourseCodes(final Connection destination)
-        throws SQLException {
-        final PreparedStatement statement = destination.prepareStatement(
-                "SELECT tt_module_id, tt_course_code, tt_academic_year, learn_course_code "
-                    + "FROM module "
-                    + "WHERE learn_course_id IS NULL",
-                ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
-        try {
-            final ResultSet rs = statement.executeQuery();
-            try {
-                while (rs.next()) {
-                    final TimetablingCourseCode courseCode;
-                    
-                    try {
-                        courseCode = new TimetablingCourseCode(rs.getString("tt_course_code"));
-                    } catch(IllegalArgumentException e) {
-                        // Log the invalid code perhaps?
-                        continue;
-                    }
-                    
-                    // Split the course code into the course, semester and occurrence
-                    final String[] courseCodeParts = courseCode.splitCode();
-                    final String academicYear = rs.getString("tt_academic_year");
-                    
-                    if (null == academicYear) {
-                        // Without an academic year, we don't know when this course ran
-                        continue;
-                    }
-                    
-                    // Build the Learn course code from the parts of the original
-                    // course code, with the academic year added in.
-                    final BlackboardCourseCode blackboardCourseCode = BlackboardCourseCode.buildCode(courseCodeParts[0],
-                        academicYear, courseCodeParts[1], courseCodeParts[2]);
-                    
-                    rs.updateString("learn_course_code", blackboardCourseCode.toString());
-                    rs.updateRow();
-                }
-            } finally {
-                rs.close();
-            }
-        } finally {
-            statement.close();
         }
     }
 
@@ -619,12 +538,9 @@ public class SynchronisationService extends Object {
         );
         try {
             final PreparedStatement selectStatement = connection.prepareStatement(
-                "SELECT a.tt_activity_id, a.tt_activity_name, a.learn_group_id, t.tt_type_name, a.description, COUNT(b.tt_activity_id) set_size "
-                    + "FROM activity a "
-                        + "JOIN activity_type t ON t.tt_type_id=a.tt_type_id "
-                        + "JOIN activity_template m ON m.tt_template_id=a.tt_template_id "
-                        + "JOIN activity b ON b.tt_template_id=m.tt_template_id "
-                + "GROUP BY a.tt_activity_id, t.tt_type_name, a.learn_group_id, a.description, t.tt_type_name");
+                "SELECT a.tt_activity_id, a.tt_activity_name, a.learn_group_id, t.tt_type_name, a.description, a.set_size "
+                    + "FROM sync_activities_vw a "
+                        + "JOIN activity_type t ON t.tt_type_id=a.tt_type_id");
             try {
                 final ResultSet rs = selectStatement.executeQuery();
                 while (rs.next()) {

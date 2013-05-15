@@ -31,7 +31,6 @@ CREATE TABLE `activity` (
   `tt_template_id` varchar(32) DEFAULT NULL,
   `tt_type_id` varchar(32) DEFAULT NULL,
   `tt_jta_activity_id` varchar(32) DEFAULT NULL,
-  `cache_set_size` int(11) DEFAULT NULL,
   `learn_group_id` varchar(80) DEFAULT NULL,
   `learn_group_name` varchar(255) DEFAULT NULL,
   `description` text,
@@ -45,14 +44,14 @@ CREATE TABLE `activity` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Temporary table structure for view `activity_set_size`
+-- Temporary table structure for view `activity_set_size_vw`
 --
 
-DROP TABLE IF EXISTS `activity_set_size`;
-/*!50001 DROP VIEW IF EXISTS `activity_set_size`*/;
+DROP TABLE IF EXISTS `activity_set_size_vw`;
+/*!50001 DROP VIEW IF EXISTS `activity_set_size_vw`*/;
 SET @saved_cs_client     = @@character_set_client;
 SET character_set_client = utf8;
-/*!50001 CREATE TABLE `activity_set_size` (
+/*!50001 CREATE TABLE `activity_set_size_vw` (
   `tt_activity_id` varchar(32),
   `set_size` bigint(21)
 ) ENGINE=MyISAM */;
@@ -85,6 +84,23 @@ CREATE TABLE `activity_type` (
   PRIMARY KEY (`tt_type_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Temporary table structure for view `added_enrolment_vw`
+--
+
+DROP TABLE IF EXISTS `added_enrolment_vw`;
+/*!50001 DROP VIEW IF EXISTS `added_enrolment_vw`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `added_enrolment_vw` (
+  `run_id` int(11),
+  `previous_run_id` int(11),
+  `tt_student_set_id` varchar(32),
+  `tt_activity_id` varchar(32),
+  `change_type` varchar(3)
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
 
 --
 -- Table structure for table `cache_enrolment`
@@ -183,9 +199,26 @@ CREATE TABLE `module` (
   `learn_course_id` varchar(80) DEFAULT NULL,
   `webct_active` char(1) DEFAULT NULL,
   PRIMARY KEY (`tt_module_id`),
-  KEY `euclid_course` (`cache_course_code`,`cache_semester_code`,`cache_occurrence_code`)
+  KEY `cache_course_code` (`cache_course_code`,`cache_semester_code`,`cache_occurrence_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Temporary table structure for view `removed_enrolment_vw`
+--
+
+DROP TABLE IF EXISTS `removed_enrolment_vw`;
+/*!50001 DROP VIEW IF EXISTS `removed_enrolment_vw`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `removed_enrolment_vw` (
+  `run_id` int(11),
+  `previous_run_id` int(11),
+  `tt_student_set_id` varchar(32),
+  `tt_activity_id` varchar(32),
+  `change_type` varchar(6)
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
 
 --
 -- Table structure for table `student_set`
@@ -201,6 +234,41 @@ CREATE TABLE `student_set` (
   PRIMARY KEY (`tt_student_set_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Temporary table structure for view `sync_activities_vw`
+--
+
+DROP TABLE IF EXISTS `sync_activities_vw`;
+/*!50001 DROP VIEW IF EXISTS `sync_activities_vw`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `sync_activities_vw` (
+  `tt_activity_id` varchar(32),
+  `tt_activity_name` varchar(255),
+  `tt_jta_activity_id` varchar(32),
+  `learn_group_id` varchar(80),
+  `description` text,
+  `learn_course_code` varchar(40),
+  `learn_course_id` varchar(80),
+  `set_size` bigint(21)
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary table structure for view `sync_student_set_vw`
+--
+
+DROP TABLE IF EXISTS `sync_student_set_vw`;
+/*!50001 DROP VIEW IF EXISTS `sync_student_set_vw`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `sync_student_set_vw` (
+  `tt_student_set_id` varchar(32),
+  `username` varchar(32),
+  `learn_person_id` varchar(80)
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
 
 --
 -- Table structure for table `synchronisation_run`
@@ -222,11 +290,11 @@ CREATE TABLE `synchronisation_run` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Final view structure for view `activity_set_size`
+-- Final view structure for view `activity_set_size_vw`
 --
 
-/*!50001 DROP TABLE IF EXISTS `activity_set_size`*/;
-/*!50001 DROP VIEW IF EXISTS `activity_set_size`*/;
+/*!50001 DROP TABLE IF EXISTS `activity_set_size_vw`*/;
+/*!50001 DROP VIEW IF EXISTS `activity_set_size_vw`*/;
 /*!50001 SET @saved_cs_client          = @@character_set_client */;
 /*!50001 SET @saved_cs_results         = @@character_set_results */;
 /*!50001 SET @saved_col_connection     = @@collation_connection */;
@@ -235,7 +303,83 @@ CREATE TABLE `synchronisation_run` (
 /*!50001 SET collation_connection      = utf8_general_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
-/*!50001 VIEW `activity_set_size` AS (select `a`.`tt_activity_id` AS `tt_activity_id`,count(`b`.`tt_activity_id`) AS `set_size` from ((`activity` `a` left join `activity_template` `t` on((`t`.`tt_template_id` = `a`.`tt_template_id`))) left join `activity` `b` on((`t`.`tt_template_id` = `b`.`tt_template_id`))) group by `a`.`tt_activity_id`) */;
+/*!50001 VIEW `activity_set_size_vw` AS (select `a`.`tt_activity_id` AS `tt_activity_id`,count(`b`.`tt_activity_id`) AS `set_size` from ((`activity` `a` left join `activity_template` `t` on((`t`.`tt_template_id` = `a`.`tt_template_id`))) left join `activity` `b` on((`t`.`tt_template_id` = `b`.`tt_template_id`))) group by `a`.`tt_activity_id`) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `added_enrolment_vw`
+--
+
+/*!50001 DROP TABLE IF EXISTS `added_enrolment_vw`*/;
+/*!50001 DROP VIEW IF EXISTS `added_enrolment_vw`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8 */;
+/*!50001 SET character_set_results     = utf8 */;
+/*!50001 SET collation_connection      = utf8_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
+/*!50001 VIEW `added_enrolment_vw` AS (select `a`.`run_id` AS `run_id`,`a`.`previous_run_id` AS `previous_run_id`,`ca`.`tt_student_set_id` AS `tt_student_set_id`,`ca`.`tt_activity_id` AS `tt_activity_id`,'add' AS `change_type` from (((((`synchronisation_run` `a` join `cache_enrolment` `ca` on((`ca`.`run_id` = `a`.`run_id`))) join `sync_activities_vw` `act` on((`act`.`tt_activity_id` = `ca`.`tt_activity_id`))) join `sync_student_set_vw` `stu` on((`stu`.`tt_student_set_id` = `ca`.`tt_student_set_id`))) left join `synchronisation_run` `b` on((`b`.`run_id` = `a`.`previous_run_id`))) left join `cache_enrolment` `cb` on(((`cb`.`run_id` = `b`.`run_id`) and (`cb`.`tt_student_set_id` = `ca`.`tt_student_set_id`) and (`cb`.`tt_activity_id` = `ca`.`tt_activity_id`)))) where isnull(`cb`.`tt_student_set_id`)) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `removed_enrolment_vw`
+--
+
+/*!50001 DROP TABLE IF EXISTS `removed_enrolment_vw`*/;
+/*!50001 DROP VIEW IF EXISTS `removed_enrolment_vw`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8 */;
+/*!50001 SET character_set_results     = utf8 */;
+/*!50001 SET collation_connection      = utf8_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
+/*!50001 VIEW `removed_enrolment_vw` AS (select `a`.`run_id` AS `run_id`,`a`.`previous_run_id` AS `previous_run_id`,`ca`.`tt_student_set_id` AS `tt_student_set_id`,`ca`.`tt_activity_id` AS `tt_activity_id`,'remove' AS `change_type` from (((((`synchronisation_run` `a` join `synchronisation_run` `b` on((`b`.`run_id` = `a`.`previous_run_id`))) join `cache_enrolment` `cb` on((`cb`.`run_id` = `b`.`run_id`))) join `sync_activities_vw` `act` on((`act`.`tt_activity_id` = `cb`.`tt_activity_id`))) join `sync_student_set_vw` `stu` on((`stu`.`tt_student_set_id` = `cb`.`tt_student_set_id`))) left join `cache_enrolment` `ca` on(((`ca`.`run_id` = `a`.`run_id`) and (`cb`.`tt_student_set_id` = `ca`.`tt_student_set_id`) and (`cb`.`tt_activity_id` = `ca`.`tt_activity_id`)))) where isnull(`ca`.`tt_student_set_id`)) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `sync_activities_vw`
+--
+
+/*!50001 DROP TABLE IF EXISTS `sync_activities_vw`*/;
+/*!50001 DROP VIEW IF EXISTS `sync_activities_vw`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8 */;
+/*!50001 SET character_set_results     = utf8 */;
+/*!50001 SET collation_connection      = utf8_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
+/*!50001 VIEW `sync_activities_vw` AS (select `a`.`tt_activity_id` AS `tt_activity_id`,`a`.`tt_activity_name` AS `tt_activity_name`,`a`.`tt_jta_activity_id` AS `tt_jta_activity_id`,`a`.`learn_group_id` AS `learn_group_id`,`a`.`description` AS `description`,`m`.`learn_course_code` AS `learn_course_code`,`m`.`learn_course_id` AS `learn_course_id`,`s`.`set_size` AS `set_size` from ((`activity` `a` join `module` `m` on((`m`.`tt_module_id` = `a`.`tt_module_id`))) join `activity_set_size_vw` `s` on((`s`.`tt_activity_id` = `a`.`tt_activity_id`))) where ((`m`.`webct_active` = 'Y') and (`s`.`set_size` > '1'))) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `sync_student_set_vw`
+--
+
+/*!50001 DROP TABLE IF EXISTS `sync_student_set_vw`*/;
+/*!50001 DROP VIEW IF EXISTS `sync_student_set_vw`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8 */;
+/*!50001 SET character_set_results     = utf8 */;
+/*!50001 SET collation_connection      = utf8_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
+/*!50001 VIEW `sync_student_set_vw` AS (select `s`.`tt_student_set_id` AS `tt_student_set_id`,`s`.`tt_host_key` AS `username`,`s`.`learn_person_id` AS `learn_person_id` from `student_set` `s` where (substr(`s`.`tt_host_key`,0,6) <> '#SPLUS')) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
@@ -249,4 +393,4 @@ CREATE TABLE `synchronisation_run` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2013-05-14 14:41:36
+-- Dump completed on 2013-05-15 15:17:37
