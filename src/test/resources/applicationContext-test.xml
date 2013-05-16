@@ -11,7 +11,7 @@
     
     <bean id="propertyConfigurer"
           class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"
-          p:location="WEB-INF/jdbc.properties" />
+          p:location="jdbc.properties" />
 
     <bean id="cacheDataSource"
           class="org.springframework.jdbc.datasource.DriverManagerDataSource"

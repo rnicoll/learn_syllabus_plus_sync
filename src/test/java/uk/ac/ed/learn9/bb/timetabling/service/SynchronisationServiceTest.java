@@ -2,13 +2,19 @@ package uk.ac.ed.learn9.bb.timetabling.service;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Before;
 
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 
-@ContextConfiguration(locations={"classpath:applicationContext.xml"})
+@ContextConfiguration(locations={"classpath:applicationContext-test.xml"})
 public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests {
     public SynchronisationServiceTest() {
+    }
+    
+    @Before
+    public void before() {
+        // FIXME: Construct schema here
     }
 
     /**
