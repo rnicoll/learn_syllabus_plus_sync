@@ -2,7 +2,6 @@ package uk.ac.ed.learn9.bb.timetabling;
 
 import java.sql.SQLException;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -20,6 +19,10 @@ import org.springframework.context.event.ContextStoppedEvent;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService;
 
+/**
+ * Application life-cycle listener used to start the scheduled synchronisation
+ * tasks when the application context is created.
+ */
 public class ScheduledJobManager extends Object implements ApplicationListener<ApplicationContextEvent> {
     public static final int START_HOUR_OF_DAY = 6;
     public static final int START_MINUTE = 0;
@@ -38,6 +41,22 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
     }
 
     /**
+     * Listens for application lifecycle events (specifically start/stop),
+     * and schedules the new run/cancels the next run as appropriate.
+     * 
+     * @param e the application event to process.
+     */
+    @Override
+    public void onApplicationEvent(final ApplicationContextEvent e) {
+        if (e instanceof ContextStartedEvent) {
+            this.logService = LogServiceFactory.getInstance();
+            this.scheduleRun();
+        } else if (e instanceof ContextStoppedEvent) {
+            this.cancel();
+        }
+    }
+
+    /**
      * Cancels any scheduled synchronisation.
      */
     public void cancel() {
@@ -49,7 +68,7 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
      * Schedules the synchronisation task.
      */
     public void scheduleRun() {
-        final long delay = calculateDelay();
+        final long delay = calculateDelay(System.currentTimeMillis());
         
         this.logService.logInfo("Scheduling synchronisation job after a delay of "
             + delay + "ms.");
@@ -63,26 +82,20 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
      * 
      * @return the delay in milliseconds.
      */
-    public long calculateDelay() {
-        final Date now = new Date();
+    public long calculateDelay(final long nowMillis) {
         final Calendar calendar = Calendar.getInstance();
+ 
+        // Strip seconds & milliseconds
+        final long thisMinuteMillis = nowMillis - (nowMillis % (60 * 1000L));
         
-        calendar.setTime(now);
-        
-        // Zero the seconds & millis first
-        calendar.set(Calendar.MILLISECOND, 0);
-        calendar.set(Calendar.SECOND, 0);
+        calendar.setTimeInMillis(thisMinuteMillis);
         
         // Set the time of day
         calendar.set(Calendar.MINUTE, START_MINUTE);
         calendar.set(Calendar.HOUR_OF_DAY, START_HOUR_OF_DAY);
+        calendar.add(Calendar.DATE, 1);
         
-        if (calendar.getTime().before(now)) {
-            // The calendar now reflects a time in the past, so add a day.
-            calendar.add(Calendar.DATE, 1);
-        }
-        
-        return calendar.getTime().getTime() - now.getTime();
+        return calendar.getTimeInMillis() - nowMillis;
     }
 
     /**
@@ -100,23 +113,13 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
     public void setService(SynchronisationService service) {
         this.service = service;
     }
-
-    @Override
-    public void onApplicationEvent(final ApplicationContextEvent e) {
-        if (e instanceof ContextStartedEvent) {
-            this.logService = LogServiceFactory.getInstance();
-            this.scheduleRun();
-        } else if (e instanceof ContextStoppedEvent) {
-            this.cancel();
-        }
-    }
     
     public class Task extends TimerTask {
         @Override
         public void run() {
             ScheduledJobManager.this.logService.logInfo("Running Learn/Timetabling synchronisation.");
             
-            /* final SynchronisationService service = ScheduledJobManager.this.getService();
+            final SynchronisationService service = ScheduledJobManager.this.getService();
             try {
                 doSynchronisation(service);
             } catch(PersistenceException e) {
@@ -125,7 +128,7 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
                 ScheduledJobManager.this.logService.logError("Database error while synchronising groups from Timetabling.", e);
             } catch(ValidationException e) {
                 ScheduledJobManager.this.logService.logError("Error validating entities to be persisted in Learn.", e);
-            } */
+            }
             
             if (!ScheduledJobManager.this.cancelled) {
                 ScheduledJobManager.this.scheduleRun();
