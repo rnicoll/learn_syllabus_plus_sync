@@ -96,7 +96,7 @@ CREATE GLOBAL TEMPORARY TABLE learn_group.enrolment_change (
   CONSTRAINT enrolment_change_type FOREIGN KEY (change_type) REFERENCES change_type (change_type)
 );
 
-CREATE GLOBAL TEMPORARY VIEW learn_group.activity_set_size_vw AS
+CREATE VIEW learn_group.activity_set_size_vw AS
 	(SELECT a.tt_activity_id, COUNT(b.tt_activity_id) AS set_size
 		FROM learn_group.activity a
 			LEFT JOIN learn_group.activity_template t ON t.tt_template_id = a.tt_template_id

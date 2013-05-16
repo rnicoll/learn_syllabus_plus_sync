@@ -1,20 +1,28 @@
 package uk.ac.ed.learn9.bb.timetabling.service;
 
+import java.io.File;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
+import org.junit.After;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.Before;
 
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
+import uk.ac.ed.learn9.bb.timetabling.util.DbScriptUtil;
 
 @ContextConfiguration(locations={"classpath:applicationContext-test.xml"})
 public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests {
+    public static final String LOCATION_SYNC_DB_SCHEMA_RESOURCE = "classpath:sync_db_schema.sql";
+    public static final String LOCATION_SYNC_DB_DROP_RESOURCE = "classpath:sync_db_drop.sql";
+    
     public SynchronisationServiceTest() {
     }
     
-    @Before
-    public void before() {
-        // FIXME: Construct schema here
+    public SynchronisationService getService() {
+        return this.applicationContext.getBean(SynchronisationService.class);
     }
 
     /**
@@ -91,14 +99,38 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
         fail("The test case is a prototype.");
     }
      */
-
+    
+    @Before
+    public void before() throws IOException, SQLException {
+        final File syncDbSchema = this.applicationContext.getResource(LOCATION_SYNC_DB_SCHEMA_RESOURCE).getFile();
+        final Connection connection = this.getService().getCacheDataSource().getConnection();
+        
+        try {
+            DbScriptUtil.runScript(connection, syncDbSchema);
+        } finally {
+            connection.close();
+        }
+    }
+    
+    @After
+    public void after() throws IOException, SQLException {
+        final File syncDbSchema = this.applicationContext.getResource(LOCATION_SYNC_DB_DROP_RESOURCE).getFile();
+        final Connection connection = this.getService().getCacheDataSource().getConnection();
+        
+        try {
+            DbScriptUtil.runScript(connection, syncDbSchema);
+        } finally {
+            connection.close();
+        }
+    }
+    
     /**
      * Test of synchroniseTimetablingData method, of class SynchronisationService.
      */
     @Test
     public void testTimetablingSynchroniseData() throws Exception {
         System.out.println("synchroniseTimetablingData");
-        final SynchronisationService instance = this.applicationContext.getBean(SynchronisationService.class);
+        final SynchronisationService instance = this.getService();
         instance.synchroniseTimetablingData();
     }
 
