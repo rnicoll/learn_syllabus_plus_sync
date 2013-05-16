@@ -1,24 +1,14 @@
 package uk.ac.ed.learn9.bb.timetabling.service;
 
-import java.sql.Connection;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import uk.ac.ed.learn9.bb.timetabling.dao.SynchronisationRunDao;
-import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 
-public class SynchronisationServiceTest {
-    
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
+
+@ContextConfiguration(locations={"classpath:applicationContext.xml"})
+public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests {
     public SynchronisationServiceTest() {
-    }
-    
-    @BeforeClass
-    public static void setUpClass() {
-    }
-    
-    @AfterClass
-    public static void tearDownClass() {
     }
 
     /**
@@ -97,18 +87,14 @@ public class SynchronisationServiceTest {
      */
 
     /**
-     * Test of synchroniseData method, of class SynchronisationService.
+     * Test of synchroniseTimetablingData method, of class SynchronisationService.
      */
-    /*
     @Test
-    public void testSynchroniseData() throws Exception {
-        System.out.println("synchroniseData");
-        SynchronisationService instance = new SynchronisationService();
-        instance.synchroniseData();
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+    public void testTimetablingSynchroniseData() throws Exception {
+        System.out.println("synchroniseTimetablingData");
+        final SynchronisationService instance = this.applicationContext.getBean(SynchronisationService.class);
+        instance.synchroniseTimetablingData();
     }
-     */
 
     /**
      * Test of startNewRun method, of class SynchronisationService.
