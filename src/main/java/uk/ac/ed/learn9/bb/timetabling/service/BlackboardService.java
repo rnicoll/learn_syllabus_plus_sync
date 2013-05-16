@@ -25,6 +25,7 @@ import blackboard.persist.course.GroupDbPersister;
 import blackboard.persist.course.GroupMembershipDbLoader;
 import blackboard.persist.course.GroupMembershipDbPersister;
 import blackboard.persist.user.UserDbLoader;
+import java.sql.Timestamp;
 import org.springframework.stereotype.Service;
 import uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
@@ -194,10 +195,8 @@ public class BlackboardService {
             throws KeyNotFoundException, PersistenceException, SQLException, ValidationException {
         final GroupDbPersister groupDbPersister = getGroupDbPersister();
         
-        final PreparedStatement updateStatement = connection.prepareStatement(
-            "UPDATE activity a "
-                + "SET a.learn_group_id=? "
-                + "WHERE a.tt_activity_id=?");
+        final ManagedGroupDetailsStatement updateStatement
+            = new ManagedGroupDetailsStatement(connection);
         try {
             // First resolve all activities that have a Learn course, but no group,
             // and are not JTA child activities.
@@ -500,7 +499,7 @@ public class BlackboardService {
      * @throws SQLException 
      */
     private void doCreateCourseGroupAndStoreId(final ResultSet rs, final GroupDbPersister groupDbPersister,
-            final PreparedStatement updateStatement)
+            final ManagedGroupDetailsStatement updateStatement)
             throws PersistenceException, ValidationException, SQLException {
         final Id courseId = Id.generateId(Course.DATA_TYPE, rs.getString("learn_course_id"));
         final String descriptionText = rs.getString("description");
@@ -516,10 +515,37 @@ public class BlackboardService {
         
         groupDbPersister.persist(group);
         
+        final Timestamp now = new Timestamp(System.currentTimeMillis());
         final String activityId = rs.getString("tt_activity_id");
         
-        updateStatement.setString(1, group.getId().toExternalString());
-        updateStatement.setString(2, activityId);
-        updateStatement.executeUpdate();
+        updateStatement.recordGroupId(now, activityId, group.getId());
+    }
+    
+    /**
+     * Wrapper around a prepared statement for updating the Learn group ID
+     * associated with an activity in the database.
+     */
+    private class ManagedGroupDetailsStatement extends Object {
+        private final PreparedStatement statement;
+        
+        private             ManagedGroupDetailsStatement(final Connection connection)
+            throws SQLException {
+            this.statement = connection.prepareStatement("UPDATE activity a "
+                + "SET a.learn_group_id=?, a.learn_group_created=? "
+                + "WHERE a.tt_activity_id=?");
+        }
+        
+        public void close() throws SQLException {
+            this.statement.close();
+        }
+        
+        public int recordGroupId(final Timestamp now,
+                final String activityId, final Id groupId)
+            throws SQLException {
+            this.statement.setString(1, groupId.toExternalString());
+            this.statement.setTimestamp(2, now);
+            this.statement.setString(3, activityId);
+            return this.statement.executeUpdate();
+        }
     }
 }
