@@ -16,6 +16,8 @@ import blackboard.data.course.Group;
 import blackboard.persist.Id;
 import blackboard.persist.KeyNotFoundException;
 import blackboard.persist.PersistenceException;
+import blackboard.platform.log.LogService;
+import blackboard.platform.log.LogServiceFactory;
 
 import uk.ac.ed.learn9.bb.timetabling.dao.SynchronisationRunDao;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
@@ -162,7 +164,7 @@ public class SynchronisationService extends Object {
      * @return a group name, or null if no name could be generated (for example
      * missing data).
      */
-    private String buildGroupName(String activityName, String moduleName, String activityType) {
+    private String buildGroupName(final String activityName, final String moduleName, final String activityType) {
         if (null == activityName) {
             return null;
         }
@@ -233,6 +235,8 @@ public class SynchronisationService extends Object {
      */
     public void generateGroupNames(final Connection connection)
             throws SQLException {
+        final LogService logService = LogServiceFactory.getInstance();
+        
         final Map<String, String> activityGroupNames = new HashMap<String, String>();
         // Find groups that need their names completed.
         final PreparedStatement queryStatement = connection.prepareStatement(
@@ -247,12 +251,15 @@ public class SynchronisationService extends Object {
             final ResultSet rs = queryStatement.executeQuery();
             try {
                 while (rs.next()) {
+                    final String activityId = rs.getString("tt_activity_id");
                     final String activityName = rs.getString("tt_activity_name");
                     final String moduleName = rs.getString("tt_module_name");
                     final String activityType = rs.getString("tt_type_name");
                     final String groupName = buildGroupName(activityName, moduleName, activityType);
                     
                     if (null == groupName) {
+                        logService.logWarning("Could not create group name for activity "
+                            + activityId + " due to missing data (module name, type, etc.)");
                         continue;
                     }
                     
@@ -278,8 +285,6 @@ public class SynchronisationService extends Object {
         } finally {
             updateStatement.close();
         }
-        
-        connection.commit();
     }
     
     /**
@@ -572,8 +577,6 @@ public class SynchronisationService extends Object {
         } finally {
             updateStatement.close();
         }
-                
-        return;
     }
 
     /**
