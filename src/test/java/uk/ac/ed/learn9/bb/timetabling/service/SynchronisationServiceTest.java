@@ -176,7 +176,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
         
         // FIXME: For some reason copied modules aren't loaded - need
         // to track down why.
-        // assertEquals(1, modules.size());
+        assertEquals(1, modules.size());
     }
 
     /**

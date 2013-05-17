@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 import javax.sql.DataSource;
@@ -18,6 +17,7 @@ import blackboard.persist.KeyNotFoundException;
 import blackboard.persist.PersistenceException;
 import blackboard.platform.log.LogService;
 import blackboard.platform.log.LogServiceFactory;
+import java.sql.Timestamp;
 
 import uk.ac.ed.learn9.bb.timetabling.dao.SynchronisationRunDao;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
@@ -353,13 +353,15 @@ public class SynchronisationService extends Object {
     public SynchronisationRun startNewRun(final Connection destination)
             throws SQLException {
         final int runId;
+        final Timestamp now = new Timestamp(System.currentTimeMillis());
         final PreparedStatement statement = destination.prepareStatement(
             "INSERT INTO synchronisation_run "
                 + "(previous_run_id, start_time) "
-                + "(SELECT MAX(run_id), NOW() FROM synchronisation_run WHERE end_time IS NOT NULL)",
+                + "(SELECT MAX(run_id), ? FROM synchronisation_run WHERE end_time IS NOT NULL)",
                 PreparedStatement.RETURN_GENERATED_KEYS);
 
         try {
+            statement.setTimestamp(1, now);
             statement.executeUpdate();
 
             final ResultSet rs = statement.getGeneratedKeys();

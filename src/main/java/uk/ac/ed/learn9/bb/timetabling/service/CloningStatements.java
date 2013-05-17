@@ -114,6 +114,9 @@ class CloningStatements extends Object {
             case Types.CHAR:
             case Types.CLOB:
             case Types.VARCHAR:
+            case Types.NCHAR:
+            case Types.NCLOB:
+            case Types.NVARCHAR:
                 statement.setString(colIdx, sourceRow.getString(entry.getKey()));
                 break;
             case Types.FLOAT:
