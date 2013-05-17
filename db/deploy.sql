@@ -1,6 +1,7 @@
 CREATE TABLE activity_template (
   tt_template_id VARCHAR2(32) NOT NULL,
   tt_template_name VARCHAR2(255) DEFAULT NULL,
+  learn_group_set_id VARCHAR2(80) DEFAULT NULL,
   PRIMARY KEY (tt_template_id)
 );
 
