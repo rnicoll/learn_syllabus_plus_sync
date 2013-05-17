@@ -15,6 +15,8 @@ import uk.ac.ed.learn9.bb.timetabling.util.DbScriptUtil;
 
 @ContextConfiguration(locations={"classpath:applicationContext-test.xml"})
 public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests {
+    public static final String LOCATION_RDB_DB_SCHEMA_RESOURCE = "classpath:rdb_schema.sql";
+    public static final String LOCATION_RDB_DB_DROP_RESOURCE = "classpath:rdb_drop.sql";
     public static final String LOCATION_SYNC_DB_SCHEMA_RESOURCE = "classpath:sync_db_schema.sql";
     public static final String LOCATION_SYNC_DB_DROP_RESOURCE = "classpath:sync_db_drop.sql";
     
@@ -102,6 +104,15 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     
     @Before
     public void before() throws IOException, SQLException {
+        final File rdbDbSchema = this.applicationContext.getResource(LOCATION_RDB_DB_SCHEMA_RESOURCE).getFile();
+        final Connection rdbConnection = this.getService().getCacheDataSource().getConnection();
+        
+        try {
+            DbScriptUtil.runScript(rdbConnection, rdbDbSchema);
+        } finally {
+            rdbConnection.close();
+        }
+        
         final File syncDbSchema = this.applicationContext.getResource(LOCATION_SYNC_DB_SCHEMA_RESOURCE).getFile();
         final Connection connection = this.getService().getCacheDataSource().getConnection();
         
