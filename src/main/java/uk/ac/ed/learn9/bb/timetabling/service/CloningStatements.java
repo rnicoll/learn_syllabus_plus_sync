@@ -135,6 +135,9 @@ class CloningStatements extends Object {
                     entry, colType);
         }
         
+        System.out.println("Running insert "
+            + this.insertStatement);
+        
         return this.insertStatement.executeUpdate();
     }
 

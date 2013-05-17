@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 import org.junit.After;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -13,6 +14,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 import uk.ac.ed.learn9.bb.timetabling.RdbIdSource;
 import uk.ac.ed.learn9.bb.timetabling.SequentialRdbIdSource;
+import uk.ac.ed.learn9.bb.timetabling.dao.ModuleDao;
 import uk.ac.ed.learn9.bb.timetabling.data.AcademicYearCode;
 import uk.ac.ed.learn9.bb.timetabling.data.Module;
 import uk.ac.ed.learn9.bb.timetabling.util.DbScriptUtil;
@@ -157,16 +159,22 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
         System.out.println("synchroniseTimetablingData");
         final SynchronisationService instance = this.getService();
         
+        final AcademicYearCode academicYearCode = new AcademicYearCode("2013/4");
+        final Module testModule;
         final Connection rdbConnection = instance.getRdbDataSource().getConnection();
         try {
             final RdbIdSource rdbIdSource = new SequentialRdbIdSource();
-            final AcademicYearCode academicYearCode = new AcademicYearCode("2013/4");
-            final Module testModule = RdbUtil.createTestModule(rdbConnection, academicYearCode, rdbIdSource);
+            testModule = RdbUtil.createTestModule(rdbConnection, academicYearCode, rdbIdSource);
         } finally {
             rdbConnection.close();
         }
         
         instance.synchroniseTimetablingData();
+        
+        final ModuleDao moduleDao = this.applicationContext.getBean(ModuleDao.class);
+        final List<Module> modules = moduleDao.getAll();
+        
+        assertEquals(1, modules.size());
     }
 
     /**
