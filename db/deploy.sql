@@ -53,15 +53,6 @@ CREATE TABLE synchronisation_run (
 CREATE INDEX run_diff_uniq ON synchronisation_run(previous_run_id);
 
 CREATE SEQUENCE SYNCHRONISATION_RUN_SEQ;
-set define off;
-CREATE TRIGGER SYNCHRONISATION_RUN_PK
-  BEFORE INSERT ON SYNCHRONISATION_RUN
-    for each row
-    begin
-      select SYNCHRONISATION_RUN_SEQ.nextval into :new.run_id from dual;
-    end;
-/
-set define on;
 
 CREATE TABLE cache_enrolment (
   run_id INTEGER NOT NULL CONSTRAINT cache_run REFERENCES synchronisation_run(run_id),
@@ -161,11 +152,15 @@ SET DEFINE OFF;
 CREATE OR REPLACE TRIGGER course_code_ins BEFORE INSERT OR UPDATE ON module
    FOR EACH ROW WHEN ( REGEXP_LIKE (new.tt_course_code, '^[A-Z][A-Z0-9]+_[A-Z][A-Z0-9]+_[A-Z][A-Z0-9]+$') )
    BEGIN
-     :new.cache_course_code := SUBSTR(:new.tt_course_code, 0, INSTR('_', :new.tt_course_code)-1);
-     :new.cache_semester_code := SUBSTR(:new.tt_course_code, INSTR('_', :new.tt_course_code, LENGTH(:new.cache_course_code)+2)+1);
+     :new.cache_course_code := SUBSTR(:new.tt_course_code, 0, INSTR(:new.tt_course_code, '_')-1);
+     :new.cache_semester_code := SUBSTR(:new.tt_course_code, INSTR(:new.tt_course_code, '_', LENGTH(:new.cache_course_code)+2)+1);
      :new.cache_occurrence_code := SUBSTR(:new.tt_course_code, LENGTH(:new.cache_course_code)+2, (LENGTH(:new.tt_course_code) - LENGTH(:new.cache_course_code) - LENGTH(:new.cache_semester_code) - 2));
      :new.learn_academic_year := REPLACE(:new.tt_academic_year, '/', '-');
      :new.learn_course_code := :new.cache_course_code || :new.learn_academic_year || :new.cache_occurrence_code || :new.cache_semester_code;
    END;
 /
 SET DEFINE ON;
+
+DELETE FROM ENROLMENT_CHANGE;
+DELETE FROM CACHE_ENROLMENT;
+DELETE FROM MODULE;

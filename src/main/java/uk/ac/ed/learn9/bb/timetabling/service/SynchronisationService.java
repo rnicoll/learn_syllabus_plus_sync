@@ -353,24 +353,30 @@ public class SynchronisationService extends Object {
     public SynchronisationRun startNewRun(final Connection destination)
             throws SQLException {
         final int runId;
-        final Timestamp now = new Timestamp(System.currentTimeMillis());
-        final PreparedStatement statement = destination.prepareStatement(
-            "INSERT INTO synchronisation_run "
-                + "(previous_run_id, start_time) "
-                + "(SELECT MAX(run_id), ? FROM synchronisation_run WHERE end_time IS NOT NULL)",
-                PreparedStatement.RETURN_GENERATED_KEYS);
-
+        final PreparedStatement idStatement = destination.prepareStatement("SELECT SYNCHRONISATION_RUN_SEQ.NEXTVAL FROM DUAL");
+        
         try {
-            statement.setTimestamp(1, now);
-            statement.executeUpdate();
-
-            final ResultSet rs = statement.getGeneratedKeys();
+            final ResultSet rs = idStatement.executeQuery();
             try {
                 rs.next();
                 runId = rs.getInt(1);
             } finally {
                 rs.close();
             }
+        } finally {
+            idStatement.close();
+        }
+        
+        final Timestamp now = new Timestamp(System.currentTimeMillis());
+        final PreparedStatement statement = destination.prepareStatement(
+            "INSERT INTO synchronisation_run "
+                + "(run_id, previous_run_id, start_time) "
+                + "(SELECT ?, MAX(run_id) previous_run_id, ? FROM synchronisation_run WHERE end_time IS NOT NULL)");
+
+        try {
+            statement.setInt(1, runId);
+            statement.setTimestamp(2, now);
+            statement.executeUpdate();
         } finally {
             statement.close();
         }
