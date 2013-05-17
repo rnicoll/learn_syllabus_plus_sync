@@ -93,8 +93,19 @@ class CloningStatements extends Object {
         
         return query.toString();
     }
-            
-    protected static void copyIntoStatement(final PreparedStatement statement, final ResultSet sourceRow,
+           
+    /**
+     * Copies a field from the given result set, in a prepared statement, ready
+     * for use in an UPDATE/INSERT statement.
+     * 
+     * @param statement the statement to set the value on.
+     * @param sourceRow the result set to pull data from.
+     * @param colIdx the index within the statement of the column to set a value for.
+     * @param entry a map entry for the source/destination column names.
+     * @param colType the type (as in java.sql.Types) of the column.
+     * @throws SQLException 
+     */
+    private static void copyIntoStatement(final PreparedStatement statement, final ResultSet sourceRow,
         final int colIdx, final Map.Entry<String, String> entry, final int colType) throws SQLException {
         switch (colType) {
             case Types.INTEGER:
@@ -134,9 +145,6 @@ class CloningStatements extends Object {
             copyIntoStatement(this.insertStatement, sourceRow, colIdx++,
                     entry, colType);
         }
-        
-        System.out.println("Running insert "
-            + this.insertStatement);
         
         return this.insertStatement.executeUpdate();
     }
