@@ -174,9 +174,12 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
         final ModuleDao moduleDao = this.applicationContext.getBean(ModuleDao.class);
         final List<Module> modules = moduleDao.getAll();
         
-        // FIXME: For some reason copied modules aren't loaded - need
-        // to track down why.
         assertEquals(1, modules.size());
+        
+        final Module result = modules.get(0);
+        assertEquals(testModule.getModuleId(), result.getModuleId());
+        assertEquals(testModule.getTimetablingCourseCode(), result.getTimetablingCourseCode());
+        assertEquals(academicYearCode.toString(), result.getTimetablingAcademicYear());
     }
 
     /**
