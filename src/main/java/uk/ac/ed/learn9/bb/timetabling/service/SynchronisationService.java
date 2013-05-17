@@ -340,9 +340,6 @@ public class SynchronisationService extends Object {
         } finally {
             source.close();
         }
-        
-        // Refresh the fields on modules derived from Timetabling data
-        // this.refreshModuleCacheFields();
     }
 
     /**
@@ -465,61 +462,6 @@ public class SynchronisationService extends Object {
             this.getBlackboardService().mapStudentSetsToUsers(connection, run);
         } finally {
             connection.close();
-        }
-    }
-
-    /**
-     * Refreshes local copies of various bits of data about a course, based
-     * on a Timetabling module. Specifically this updates:
-     * 
-     * <ul>
-     * <li>cache_course_code</li>
-     * <li>cache_occurrence_code</li>
-     * <li>cache_semester_code</li>
-     * <li>learn_academic_year</li>
-     * <li>learn_course_code</li>
-     * </ul>
-     * 
-     * @throws SQLException 
-     */
-    public void refreshModuleCacheFields()
-            throws SQLException {
-        final Connection cacheDatabase = this.getCacheDataSource().getConnection();
-        
-        try {
-            final Statement statement = cacheDatabase.createStatement();
-            
-            try {
-                // First of all, where the timetabling course code is in a suitable
-                // form, split it into three separate parts.
-                statement.executeUpdate("UPDATE module SET cache_course_code=LEFT(tt_course_code, LOCATE('_', tt_course_code)-1) "
-                    + "WHERE tt_course_code RLIKE '"
-                    + COURSE_CODE_REGEXP + "'");
-                // Null any cached course codes for modules that don't match a course
-                // code any more
-                statement.executeUpdate("UPDATE module SET cache_course_code=NULL "
-                    + "WHERE tt_course_code NOT RLIKE '"
-                    + COURSE_CODE_REGEXP + "'");
-                
-                // Split out semester (last part of a timetabling course code)
-                statement.executeUpdate("UPDATE module SET cache_semester_code=SUBSTR(tt_course_code FROM LOCATE('_', tt_course_code, LENGTH(cache_course_code)+2)+1) "
-                    + "WHERE cache_course_code IS NOT NULL");
-                
-                // Split out occurrence (middle of a timetabling course code)
-                statement.executeUpdate("UPDATE module SET cache_occurrence_code=SUBSTR(tt_course_code FROM LENGTH(cache_course_code)+2 FOR (LENGTH(tt_course_code) - LENGTH(cache_course_code) - LENGTH(cache_semester_code) - 2)) "
-                    + "	WHERE cache_course_code IS NOT NULL");
-                
-                // Convert the academic year to the form used by Learn
-                statement.executeUpdate("UPDATE module SET learn_academic_year=REPLACE(tt_academic_year, '/', '-') "
-                    + "WHERE LENGTH(tt_academic_year)='6'");
-                
-                // Build a course code as used in Learn
-                statement.executeUpdate("UPDATE module SET learn_course_code=CONCAT(cache_course_code, learn_academic_year, cache_occurrence_code, cache_semester_code)");
-            } finally {
-                statement.close();
-            }
-        } finally {
-            cacheDatabase.close();
         }
     }
 

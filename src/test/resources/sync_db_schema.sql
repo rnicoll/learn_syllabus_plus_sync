@@ -139,6 +139,7 @@ CREATE VIEW removed_enrolment_vw AS
 			JOIN sync_student_set_vw stu ON stu.tt_student_set_id = cb.tt_student_set_id
 			LEFT JOIN cache_enrolment ca ON ca.run_id = a.run_id AND cb.tt_student_set_id = ca.tt_student_set_id AND cb.tt_activity_id = ca.tt_activity_id
 		WHERE ca.tt_student_set_id IS NULL);
+
 CREATE TRIGGER course_code_ins BEFORE INSERT ON module 
    REFERENCING NEW ROW AS newrow
    FOR EACH ROW WHEN (REGEXP_MATCHES (newrow.tt_course_code, '^[A-Z][A-Z0-9]+_[A-Z][A-Z0-9]+_[A-Z][A-Z0-9]+$'))
@@ -148,7 +149,8 @@ CREATE TRIGGER course_code_ins BEFORE INSERT ON module
      SET newrow.cache_occurrence_code=SUBSTRING(newrow.tt_course_code FROM LENGTH(newrow.cache_course_code)+2 FOR (LENGTH(newrow.tt_course_code) - LENGTH(newrow.cache_course_code) - LENGTH(newrow.cache_semester_code) - 2));
      SET newrow.learn_academic_year=REPLACE(newrow.tt_academic_year, '/', '-');
      SET newrow.learn_course_code=CONCAT(newrow.cache_course_code, newrow.learn_academic_year, newrow.cache_occurrence_code, newrow.cache_semester_code);
-   END
+   END;
+
 CREATE TRIGGER course_code_upd BEFORE UPDATE ON module 
    REFERENCING NEW ROW AS newrow
    FOR EACH ROW WHEN (REGEXP_MATCHES (newrow.tt_course_code, '^[A-Z][A-Z0-9]+_[A-Z][A-Z0-9]+_[A-Z][A-Z0-9]+$'))

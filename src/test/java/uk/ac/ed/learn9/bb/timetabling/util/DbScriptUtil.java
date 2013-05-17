@@ -22,8 +22,13 @@ public class DbScriptUtil {
         final Statement statement = connection.createStatement();
         
         try {
+            // Count the number of BEGIN/END keywords, used to wrap procedural
+            // chunks that may include ";" characters without ending the statement.
+            int beginCount = 0;
+            int endCount = 0;
+            
             for (String line = reader.readLine(); null != line; line = reader.readLine()) {
-                final String trimmedLine = line.trim();
+                final String trimmedLine = line.trim().toUpperCase();
                 
                 if (trimmedLine.length() == 0) {
                     continue;
@@ -31,7 +36,15 @@ public class DbScriptUtil {
                 
                 buffer.append(line).append("\n");
                 
-                if (trimmedLine.endsWith(";")) {
+                if (trimmedLine.contains("BEGIN ATOMIC")) {
+                    beginCount++;
+                } else if (beginCount > endCount
+                    && trimmedLine.contains("END;")) {
+                    endCount++;
+                }
+                
+                if (trimmedLine.endsWith(";")
+                    && (beginCount == endCount)) {
                     try {
                         statement.executeUpdate(buffer.toString());
                     } catch(SQLException e) {
@@ -39,6 +52,8 @@ public class DbScriptUtil {
                             + buffer.toString(), e);
                     }
                     buffer = new StringBuilder();
+                    beginCount = 0;
+                    endCount = 0;
                 }
             }
         } finally {

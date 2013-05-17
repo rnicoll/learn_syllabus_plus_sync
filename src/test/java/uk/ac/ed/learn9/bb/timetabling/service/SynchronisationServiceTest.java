@@ -15,8 +15,8 @@ import uk.ac.ed.learn9.bb.timetabling.util.DbScriptUtil;
 
 @ContextConfiguration(locations={"classpath:applicationContext-test.xml"})
 public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests {
-    public static final String LOCATION_RDB_DB_SCHEMA_RESOURCE = "classpath:rdb_schema.sql";
-    public static final String LOCATION_RDB_DB_DROP_RESOURCE = "classpath:rdb_drop.sql";
+    public static final String LOCATION_RDB_DB_SCHEMA_RESOURCE = "classpath:rdb_db_schema.sql";
+    public static final String LOCATION_RDB_DB_DROP_RESOURCE = "classpath:rdb_db_drop.sql";
     public static final String LOCATION_SYNC_DB_SCHEMA_RESOURCE = "classpath:sync_db_schema.sql";
     public static final String LOCATION_SYNC_DB_DROP_RESOURCE = "classpath:sync_db_drop.sql";
     
@@ -104,34 +104,43 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     
     @Before
     public void before() throws IOException, SQLException {
-        final File rdbDbSchema = this.applicationContext.getResource(LOCATION_RDB_DB_SCHEMA_RESOURCE).getFile();
-        final Connection rdbConnection = this.getService().getCacheDataSource().getConnection();
+        final Connection syncConnection = this.getService().getCacheDataSource().getConnection();
         
         try {
+            final File syncDbSchema = this.applicationContext.getResource(LOCATION_SYNC_DB_SCHEMA_RESOURCE).getFile();
+            DbScriptUtil.runScript(syncConnection, syncDbSchema);
+        } finally {
+            syncConnection.close();
+        }
+        
+        final Connection rdbConnection = this.getService().getRdbDataSource().getConnection();
+        
+        try {
+            final File rdbDbSchema = this.applicationContext.getResource(LOCATION_RDB_DB_SCHEMA_RESOURCE).getFile();
             DbScriptUtil.runScript(rdbConnection, rdbDbSchema);
         } finally {
             rdbConnection.close();
-        }
-        
-        final File syncDbSchema = this.applicationContext.getResource(LOCATION_SYNC_DB_SCHEMA_RESOURCE).getFile();
-        final Connection connection = this.getService().getCacheDataSource().getConnection();
-        
-        try {
-            DbScriptUtil.runScript(connection, syncDbSchema);
-        } finally {
-            connection.close();
         }
     }
     
     @After
     public void after() throws IOException, SQLException {
-        final File syncDbSchema = this.applicationContext.getResource(LOCATION_SYNC_DB_DROP_RESOURCE).getFile();
-        final Connection connection = this.getService().getCacheDataSource().getConnection();
+        final Connection syncConnection = this.getService().getCacheDataSource().getConnection();
         
         try {
-            DbScriptUtil.runScript(connection, syncDbSchema);
+            final File syncDbSchema = this.applicationContext.getResource(LOCATION_SYNC_DB_DROP_RESOURCE).getFile();
+            DbScriptUtil.runScript(syncConnection, syncDbSchema);
         } finally {
-            connection.close();
+            syncConnection.close();
+        }
+        
+        final Connection rdbConnection = this.getService().getRdbDataSource().getConnection();
+        
+        try {
+            final File rdbDbSchema = this.applicationContext.getResource(LOCATION_RDB_DB_DROP_RESOURCE).getFile();
+            DbScriptUtil.runScript(rdbConnection, rdbDbSchema);
+        } finally {
+            rdbConnection.close();
         }
     }
     
