@@ -11,7 +11,12 @@ import org.junit.Before;
 
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
+import uk.ac.ed.learn9.bb.timetabling.RdbIdSource;
+import uk.ac.ed.learn9.bb.timetabling.SequentialRdbIdSource;
+import uk.ac.ed.learn9.bb.timetabling.data.AcademicYearCode;
+import uk.ac.ed.learn9.bb.timetabling.data.Module;
 import uk.ac.ed.learn9.bb.timetabling.util.DbScriptUtil;
+import uk.ac.ed.learn9.bb.timetabling.util.RdbUtil;
 
 @ContextConfiguration(locations={"classpath:applicationContext-test.xml"})
 public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests {
@@ -151,6 +156,16 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     public void testTimetablingSynchroniseData() throws Exception {
         System.out.println("synchroniseTimetablingData");
         final SynchronisationService instance = this.getService();
+        
+        final Connection rdbConnection = instance.getRdbDataSource().getConnection();
+        try {
+            final RdbIdSource rdbIdSource = new SequentialRdbIdSource();
+            final AcademicYearCode academicYearCode = new AcademicYearCode("2013/4");
+            final Module testModule = RdbUtil.createTestModule(rdbConnection, academicYearCode, rdbIdSource);
+        } finally {
+            rdbConnection.close();
+        }
+        
         instance.synchroniseTimetablingData();
     }
 

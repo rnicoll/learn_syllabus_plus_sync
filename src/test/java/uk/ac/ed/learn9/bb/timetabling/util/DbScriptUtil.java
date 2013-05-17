@@ -36,6 +36,8 @@ public class DbScriptUtil {
                 
                 buffer.append(line).append("\n");
                 
+                // Watch out for keywords that suggest the start of a procedural
+                // chunk
                 if (trimmedLine.contains("BEGIN ATOMIC")) {
                     beginCount++;
                 } else if (beginCount > endCount
