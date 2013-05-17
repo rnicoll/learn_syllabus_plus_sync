@@ -33,6 +33,48 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     public SynchronisationService getService() {
         return this.applicationContext.getBean(SynchronisationService.class);
     }
+    
+    @Before
+    public void before() throws IOException, SQLException {
+        final Connection syncConnection = this.getService().getCacheDataSource().getConnection();
+        
+        try {
+            final File syncDbSchema = this.applicationContext.getResource(LOCATION_SYNC_DB_SCHEMA_RESOURCE).getFile();
+            DbScriptUtil.runScript(syncConnection, syncDbSchema);
+        } finally {
+            syncConnection.close();
+        }
+        
+        final Connection rdbConnection = this.getService().getRdbDataSource().getConnection();
+        
+        try {
+            final File rdbDbSchema = this.applicationContext.getResource(LOCATION_RDB_DB_SCHEMA_RESOURCE).getFile();
+            DbScriptUtil.runScript(rdbConnection, rdbDbSchema);
+        } finally {
+            rdbConnection.close();
+        }
+    }
+    
+    @After
+    public void after() throws IOException, SQLException {
+        final Connection syncConnection = this.getService().getCacheDataSource().getConnection();
+        
+        try {
+            final File syncDbSchema = this.applicationContext.getResource(LOCATION_SYNC_DB_DROP_RESOURCE).getFile();
+            DbScriptUtil.runScript(syncConnection, syncDbSchema);
+        } finally {
+            syncConnection.close();
+        }
+        
+        final Connection rdbConnection = this.getService().getRdbDataSource().getConnection();
+        
+        try {
+            final File rdbDbSchema = this.applicationContext.getResource(LOCATION_RDB_DB_DROP_RESOURCE).getFile();
+            DbScriptUtil.runScript(rdbConnection, rdbDbSchema);
+        } finally {
+            rdbConnection.close();
+        }
+    }
 
     /**
      * Test of applyEnrolmentChanges method, of class SynchronisationService.
@@ -109,48 +151,6 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     }
      */
     
-    @Before
-    public void before() throws IOException, SQLException {
-        final Connection syncConnection = this.getService().getCacheDataSource().getConnection();
-        
-        try {
-            final File syncDbSchema = this.applicationContext.getResource(LOCATION_SYNC_DB_SCHEMA_RESOURCE).getFile();
-            DbScriptUtil.runScript(syncConnection, syncDbSchema);
-        } finally {
-            syncConnection.close();
-        }
-        
-        final Connection rdbConnection = this.getService().getRdbDataSource().getConnection();
-        
-        try {
-            final File rdbDbSchema = this.applicationContext.getResource(LOCATION_RDB_DB_SCHEMA_RESOURCE).getFile();
-            DbScriptUtil.runScript(rdbConnection, rdbDbSchema);
-        } finally {
-            rdbConnection.close();
-        }
-    }
-    
-    @After
-    public void after() throws IOException, SQLException {
-        final Connection syncConnection = this.getService().getCacheDataSource().getConnection();
-        
-        try {
-            final File syncDbSchema = this.applicationContext.getResource(LOCATION_SYNC_DB_DROP_RESOURCE).getFile();
-            DbScriptUtil.runScript(syncConnection, syncDbSchema);
-        } finally {
-            syncConnection.close();
-        }
-        
-        final Connection rdbConnection = this.getService().getRdbDataSource().getConnection();
-        
-        try {
-            final File rdbDbSchema = this.applicationContext.getResource(LOCATION_RDB_DB_DROP_RESOURCE).getFile();
-            DbScriptUtil.runScript(rdbConnection, rdbDbSchema);
-        } finally {
-            rdbConnection.close();
-        }
-    }
-    
     /**
      * Test of synchroniseTimetablingData method, of class SynchronisationService.
      */
@@ -159,27 +159,43 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
         System.out.println("synchroniseTimetablingData");
         final SynchronisationService instance = this.getService();
         
-        final AcademicYearCode academicYearCode = new AcademicYearCode("2013/4");
-        final Module testModule;
+        AcademicYearCode academicYearCode = new AcademicYearCode("2012/3");
+        final Module expResultModule;
         final Connection rdbConnection = instance.getRdbDataSource().getConnection();
         try {
             final RdbIdSource rdbIdSource = new SequentialRdbIdSource();
-            testModule = RdbUtil.createTestModule(rdbConnection, academicYearCode, rdbIdSource);
+            expResultModule = RdbUtil.createTestModule(rdbConnection, academicYearCode, rdbIdSource);
+        
+            instance.synchroniseTimetablingData();
+
+            final ModuleDao moduleDao = this.applicationContext.getBean(ModuleDao.class);
+            List<Module> modules = moduleDao.getAll();
+
+            assertEquals(1, modules.size());
+
+            Module resultModule = modules.get(0);
+            assertEquals(expResultModule.getModuleId(), resultModule.getModuleId());
+            assertEquals(expResultModule.getTimetablingCourseCode(), resultModule.getTimetablingCourseCode());
+            assertEquals(academicYearCode.toString(), resultModule.getTimetablingAcademicYear());
+        
+            // Change the academic year code, re-sync and check it's updated
+            // correctly.
+            academicYearCode = new AcademicYearCode("2013/4");
+            RdbUtil.updateModuleAyr(rdbConnection, academicYearCode, expResultModule);
+            
+            instance.synchroniseTimetablingData();
+            
+            modules = moduleDao.getAll();
+            
+            assertEquals(1, modules.size());
+
+            resultModule = modules.get(0);
+            assertEquals(expResultModule.getModuleId(), resultModule.getModuleId());
+            assertEquals(expResultModule.getTimetablingCourseCode(), resultModule.getTimetablingCourseCode());
+            assertEquals(academicYearCode.toString(), resultModule.getTimetablingAcademicYear());
         } finally {
             rdbConnection.close();
         }
-        
-        instance.synchroniseTimetablingData();
-        
-        final ModuleDao moduleDao = this.applicationContext.getBean(ModuleDao.class);
-        final List<Module> modules = moduleDao.getAll();
-        
-        assertEquals(1, modules.size());
-        
-        final Module result = modules.get(0);
-        assertEquals(testModule.getModuleId(), result.getModuleId());
-        assertEquals(testModule.getTimetablingCourseCode(), result.getTimetablingCourseCode());
-        assertEquals(academicYearCode.toString(), result.getTimetablingAcademicYear());
     }
 
     /**

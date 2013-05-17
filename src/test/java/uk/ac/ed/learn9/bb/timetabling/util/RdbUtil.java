@@ -63,4 +63,21 @@ public class RdbUtil {
         
         return module;
     }
+
+    public static int updateModuleAyr(final Connection rdb, final AcademicYearCode academicYearCode,
+            final Module testModule)
+        throws SQLException {
+        testModule.setTimetablingAcademicYear(academicYearCode.toString());
+        
+        final PreparedStatement statement = rdb.prepareStatement(
+            "UPDATE MODULE SET USER_TEXT_2=? "
+                + "WHERE ID=?");
+        try {
+            statement.setString(1, academicYearCode.toString());
+            statement.setString(2, testModule.getModuleId());
+            return statement.executeUpdate();
+        } finally {
+            statement.close();
+        }
+    }
 }
