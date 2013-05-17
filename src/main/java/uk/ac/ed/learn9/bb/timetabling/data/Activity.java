@@ -5,7 +5,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.OneToMany;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 /**
@@ -44,7 +44,7 @@ public class Activity extends Object implements Serializable {
     /**
      * @return the module this activity belongs to.
      */
-    @OneToMany
+    @ManyToOne
     @JoinColumn(name="tt_module_id")
     public Module getModule() {
         return module;

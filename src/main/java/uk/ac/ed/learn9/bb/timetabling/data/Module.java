@@ -24,7 +24,7 @@ public class Module extends Object implements Serializable {
     private String learnAcademicYear;
     private String learnCourseId;
     private String learnCourseCode;
-    private boolean webctActive;
+    private Boolean webctActive;
 
     /**
      * @return the ID of the module in Timetabling.
@@ -120,7 +120,7 @@ public class Module extends Object implements Serializable {
      */
     @Column(name="webct_active", nullable=true)
     @Type(type="yes_no")
-    public boolean getWebctActive() {
+    public Boolean getWebctActive() {
         return webctActive;
     }
 
@@ -204,7 +204,7 @@ public class Module extends Object implements Serializable {
     /**
      * @param webctActive the webctActive to set
      */
-    public void setWebctActive(final boolean webctActive) {
+    public void setWebctActive(final Boolean webctActive) {
         this.webctActive = webctActive;
     }
 }
