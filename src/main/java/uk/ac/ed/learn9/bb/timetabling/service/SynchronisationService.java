@@ -342,7 +342,7 @@ public class SynchronisationService extends Object {
         }
         
         // Refresh the fields on modules derived from Timetabling data
-        this.refreshModuleCacheFields();
+        // this.refreshModuleCacheFields();
     }
 
     /**

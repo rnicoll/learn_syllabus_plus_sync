@@ -5,9 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Abstract service for cloning tables from one database to another. Intended
@@ -39,14 +37,12 @@ public abstract class AbstractCloneService extends Object {
         destination.setAutoCommit(false);
         try {
             final PreparedStatement destinationStatement = destination.prepareStatement(
-                    buildQuery(destinationTable, destinationPkField, fieldMappings.values()),
-                    ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+                    buildQuery(destinationTable, destinationPkField, fieldMappings.values()));
             try {
                 final PreparedStatement sourceStatement = source.prepareStatement(
-                        buildQuery(sourceTable, sourcePkField, fieldMappings.keySet()),
-                        ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+                        buildQuery(sourceTable, sourcePkField, fieldMappings.keySet()));
                 try {
-                    cloneQuery(sourceStatement, destinationStatement,
+                    cloneQuery(destinationTable, sourceStatement, destinationStatement,
                             sourcePkField, destinationPkField,
                             fieldMappings);
                     destination.commit();
@@ -65,10 +61,8 @@ public abstract class AbstractCloneService extends Object {
     /**
      * Clones the data in from one query statement into another.
      *
-     * @param sourceStatement the prepared statement to read data from. This
-     * must be set up so it is scroll insensitive.
+     * @param sourceStatement the prepared statement to read data from.
      * @param destinationStatement the prepared statement to write data into.
-     * This must be set up to be updatable.
      * @param sourcePkField the name of the primary key field on the source
      * table. Tables with compound primary keys are not supported.
      * @param destinationPkField the name of the primary key field on the
@@ -76,7 +70,8 @@ public abstract class AbstractCloneService extends Object {
      * @param fieldMappings a mapping from source field names to destination
      * fields, for non-primary key fields to be cloned.
      */
-    public void cloneQuery(final PreparedStatement sourceStatement, final PreparedStatement destinationStatement,
+    public void cloneQuery(final String destinationTable,
+            final PreparedStatement sourceStatement, final PreparedStatement destinationStatement,
             final String sourcePkField, final String destinationPkField,
             final Map<String, String> fieldMappings)
             throws SQLException {
@@ -84,7 +79,8 @@ public abstract class AbstractCloneService extends Object {
         try {
             final ResultSet sourceRs = sourceStatement.executeQuery();
             try {
-                cloneResultSet(sourceRs, destinationRs, sourcePkField, destinationPkField, fieldMappings);
+                cloneResultSet(destinationTable, sourceRs, destinationRs,
+                    sourcePkField, destinationPkField, fieldMappings);
             } finally {
                 sourceRs.close();
             }
@@ -96,10 +92,8 @@ public abstract class AbstractCloneService extends Object {
     /**
      * Clones the data in from one result set into another.
      *
-     * @param sourceRs the result set to read data from. This must be scroll
-     * insensitive.
-     * @param destinationRs the result set to write data into. This must be
-     * updatable.
+     * @param sourceRs the result set to read data from.
+     * @param destinationRs the result set to write data into.
      * @param sourcePkField the name of the primary key field on the source
      * table. Tables with compound primary keys are not supported.
      * @param destinationPkField the name of the primary key field on the
@@ -107,118 +101,74 @@ public abstract class AbstractCloneService extends Object {
      * @param fieldMappings a mapping from source field names to destination
      * fields, for non-primary key fields to be cloned.
      */
-    public void cloneResultSet(final ResultSet sourceRs, final ResultSet destinationRs,
+    public void cloneResultSet(final String destinationTable,
+            final ResultSet sourceRs, final ResultSet destinationRs,
             final String sourcePkField, final String destinationPkField,
             final Map<String, String> fieldMappings)
             throws SQLException {
-        // Verify the result sets are set up correctly.
-        switch (sourceRs.getType()) {
-            case ResultSet.TYPE_SCROLL_INSENSITIVE:
-            case ResultSet.TYPE_SCROLL_SENSITIVE:
-                // That's fine
-                break;
-            case ResultSet.TYPE_FORWARD_ONLY:
-                throw new IllegalArgumentException("Source result set must be set to be scrollable; result set is set to forward only.");
-            default:
-                // Errr... can't tell. Rather than exploding just on unexpected
-                // input, we'll leave the JDBC driver to handle this.
-                break;
-        }
-        
-        switch (destinationRs.getConcurrency()) {
-            case ResultSet.CONCUR_UPDATABLE:
-                // That's what we want
-                break;
-            case ResultSet.CONCUR_READ_ONLY:
-                throw new IllegalArgumentException("Destination result set must be set to be updatable; result set is set to read-only.");
-            default:
-                // Errr... can't tell. Rather than exploding just on unexpected
-                // input, we'll leave the JDBC driver to handle this.
-                break;
-        }
-        
-        String destinationPk = null;
-        final Set<String> existingPks = new HashSet<String>();
+        final CloningStatements cloningStatements = new CloningStatements(
+                destinationRs.getStatement().getConnection(),
+                destinationTable, sourcePkField, destinationPkField,
+                fieldMappings, destinationRs);
 
-        // First, update existing records, and note which records we have in the database
-        while (sourceRs.next()) {
-            final String sourcePk = sourceRs.getString(sourcePkField);
+        // First, update existing records
+        if (destinationRs.next()) {
+            String destinationPk = destinationRs.getString(destinationPkField);
+            
+            while (sourceRs.next()) {
+                final String sourcePk = sourceRs.getString(sourcePkField);
 
-            // Check we have a destination primary key value before we start doing comparisons
-            if (null == destinationPk) {
-                if (!destinationRs.next()) {
-                    // Out of existing entries, go to the writing stage.
-                    break;
-                }
-                destinationPk = destinationRs.getString(destinationPkField);
-            }
-
-            while (destinationPk.compareTo(sourcePk) < 0) {
-                // Records that don't exist any longer but we have old copies of; can be ignored
-                if (!destinationRs.next()) {
-                    // Out of existing entries, go to the writing stage.
-                    break;
-                }
-                destinationPk = destinationRs.getString(destinationPkField);
-            }
-
-            // Check if we've found a match, or gone straight past the source key value
-            if (destinationPk.equals(sourcePk)) {
-                // Note that we have this record, and so don't need to insert it later.
-                existingPks.add(sourcePk);
-
-                boolean recordDirty = false;
-
-                // Synchronize the data across - this only handles strings because that's fine here,
-                // but we should handle other data types
-                for (String sourceFieldName : fieldMappings.keySet()) {
-                    final String destinationFieldName = fieldMappings.get(sourceFieldName);
-                    final String sourceVal = sourceRs.getString(sourceFieldName);
-                    final String destinationVal = destinationRs.getString(destinationFieldName);
-
-                    // Delibrately testing two objects being the same, not just
-                    // equal. Equality tests come later.
-                    if (sourceVal == destinationVal) {
-                        // Handle both sides are null
-                        continue;
+                // Continue onwards until we find a match
+                if (destinationPk.compareTo(sourcePk) < 0) {
+                    // We don't delete these records as they may have data attached
+                    // to them.
+                    
+                    while (destinationRs.next()) {
+                        destinationPk = destinationRs.getString(destinationPkField);
+                        if (destinationPk.compareTo(sourcePk) >= 0) {
+                            break;
+                        }
                     }
-
-                    if (null == sourceVal
-                            || null == destinationVal
-                            || !sourceVal.equals(destinationVal)) {
-                        destinationRs.updateString(destinationFieldName, sourceVal);
-                        recordDirty = true;
+                    if (destinationRs.isAfterLast()) {
+                        // No match, insert and then jump to just inserting new records
+                        cloningStatements.insert(sourceRs);
+                        break;
                     }
                 }
 
-                if (recordDirty) {
-                    destinationRs.updateRow();
+                // Check if we've found a match, or gone straight past the source key value
+                if (destinationPk.equals(sourcePk)) {
+                    // Synchronize the data across - this only handles strings because that's fine here,
+                    // but we should handle other data types
+                    for (String sourceFieldName : fieldMappings.keySet()) {
+                        final String destinationFieldName = fieldMappings.get(sourceFieldName);
+                        final String sourceVal = sourceRs.getString(sourceFieldName);
+                        final String destinationVal = destinationRs.getString(destinationFieldName);
+
+                        // Delibrately testing two objects being the same, not just
+                        // equal. Equality tests come later.
+                        if (sourceVal == destinationVal) {
+                            // Handle both sides are null
+                            continue;
+                        }
+
+                        if (null == sourceVal
+                                || null == destinationVal
+                                || !sourceVal.equals(destinationVal)) {
+                            // There are differences, sync
+                            cloningStatements.update(sourceRs);
+                        }
+                    }
+                } else if (destinationPk.compareTo(sourcePk) > 0) {
+                    cloningStatements.insert(sourceRs);
                 }
             }
         }
 
-        // Now insert new records into the database
-        sourceRs.first();
-        destinationRs.moveToInsertRow();
-
+        // Insert any remaining rows
         while (sourceRs.next()) {
-            final String sourcePk = sourceRs.getString(sourcePkField);
-
-            if (existingPks.contains(sourcePk)) {
-                continue;
-            }
-
-            destinationRs.updateString(destinationPkField, sourcePk);
-            for (String sourceFieldName : fieldMappings.keySet()) {
-                final String destinationFieldName = fieldMappings.get(sourceFieldName);
-                final String sourceVal = sourceRs.getString(sourceFieldName);
-                destinationRs.updateString(destinationFieldName, sourceVal);
-            }
-
-            destinationRs.insertRow();
+            cloningStatements.insert(sourceRs);
         }
-
-        return;
     }
 
     /**

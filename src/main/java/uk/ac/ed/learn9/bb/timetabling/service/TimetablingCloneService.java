@@ -195,16 +195,14 @@ public class TimetablingCloneService extends AbstractCloneService {
                 + "JOIN VARIANTJTAACTS VP ON VP.ID=P.ID "
             + "WHERE V.ISJTACHILD='1' "
                 + "AND VP.ISJTAPARENT='1' "
-                + "ORDER BY A.ID",
-            ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY
+                + "ORDER BY A.ID"
         );
         try {
             final PreparedStatement destinationStatement = destination.prepareStatement(
                "SELECT "
                     + CACHE_ACTIVITY_PRIMARY_KEY + ", tt_jta_activity_id "
                     + "FROM " + CACHE_ACTIVITY_TABLE + " "
-                    + "ORDER BY " + CACHE_ACTIVITY_PRIMARY_KEY,
-               ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE
+                    + "ORDER BY " + CACHE_ACTIVITY_PRIMARY_KEY
             );
             try {
                 // Map the "JTA_PARENT_ID" field in the source to the "tt_jta_activity_id"
@@ -212,7 +210,7 @@ public class TimetablingCloneService extends AbstractCloneService {
                 final Map<String, String> fieldMappings = Collections.singletonMap("JTA_PARENT_ID", "tt_jta_activity_id");
                 
                 // Synchronize from one statement to the other.
-                this.cloneQuery(sourceStatement, destinationStatement,
+                this.cloneQuery(CACHE_ACTIVITY_TABLE, sourceStatement, destinationStatement,
                     "ID", CACHE_ACTIVITY_PRIMARY_KEY,
                     fieldMappings);
             } finally {
