@@ -91,7 +91,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     public void testApplyEnrolmentChanges() throws Exception {
         System.out.println("applyEnrolmentChanges");
         SynchronisationRun run = null;
-        SynchronisationService instance = new SynchronisationService();
+        SynchronisationService instance = this.getService();
         instance.applyEnrolmentChanges(run);
         // TODO review the generated test code and remove the default call to fail.
         fail("The test case is a prototype.");
@@ -105,7 +105,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     public void testBuildGroupsDescription() throws Exception {
         System.out.println("buildGroupsDescription");
         
-        SynchronisationService instance = new SynchronisationService();
+        SynchronisationService instance = this.getService();
         
         assertEquals("Tutorial 1 of 3",
             instance.buildGroupDescription("Course Name/1", "Tutorial", 3));
@@ -122,23 +122,8 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     public void testCreateGroupsForActivities() throws Exception {
         System.out.println("createGroupsForActivities");
         SynchronisationRun run = null;
-        SynchronisationService instance = new SynchronisationService();
+        SynchronisationService instance = this.getService();
         instance.createGroupsForActivities(run);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-     */
-
-    /**
-     * Test of generateGroupNames method, of class SynchronisationService.
-     */
-    /*
-    @Test
-    public void testGenerateGroupNames() throws Exception {
-        System.out.println("generateGroupNames");
-        Connection connection = null;
-        SynchronisationService instance = new SynchronisationService();
-        instance.generateGroupNames(connection);
         // TODO review the generated test code and remove the default call to fail.
         fail("The test case is a prototype.");
     }
@@ -151,7 +136,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     @Test
     public void testMapModulesToCourses() throws Exception {
         System.out.println("mapModulesToCourses");
-        SynchronisationService instance = new SynchronisationService();
+        SynchronisationService instance = this.getService();
         instance.mapModulesToCourses();
         // TODO review the generated test code and remove the default call to fail.
         fail("The test case is a prototype.");
@@ -247,7 +232,9 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
 
             instance.synchroniseTimetablingData();
             
-            final Set<String> expectedIds = Collections.singleton(activityTemplateSync.getTemplateId());
+            // Check the set of activity templates in the database view against
+            // the ones we expect to see
+            final Set<String> expResultIds = Collections.singleton(activityTemplateSync.getTemplateId());
             final Set<String> resultIds = new HashSet<String>();
             
             final Connection cacheConnection = instance.getCacheDataSource().getConnection();
@@ -270,7 +257,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
                 cacheConnection.close();
             }
             
-            assertEquals(expectedIds, resultIds);
+            assertEquals(expResultIds, resultIds);
         } finally {
             rdbConnection.close();
         }
@@ -307,6 +294,44 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     }
 
     /**
+     * Test of generateGroupNames method, of class SynchronisationService.
+     */
+    @Test
+    public void testGenerateGroupNames() throws Exception {
+        System.out.println("generateGroupNames");
+        final AcademicYearCode academicYearCode = new AcademicYearCode("2012/3");
+        final SynchronisationService instance = this.getService();
+        final Connection rdbConnection = instance.getRdbDataSource().getConnection();
+        try {
+            final RdbIdSource rdbIdSource = new SequentialRdbIdSource();
+            final ActivityType tutorialType = RdbUtil.createTestActivityType(rdbConnection, "Tutorial", rdbIdSource);
+            final Module module = RdbUtil.createTestModule(rdbConnection, academicYearCode, rdbIdSource);
+            
+            // Generate a pair of activities that we can build names for
+            final ActivityTemplate activityTemplateSync = RdbUtil.createTestActivityTemplate(rdbConnection, module,
+                    tutorialType, "Tutorials", RdbUtil.TemplateForVle.FOR_VLE, rdbIdSource);
+            
+            int activityId = 1;
+            
+            RdbUtil.createTestActivity(rdbConnection, activityTemplateSync,
+                    module, RdbUtil.SchedulingMethod.SCHEDULED, activityId++, rdbIdSource);
+            RdbUtil.createTestActivity(rdbConnection, activityTemplateSync,
+                    module, RdbUtil.SchedulingMethod.SCHEDULED, activityId++, rdbIdSource);
+            
+            final Connection cacheConnection = instance.getCacheDataSource().getConnection();
+            try {
+                instance.synchroniseTimetablingData();
+                instance.generateGroupNames(cacheConnection);
+            } finally {
+                cacheConnection.close();
+            }
+            // XXX: Validate the generated group names
+        } finally {
+            rdbConnection.close();
+        }
+    }
+
+    /**
      * Test of startNewRun method, of class SynchronisationService.
      */
     /*
@@ -314,7 +339,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     public void testStartNewRun() throws Exception {
         System.out.println("startNewRun");
         Connection destination = null;
-        SynchronisationService instance = new SynchronisationService();
+        SynchronisationService instance = this.getService();
         SynchronisationRun expResult = null;
         SynchronisationRun result = instance.startNewRun(destination);
         assertEquals(expResult, result);
@@ -331,7 +356,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     public void testMapStudentSetsToUsers() throws Exception {
         System.out.println("mapStudentSetsToUsers");
         SynchronisationRun run = null;
-        SynchronisationService instance = new SynchronisationService();
+        SynchronisationService instance = this.getService();
         instance.mapStudentSetsToUsers(run);
         // TODO review the generated test code and remove the default call to fail.
         fail("The test case is a prototype.");
@@ -345,7 +370,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     @Test
     public void testUpdateGroupDescriptions() throws Exception {
         System.out.println("updateGroupDescriptions");
-        SynchronisationService instance = new SynchronisationService();
+        SynchronisationService instance = this.getService();
         instance.updateGroupDescriptions();
         // TODO review the generated test code and remove the default call to fail.
         fail("The test case is a prototype.");
