@@ -34,7 +34,6 @@ CREATE TABLE activity (
   tt_module_id VARCHAR2(32) DEFAULT NULL CONSTRAINT activity_module REFERENCES module (tt_module_id),
   tt_template_id VARCHAR2(32) DEFAULT NULL CONSTRAINT activity_template REFERENCES activity_template (tt_template_id),
   tt_type_id VARCHAR2(32) DEFAULT NULL,
-  tt_jta_activity_id VARCHAR2(32) DEFAULT NULL,
   tt_scheduling_method NUMBER(10,0) DEFAULT NULL,
   learn_group_id VARCHAR2(80) DEFAULT NULL,
   learn_group_name NVARCHAR2(255) DEFAULT NULL,
@@ -43,7 +42,7 @@ CREATE TABLE activity (
   PRIMARY KEY (tt_activity_id)
 );
 
-CREATE TABLE variantjtaaccts (
+CREATE TABLE variantjtaacts (
     tt_activity_id VARCHAR2(32) NOT NULL CONSTRAINT variant_activity REFERENCES activity (tt_activity_id),
     tt_is_jta_parent NUMBER(3,0) NOT NULL,
     tt_is_jta_child NUMBER(3,0) NOT NULL,
@@ -121,19 +120,24 @@ CREATE VIEW activity_set_size_vw AS
 			LEFT JOIN activity b ON t.tt_template_id = b.tt_template_id
 		GROUP BY a.tt_activity_id
 	);
+    
+CREATE VIEW variant_child_activities_vw AS
+    (SELECT a.tt_activity_id
+        FROM variantjtaacts a WHERE tt_is_variant_child='1');
 
 CREATE VIEW sync_activities_vw AS
-	(SELECT a.tt_activity_id, a.tt_activity_name, a.tt_jta_activity_id, 
+	(SELECT a.tt_activity_id, a.tt_activity_name, 
 			a.learn_group_id, a.description, a.tt_type_id, a.tt_template_id,
 			m.learn_course_code, m.learn_course_id, s.set_size
 		FROM activity a
 			JOIN module m ON m.tt_module_id = a.tt_module_id
 			JOIN activity_set_size_vw s ON s.tt_activity_id = a.tt_activity_id
 		WHERE a.tt_scheduling_method!='0'
-      AND m.webct_active = 'Y'
+            AND a.tt_activity_id NOT IN (SELECT tt_activity_id FROM variant_child_activities_vw)
+            AND m.webct_active = 'Y'
 			AND s.set_size > '1'
 	);
-  
+        
 CREATE VIEW sync_student_set_vw AS
 	(SELECT s.tt_student_set_id, s.tt_host_key AS username, s.learn_person_id
 		FROM student_set s

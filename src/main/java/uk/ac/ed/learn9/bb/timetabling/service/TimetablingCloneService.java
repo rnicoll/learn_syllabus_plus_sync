@@ -30,7 +30,7 @@ public class TimetablingCloneService extends AbstractCloneService {
     public static final String CACHE_ACTIVITY_TEMPLATE_TABLE = "activity_template";
     public static final String CACHE_MODULE_TABLE = "module";
     public static final String CACHE_STUDENT_SET_TABLE = "student_set";
-    public static final String CACHE_VARIANT_JTA_TABLE = "variantjtaaccts";
+    public static final String CACHE_VARIANT_JTA_TABLE = "variantjtaacts";
     
     public static final String CACHE_ACTIVITY_PRIMARY_KEY = "tt_activity_id";
     public static final String CACHE_ACTIVITY_TEMPLATE_PRIMARY_KEY = "tt_template_id";
