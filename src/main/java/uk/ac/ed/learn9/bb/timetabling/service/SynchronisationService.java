@@ -241,8 +241,8 @@ public class SynchronisationService extends Object {
         // Find groups that need their names completed.
         final PreparedStatement queryStatement = connection.prepareStatement(
                 "SELECT a.tt_activity_id, a.tt_activity_name, a.learn_group_id, a.learn_group_name, m.tt_module_name, t.tt_type_name "
-                    + "FROM activity a "
-                        + "JOIN module m ON m.tt_module_id=a.tt_module_id "
+                    + "FROM sync_activity_vw a "
+                        + "JOIN sync_module_vw m ON m.tt_module_id=a.tt_module_id "
                         + "JOIN activity_type t ON t.tt_type_id=a.tt_type_id "
                     + "WHERE a.learn_group_name IS NULL "
                         + "AND m.learn_course_code IS NOT NULL "

@@ -153,7 +153,7 @@ CREATE VIEW sync_template_vw AS
     );
 
 CREATE VIEW sync_activity_vw AS
-    (SELECT a.tt_activity_id, a.tt_activity_name, a.learn_group_id,
+    (SELECT a.tt_activity_id, a.tt_activity_name, a.tt_module_id, a.learn_group_id,
             a.learn_group_name, a.description, a.tt_type_id, a.tt_template_id,
             m.effective_course_code,
             m.learn_course_id, t.set_size
