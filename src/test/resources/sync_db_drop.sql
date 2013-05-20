@@ -1,14 +1,14 @@
 DROP VIEW REMOVED_ENROLMENT_VW;
 DROP VIEW ADDED_ENROLMENT_VW;
-DROP VIEW jta_sync_activities_vw;
-DROP VIEW non_jta_sync_activities_vw;
-DROP VIEW SYNC_ACTIVITIES_VW;
-DROP VIEW SYNC_MODULES_VW;
-DROP VIEW SYNC_TEMPLATES_VW;
-DROP VIEW jta_child_activities_vw;
-DROP VIEW jta_parent_activities_vw;
-DROP VIEW variant_child_activities_vw;
-DROP VIEW variant_parent_activities_vw;
+DROP VIEW jta_sync_activity_vw;
+DROP VIEW non_jta_sync_activity_vw;
+DROP VIEW SYNC_ACTIVITY_VW;
+DROP VIEW SYNC_MODULE_VW;
+DROP VIEW SYNC_TEMPLATE_VW;
+DROP VIEW jta_child_activity_vw;
+DROP VIEW jta_parent_activity_vw;
+DROP VIEW variant_child_activity_vw;
+DROP VIEW variant_parent_activity_vw;
 DROP VIEW SYNC_STUDENT_SET_VW;
 DROP VIEW TEMPLATE_SET_SIZE_VW;
 

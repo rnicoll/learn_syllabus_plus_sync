@@ -25,6 +25,33 @@ public class RdbUtil {
     public static final String DEPARTMENT_ID = "BF20A0ADF91117B06331C6ED3F9FC187";
     public static final String WEEK_PATTERN = "11111111111111111111111111111111111111111111111111111111111111111";
     
+    public static ActivityType createTestActivityType(final Connection rdb, final String typeName,
+            final RdbIdSource idSource)
+        throws SQLException {
+        final ActivityType template = new ActivityType();
+        
+        template.setTypeId(idSource.getId());
+        template.setTypeName(typeName);
+        
+        final PreparedStatement statement = rdb.prepareStatement(
+            "Insert into ACTIVITYTYPES (ID,NAME,HOST_KEY,DEPARTMENT) "
+                + "VALUES (?,?,?,?)");
+        try {
+            int paramIdx = 1;
+            
+            statement.setString(paramIdx++, template.getTypeId());
+            statement.setString(paramIdx++, template.getTypeName());
+            statement.setString(paramIdx++, RdbUtil.generateHostKey(template.getTypeId()));
+            statement.setString(paramIdx++, DEPARTMENT_ID);
+            
+            statement.executeUpdate();
+        } finally {
+            statement.close();
+        }
+        
+        return template;
+    }
+    
     public static ActivityTemplate createTestActivityTemplate(final Connection rdb, final Module module,
             final ActivityType activityType, final String templateName,
             final TemplateForVle forVle, final RdbIdSource idSource)

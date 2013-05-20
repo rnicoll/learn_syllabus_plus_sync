@@ -40,11 +40,13 @@
         <property name="dataSource" ref="cacheDataSource"/>
         <property name="annotatedClasses">
             <list>
-                <value>uk.ac.ed.learn9.bb.timetabling.data.Activity</value>
-                <value>uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange</value>
-                <value>uk.ac.ed.learn9.bb.timetabling.data.Module</value>
-                <value>uk.ac.ed.learn9.bb.timetabling.data.StudentSet</value>
-                <value>uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun</value>
+                <value>uk.ac.ed.learn9.bb.timetabling.data.cache.ActivityTemplate</value>
+                <value>uk.ac.ed.learn9.bb.timetabling.data.cache.ActivityType</value>
+                <value>uk.ac.ed.learn9.bb.timetabling.data.cache.Activity</value>
+                <value>uk.ac.ed.learn9.bb.timetabling.data.cache.EnrolmentChange</value>
+                <value>uk.ac.ed.learn9.bb.timetabling.data.cache.Module</value>
+                <value>uk.ac.ed.learn9.bb.timetabling.data.cache.StudentSet</value>
+                <value>uk.ac.ed.learn9.bb.timetabling.data.cache.SynchronisationRun</value>
             </list>
         </property>
         <property name="hibernateProperties">
@@ -67,6 +69,12 @@
          class="uk.ac.ed.learn9.bb.timetabling.ScheduledJobManager"/>
     
     <!-- Service beans -->
+    <bean id="activityTemplateDao" class="uk.ac.ed.learn9.bb.timetabling.dao.impl.ActivityTemplateDaoImpl">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+    <bean id="activityTypeDao" class="uk.ac.ed.learn9.bb.timetabling.dao.impl.ActivityTypeDaoImpl">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
     <bean id="enrolmentChangeDao" class="uk.ac.ed.learn9.bb.timetabling.dao.impl.EnrolmentChangeDaoImpl">
         <property name="sessionFactory" ref="sessionFactory"/>
     </bean>

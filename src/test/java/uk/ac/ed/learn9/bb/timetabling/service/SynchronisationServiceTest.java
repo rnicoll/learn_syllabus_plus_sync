@@ -3,6 +3,8 @@ package uk.ac.ed.learn9.bb.timetabling.service;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import org.junit.After;
@@ -16,6 +18,8 @@ import uk.ac.ed.learn9.bb.timetabling.RdbIdSource;
 import uk.ac.ed.learn9.bb.timetabling.SequentialRdbIdSource;
 import uk.ac.ed.learn9.bb.timetabling.dao.ModuleDao;
 import uk.ac.ed.learn9.bb.timetabling.data.AcademicYearCode;
+import uk.ac.ed.learn9.bb.timetabling.data.cache.ActivityTemplate;
+import uk.ac.ed.learn9.bb.timetabling.data.cache.ActivityType;
 import uk.ac.ed.learn9.bb.timetabling.data.cache.Module;
 import uk.ac.ed.learn9.bb.timetabling.util.DbScriptUtil;
 import uk.ac.ed.learn9.bb.timetabling.util.RdbUtil;
@@ -192,6 +196,54 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
             assertEquals(expResultModule.getModuleId(), resultModule.getModuleId());
             assertEquals(expResultModule.getTimetablingCourseCode(), resultModule.getTimetablingCourseCode());
             assertEquals(academicYearCode.toString(), resultModule.getTimetablingAcademicYear());
+        } finally {
+            rdbConnection.close();
+        }
+    }
+    
+    /**
+     * Tests that activity templates that are not intended to be synchronised,
+     * are corrected excluded.
+     */
+    @Test
+    public void testActivityTemplateFiltering() throws Exception {
+        System.out.println("activityCourseCodeGeneration");
+        final SynchronisationService instance = this.getService();
+        final AcademicYearCode academicYearCode = new AcademicYearCode("2012/3");            
+        final Connection rdbConnection = instance.getRdbDataSource().getConnection();
+        
+        try {
+            final RdbIdSource rdbIdSource = new SequentialRdbIdSource();
+            final ActivityType lectureType = RdbUtil.createTestActivityType(rdbConnection, "Lecture", rdbIdSource);
+            final ActivityType tutorialType = RdbUtil.createTestActivityType(rdbConnection, "Tutorial", rdbIdSource);
+            final Module module = RdbUtil.createTestModule(rdbConnection, academicYearCode, rdbIdSource);
+            
+            final ActivityTemplate activityTemplateSync = RdbUtil.createTestActivityTemplate(rdbConnection, module, tutorialType, "Tutorials", RdbUtil.TemplateForVle.FOR_VLE, rdbIdSource);
+            final ActivityTemplate activityTemplateNoSync = RdbUtil.createTestActivityTemplate(rdbConnection, module, lectureType, "Lectures", RdbUtil.TemplateForVle.NOT_FOR_VLE, rdbIdSource);
+            
+            instance.synchroniseTimetablingData();
+            
+            final Connection cacheConnection = instance.getCacheDataSource().getConnection();
+            try {
+                final PreparedStatement selectStatement = cacheConnection.prepareStatement("SELECT tt_template_id "
+                    + "FROM sync_template_vw");
+                try {
+                    final ResultSet rs = selectStatement.executeQuery();
+                    try {
+                        while (rs.next()) {
+                            assertEquals(activityTemplateSync.getTemplateId(),
+                                rs.getString("tt_template_id"));
+                        }
+                    } finally {
+                        rs.close();
+                    }
+                } finally {
+                    selectStatement.close();
+                }
+                    
+            } finally {
+                cacheConnection.close();
+            }
         } finally {
             rdbConnection.close();
         }

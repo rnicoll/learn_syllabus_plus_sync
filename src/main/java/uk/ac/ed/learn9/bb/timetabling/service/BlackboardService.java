@@ -201,11 +201,11 @@ public class BlackboardService {
             PreparedStatement queryStatement = connection.prepareStatement(
                 "(SELECT tt_activity_id, tt_activity_name, learn_group_id, learn_group_name, "
                     + "learn_course_id, description "
-                    + "FROM non_jta_sync_activities_vw WHERE learn_group_id IS NULL)"
+                    + "FROM non_jta_sync_activity_vw WHERE learn_group_id IS NULL)"
                 + " UNION "
                 + "(SELECT tt_activity_id, tt_activity_name, learn_group_id, learn_group_name, "
                     + "learn_course_id, description "
-                    + "FROM jta_sync_activities_vw WHERE learn_group_id IS NULL)"
+                    + "FROM jta_sync_activity_vw WHERE learn_group_id IS NULL)"
             );
             try {
                 queryStatement.setInt(1, run.getRunId());
@@ -264,7 +264,7 @@ public class BlackboardService {
         try {
             final PreparedStatement queryStatement = connection.prepareStatement(
                     "SELECT tt_module_id, effective_course_code, learn_course_id "
-                        + "FROM sync_modules_vw "
+                        + "FROM sync_module_vw "
                         + "WHERE learn_course_code IS NOT NULL "
                             + "AND learn_course_id IS NULL"
             );
