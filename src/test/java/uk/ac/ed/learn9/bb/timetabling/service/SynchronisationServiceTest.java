@@ -6,7 +6,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.junit.After;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -218,10 +221,34 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
             final ActivityType tutorialType = RdbUtil.createTestActivityType(rdbConnection, "Tutorial", rdbIdSource);
             final Module module = RdbUtil.createTestModule(rdbConnection, academicYearCode, rdbIdSource);
             
-            final ActivityTemplate activityTemplateSync = RdbUtil.createTestActivityTemplate(rdbConnection, module, tutorialType, "Tutorials", RdbUtil.TemplateForVle.FOR_VLE, rdbIdSource);
-            final ActivityTemplate activityTemplateNoSync = RdbUtil.createTestActivityTemplate(rdbConnection, module, lectureType, "Lectures", RdbUtil.TemplateForVle.NOT_FOR_VLE, rdbIdSource);
+            // We generate three activities:
+            // 1. To sync
+            // 2. Marked to sync, but with a whole-class activity only (so not synced)
+            // 3. Marked not to be synced
+            final ActivityTemplate activityTemplateSync = RdbUtil.createTestActivityTemplate(rdbConnection, module,
+                    tutorialType, "Tutorials", RdbUtil.TemplateForVle.FOR_VLE, rdbIdSource);
+            final ActivityTemplate activityTemplateWholeClass = RdbUtil.createTestActivityTemplate(rdbConnection, module,
+                    lectureType, "Labs", RdbUtil.TemplateForVle.FOR_VLE, rdbIdSource);
+            final ActivityTemplate activityTemplateNoSync = RdbUtil.createTestActivityTemplate(rdbConnection, module,
+                    lectureType, "Lectures", RdbUtil.TemplateForVle.NOT_FOR_VLE, rdbIdSource);
             
+            int activityId = 1;
+            
+            RdbUtil.createTestActivity(rdbConnection, activityTemplateSync,
+                    module, RdbUtil.SchedulingMethod.SCHEDULED, activityId++, rdbIdSource);
+            RdbUtil.createTestActivity(rdbConnection, activityTemplateSync,
+                    module, RdbUtil.SchedulingMethod.SCHEDULED, activityId++, rdbIdSource);
+            RdbUtil.createTestActivity(rdbConnection, activityTemplateWholeClass,
+                    module, RdbUtil.SchedulingMethod.SCHEDULED, activityId++, rdbIdSource);
+            RdbUtil.createTestActivity(rdbConnection, activityTemplateNoSync,
+                    module, RdbUtil.SchedulingMethod.SCHEDULED, activityId++, rdbIdSource);
+            RdbUtil.createTestActivity(rdbConnection, activityTemplateNoSync,
+                    module, RdbUtil.SchedulingMethod.SCHEDULED, activityId++, rdbIdSource);
+
             instance.synchroniseTimetablingData();
+            
+            final Set<String> expectedIds = Collections.singleton(activityTemplateSync.getTemplateId());
+            final Set<String> resultIds = new HashSet<String>();
             
             final Connection cacheConnection = instance.getCacheDataSource().getConnection();
             try {
@@ -231,8 +258,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
                     final ResultSet rs = selectStatement.executeQuery();
                     try {
                         while (rs.next()) {
-                            assertEquals(activityTemplateSync.getTemplateId(),
-                                rs.getString("tt_template_id"));
+                            resultIds.add(rs.getString("tt_template_id"));
                         }
                     } finally {
                         rs.close();
@@ -240,10 +266,11 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
                 } finally {
                     selectStatement.close();
                 }
-                    
             } finally {
                 cacheConnection.close();
             }
+            
+            assertEquals(expectedIds, resultIds);
         } finally {
             rdbConnection.close();
         }

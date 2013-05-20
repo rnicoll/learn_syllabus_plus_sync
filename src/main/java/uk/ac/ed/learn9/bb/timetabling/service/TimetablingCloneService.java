@@ -55,7 +55,8 @@ public class TimetablingCloneService extends AbstractCloneService {
         {"LATESTTRANSACTION", "tt_latest_transaction"}
     };
     public static final String[][] ACTIVITY_TEMPLATE_FIELD_MAPPINGS = {
-        {"NAME", "tt_template_name"}
+        {"NAME", "tt_template_name"},
+        {"USER_TEXT_5", "tt_user_text_5"}
     };
     public static final String[][] ACTIVITY_TYPE_FIELD_MAPPINGS = {
         {"NAME", "tt_type_name"}

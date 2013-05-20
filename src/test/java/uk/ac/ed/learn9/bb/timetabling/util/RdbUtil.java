@@ -3,8 +3,10 @@ package uk.ac.ed.learn9.bb.timetabling.util;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import uk.ac.ed.learn9.bb.timetabling.RdbIdSource;
 import uk.ac.ed.learn9.bb.timetabling.data.AcademicYearCode;
+import uk.ac.ed.learn9.bb.timetabling.data.cache.Activity;
 import uk.ac.ed.learn9.bb.timetabling.data.cache.ActivityTemplate;
 import uk.ac.ed.learn9.bb.timetabling.data.cache.ActivityType;
 import uk.ac.ed.learn9.bb.timetabling.data.cache.Module;
@@ -13,6 +15,11 @@ import uk.ac.ed.learn9.bb.timetabling.data.cache.Module;
  * Class for setting up/tearing down test data in the RDB.
  */
 public class RdbUtil {
+    public enum SchedulingMethod {
+        NOT_SCHEDULED,
+        SCHEDULED;
+    }
+    
     public enum TemplateForVle {
         NOT_SPECIFIED,
         NOT_FOR_VLE,
@@ -25,13 +32,69 @@ public class RdbUtil {
     public static final String DEPARTMENT_ID = "BF20A0ADF91117B06331C6ED3F9FC187";
     public static final String WEEK_PATTERN = "11111111111111111111111111111111111111111111111111111111111111111";
     
+    public static Activity createTestActivity(final Connection rdb,
+        final ActivityTemplate activityTemplate, final Module module,
+        final SchedulingMethod schedulingMethod, final int activityId,
+        final RdbIdSource idSource)
+        throws SQLException {
+        final Activity activity = new Activity();
+        
+        activity.setActivityId(idSource.getId());
+        activity.setActivityName(activityTemplate.getTemplateName() + "/"
+            + activityId);
+        activity.setModule(module);
+        
+        final PreparedStatement statement = rdb.prepareStatement(
+            "INSERT INTO ACTIVITY (ID, NAME, HOST_KEY, DESCRIPTION, MODUL, "
+                    + "SCHEDULING_METHOD, DEPARTMENT, ACTIVITY_TYPE, ACTIVITY_TMPL, "
+                    + "ZONE, FACTOR, DURATION, LINK_SIZE, PLANNED_SIZE, SUGGESTED_DAYS, "
+                    + "SUGGESTED_PERIOD, POOLED_RESOURCES, "
+                    + "DAYS_FOR_MINIMUM, MINIMUM_TIME, MINIMUM_DAYS, DAYS_FOR_MAXIMUM, "
+                    + "MAXIMUM_TIME, MAXIMUM_DAYS, NAMED_AVAILABILITY, NAMED_USAGE_PREF, NAMED_STARTS_PREF, DICT, "
+                    + "WEEK_PATTERN, STARTS_PREFS, USAGE_PREFS, BASE_AVAILABILITY) "
+            + "(SELECT ? ID, ? NAME, ? HOST_KEY, ? DESCRIPTION, ? MODUL, "
+                    + "? SCHEDULING_METHOD, DEPARTMENT, ACTIVITY_TYPE, ID ACTIVITY_TMPL, "
+                    + "ZONE, FACTOR, DURATION, LINK_SIZE, PLANNED_SIZE, SUGGESTED_DAYS, "
+                    + "SUGGESTED_PERIOD, POOLED_RESOURCES, "
+                    + "DAYS_FOR_MINIMUM, MINIMUM_TIME, MINIMUM_DAYS, DAYS_FOR_MAXIMUM, "
+                    + "MAXIMUM_TIME, MAXIMUM_DAYS, NAMED_AVAILABILITY, NAMED_USAGE_PREF, NAMED_STARTS_PREF, DICT, "
+                    + "WEEK_PATTERN, STARTS_PREFS, USAGE_PREFS, BASE_AVAILABILITY "
+                + "FROM TEMPLATE "
+                + "WHERE ID=?)"
+        );
+        try {
+            int paramIdx = 1;
+            
+            statement.setString(paramIdx++, activity.getActivityId());
+            statement.setString(paramIdx++, activity.getActivityName());
+            statement.setString(paramIdx++, RdbUtil.generateHostKey(activity.getActivityId()));
+            statement.setString(paramIdx++, activity.getActivityName());
+            statement.setString(paramIdx++, module.getModuleId());
+            switch (schedulingMethod) {
+                case SCHEDULED:
+                    statement.setInt(paramIdx++, 1);
+                    break;
+                default:
+                    statement.setInt(paramIdx++, 0);
+                    break;
+            }
+            statement.setString(paramIdx++, activityTemplate.getTemplateId());
+            
+            statement.executeUpdate();
+        } finally {
+            statement.close();
+        }
+        
+        return activity;
+    }
+    
     public static ActivityType createTestActivityType(final Connection rdb, final String typeName,
             final RdbIdSource idSource)
         throws SQLException {
-        final ActivityType template = new ActivityType();
+        final ActivityType activityType = new ActivityType();
         
-        template.setTypeId(idSource.getId());
-        template.setTypeName(typeName);
+        activityType.setTypeId(idSource.getId());
+        activityType.setTypeName(typeName);
         
         final PreparedStatement statement = rdb.prepareStatement(
             "Insert into ACTIVITYTYPES (ID,NAME,HOST_KEY,DEPARTMENT) "
@@ -39,9 +102,9 @@ public class RdbUtil {
         try {
             int paramIdx = 1;
             
-            statement.setString(paramIdx++, template.getTypeId());
-            statement.setString(paramIdx++, template.getTypeName());
-            statement.setString(paramIdx++, RdbUtil.generateHostKey(template.getTypeId()));
+            statement.setString(paramIdx++, activityType.getTypeId());
+            statement.setString(paramIdx++, activityType.getTypeName());
+            statement.setString(paramIdx++, RdbUtil.generateHostKey(activityType.getTypeId()));
             statement.setString(paramIdx++, DEPARTMENT_ID);
             
             statement.executeUpdate();
@@ -49,7 +112,7 @@ public class RdbUtil {
             statement.close();
         }
         
-        return template;
+        return activityType;
     }
     
     public static ActivityTemplate createTestActivityTemplate(final Connection rdb, final Module module,
@@ -173,7 +236,7 @@ public class RdbUtil {
      * @return a host key.
      */
     private static String generateHostKey(final String entityId) {
-        final String subpart = entityId.substring(entityId.length() - 4);
+        final String subpart = entityId.substring(entityId.length() - 6);
         return "#SPLUS" + subpart;
     }
     
