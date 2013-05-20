@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 public class TimetablingCloneService extends AbstractCloneService {
 
     public static final String REPORTING_ACTIVITY_TABLE = "ACTIVITY";
+    public static final String REPORTING_ACTIVITY_PARENTS_TABLE = "ACTIVITY_PARENTS";
     public static final String REPORTING_ACTIVITY_TYPE_TABLE = "ACTIVITYTYPES";
     public static final String REPORTING_ACTIVITY_TEMPLATE_TABLE = "TEMPLATE";
     public static final String REPORTING_MODULE_TABLE = "MODULE";
@@ -26,6 +27,7 @@ public class TimetablingCloneService extends AbstractCloneService {
     public static final String REPORTING_VARIANT_JTA_TABLE = "VARIANTJTAACTS";
     
     public static final String CACHE_ACTIVITY_TABLE = "activity";
+    public static final String CACHE_ACTIVITY_PARENTS_TABLE = "ACTIVITY_PARENTS";
     public static final String CACHE_ACTIVITY_TYPE_TABLE = "activity_type";
     public static final String CACHE_ACTIVITY_TEMPLATE_TABLE = "activity_template";
     public static final String CACHE_MODULE_TABLE = "module";
@@ -33,6 +35,7 @@ public class TimetablingCloneService extends AbstractCloneService {
     public static final String CACHE_VARIANT_JTA_TABLE = "variantjtaacts";
     
     public static final String CACHE_ACTIVITY_PRIMARY_KEY = "tt_activity_id";
+    public static final String CACHE_ACTIVITY_PARENTS_PRIMARY_KEY = "tt_activity_id";
     public static final String CACHE_ACTIVITY_TEMPLATE_PRIMARY_KEY = "tt_template_id";
     public static final String CACHE_ACTIVITY_TYPE_PRIMARY_KEY = "tt_type_id";
     public static final String CACHE_MODULE_PRIMARY_KEY = "tt_module_id";
@@ -45,6 +48,11 @@ public class TimetablingCloneService extends AbstractCloneService {
         {"ACTIVITY_TMPL", "tt_template_id"},
         {"ACTIVITY_TYPE", "tt_type_id"},
         {"SCHEDULING_METHOD", "tt_scheduling_method"}
+    };
+    public static final String[][] ACTIVITY_PARENTS_FIELD_MAPPINGS = {
+        {"PARENT_ACTS", "tt_parent_activity_id"},
+        {"OBSOLETEFROM", "obsolete_from"},
+        {"LATESTTRANSACTION", "latest_transaction"}
     };
     public static final String[][] ACTIVITY_TEMPLATE_FIELD_MAPPINGS = {
         {"NAME", "tt_template_name"}
@@ -90,6 +98,32 @@ public class TimetablingCloneService extends AbstractCloneService {
         cloneTable(source, destination,
                 REPORTING_ACTIVITY_TABLE, CACHE_ACTIVITY_TABLE,
                 "ID", CACHE_ACTIVITY_PRIMARY_KEY,
+                fieldMappings);
+    }
+
+    /**
+     * Clone activity parents from reporting to the local database. Activity
+     * parents are used for joint-taught-activities and variant activity
+     * relationships. Variant activities are ignored for our purposes, but
+     * joint taught activities are considered to belong to the parent
+     * activity's module.
+     * 
+     * @param source a connection to the reporting database.
+     * @param destination a connection to the cache database.
+     * @throws SQLException if there was a problem accessing one of the
+     * databases.
+     */
+    public void cloneActivityParents(final Connection source, final Connection destination)
+            throws SQLException {
+        final Map<String, String> fieldMappings = new HashMap<String, String>();
+
+        for (String[] mapping : ACTIVITY_PARENTS_FIELD_MAPPINGS) {
+            fieldMappings.put(mapping[0], mapping[1]);
+        }
+
+        cloneTable(source, destination,
+                REPORTING_ACTIVITY_PARENTS_TABLE, CACHE_ACTIVITY_PARENTS_TABLE,
+                "ID", CACHE_ACTIVITY_PARENTS_PRIMARY_KEY,
                 fieldMappings);
     }
 

@@ -331,6 +331,7 @@ public class SynchronisationService extends Object {
                 this.cloneService.cloneActivityTypes(source, destination);
                 this.cloneService.cloneActivityTemplates(source, destination);
                 this.cloneService.cloneActivities(source, destination);
+                this.cloneService.cloneActivityParents(source, destination);
                 this.cloneService.cloneVariantJointTaughtActivities(source, destination);
                 this.cloneService.cloneStudentSets(source, destination);
             } finally {
