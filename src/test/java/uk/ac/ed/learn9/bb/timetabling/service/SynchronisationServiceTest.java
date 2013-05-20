@@ -160,11 +160,10 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
         final SynchronisationService instance = this.getService();
         
         AcademicYearCode academicYearCode = new AcademicYearCode("2012/3");
-        final Module expResultModule;
         final Connection rdbConnection = instance.getRdbDataSource().getConnection();
         try {
             final RdbIdSource rdbIdSource = new SequentialRdbIdSource();
-            expResultModule = RdbUtil.createTestModule(rdbConnection, academicYearCode, rdbIdSource);
+            final Module expResultModule = RdbUtil.createTestModule(rdbConnection, academicYearCode, rdbIdSource);
         
             instance.synchroniseTimetablingData();
 
@@ -192,6 +191,36 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
             resultModule = modules.get(0);
             assertEquals(expResultModule.getModuleId(), resultModule.getModuleId());
             assertEquals(expResultModule.getTimetablingCourseCode(), resultModule.getTimetablingCourseCode());
+            assertEquals(academicYearCode.toString(), resultModule.getTimetablingAcademicYear());
+        } finally {
+            rdbConnection.close();
+        }
+    }
+    
+    /**
+     * Tests that activity course codes are generated correctly.
+     */
+    @Test
+    public void testModuleCourseCodeGeneration() throws Exception {
+        System.out.println("activityCourseCodeGeneration");
+        final SynchronisationService instance = this.getService();
+        final AcademicYearCode academicYearCode = new AcademicYearCode("2012/3");
+        final Connection rdbConnection = instance.getRdbDataSource().getConnection();
+        try {
+            final RdbIdSource rdbIdSource = new SequentialRdbIdSource();
+            final Module expResultModule = RdbUtil.createTestModule(rdbConnection, academicYearCode, rdbIdSource);
+        
+            instance.synchroniseTimetablingData();
+
+            final ModuleDao moduleDao = this.applicationContext.getBean(ModuleDao.class);
+            List<Module> modules = moduleDao.getAll();
+
+            assertEquals(1, modules.size());
+
+            Module resultModule = modules.get(0);
+            assertEquals(expResultModule.getModuleId(), resultModule.getModuleId());
+            assertEquals(expResultModule.getTimetablingCourseCode(), resultModule.getTimetablingCourseCode());
+            assertEquals(expResultModule.getLearnCourseCode(), resultModule.getLearnCourseCode());
             assertEquals(academicYearCode.toString(), resultModule.getTimetablingAcademicYear());
         } finally {
             rdbConnection.close();

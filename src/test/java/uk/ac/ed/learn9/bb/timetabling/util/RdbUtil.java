@@ -12,7 +12,8 @@ import uk.ac.ed.learn9.bb.timetabling.data.Module;
  */
 public class RdbUtil {
     public static final String TEST_COURSE_CODE = "PGHC11335";
-    public static final String TEST_MODULE_HOST_KEY = TEST_COURSE_CODE + "_SV1_SEM1";
+    public static final String TEST_SEMESTER = "SEM1";
+    public static final String TEST_OCCURRENCE = "SV1";
     public static final String DEPARTMENT_ID = "BF20A0ADF91117B06331C6ED3F9FC187";
     public static final String WEEK_PATTERN = "11111111111111111111111111111111111111111111111111111111111111111";
     
@@ -28,13 +29,37 @@ public class RdbUtil {
     public static Module createTestModule(final Connection rdb, final AcademicYearCode academicYear,
             final RdbIdSource idSource)
         throws SQLException {
+        return RdbUtil.createTestModule(rdb, academicYear, TEST_COURSE_CODE,
+                TEST_OCCURRENCE, TEST_SEMESTER, idSource);
+    }
+    
+    /**
+     * Constructs a test module in the reporting database, and returns minimal
+     * data about it in.
+     * 
+     * @param rdb a connection to the reporting database.
+     * @param idSource an ID generator.
+     * @return the new module;
+     * @throws SQLException 
+     */
+    public static Module createTestModule(final Connection rdb, final AcademicYearCode academicYear,
+            final String courseCode, final String occurrence, final String semester, final RdbIdSource idSource)
+        throws SQLException {
+        final String hostKey = courseCode + "_"
+            + occurrence + "_"
+            + semester;
+        final String learnAcademicYear = academicYear.toString().replace("/", "-");
         final Module module = new Module();
         
         module.setModuleId(idSource.getId());
-        module.setTimetablingCourseCode(TEST_MODULE_HOST_KEY);
+        module.setTimetablingCourseCode(hostKey);
         module.setTimetablingModuleName("Test module "
             + module.getModuleId());
-        module.setCacheCourseCode(TEST_COURSE_CODE);
+        module.setCacheCourseCode(courseCode);
+        module.setCacheSemesterCode(occurrence);
+        module.setCacheOccurrenceCode(semester);
+        module.setLearnAcademicYear(learnAcademicYear);
+        module.setLearnCourseCode(courseCode + learnAcademicYear + occurrence + semester);
         
         final PreparedStatement statement = rdb.prepareStatement(
             "Insert into MODULE (ID,NAME,HOST_KEY,DESCRIPTION,DEPARTMENT,LINK_SIZE,"
@@ -50,8 +75,8 @@ public class RdbUtil {
             
             statement.setString(paramIdx++, module.getModuleId());
             statement.setString(paramIdx++, module.getTimetablingModuleName());
-            statement.setString(paramIdx++, TEST_MODULE_HOST_KEY);
-            statement.setString(paramIdx++, TEST_MODULE_HOST_KEY);
+            statement.setString(paramIdx++, hostKey);
+            statement.setString(paramIdx++, hostKey);
             statement.setString(paramIdx++, DEPARTMENT_ID);
             statement.setString(paramIdx++, WEEK_PATTERN);
             statement.setString(paramIdx++, academicYear.toString());
