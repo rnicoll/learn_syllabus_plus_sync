@@ -195,55 +195,41 @@ public class BlackboardService {
             throws KeyNotFoundException, PersistenceException, SQLException, ValidationException {
         final GroupDbPersister groupDbPersister = this.getGroupDbPersister();
         
-        final ManagedGroupDetailsStatement updateStatement
-            = new ManagedGroupDetailsStatement(connection);
+        final ManagedLearnGroupIDStatement updateStatement
+            = new ManagedLearnGroupIDStatement(connection);
         try {
-            // First resolve all activities that have a Learn course, but no group,
-            // and are not JTA child activities.
             PreparedStatement queryStatement = connection.prepareStatement(
-                "SELECT a.tt_activity_id, a.tt_activity_name, a.learn_group_id, a.learn_group_name, m.learn_course_id "
-                    + "FROM sync_activities a "
-                        + "JOIN module m ON m.tt_module_id=a.tt_module_id "
-                        + "JOIN activity_type t ON t.tt_type_id=a.tt_type_id "
-                    + "WHERE a.learn_group_id IS NULL "
-                        + "AND a.tt_jta_activity_id IS NULL "
-                        + "AND a.learn_group_name IS NOT NULL "
-                        + "AND m.learn_course_id IS NOT NULL "
-                        // Only work on activites to be added
-                        + "AND a.tt_activity_id IN (SELECT DISTINCT tt_activity_id FROM enrolment_add WHERE run_id=?);"
+                "(SELECT tt_activity_id, tt_activity_name, learn_group_id, learn_group_name, "
+                    + "learn_course_id, description "
+                    + "FROM non_jta_sync_activities_vw WHERE learn_group_id IS NULL)"
+                + " UNION "
+                + "(SELECT tt_activity_id, tt_activity_name, learn_group_id, learn_group_name, "
+                    + "learn_course_id, description "
+                    + "FROM jta_sync_activities_vw WHERE learn_group_id IS NULL)"
             );
             try {
                 queryStatement.setInt(1, run.getRunId());
                 final ResultSet rs = queryStatement.executeQuery();
                 try {
                     while (rs.next()) {
-                        doCreateCourseGroupAndStoreId(rs, groupDbPersister, updateStatement);
-                    }
-                } finally {
-                    rs.close();
-                }
-            } finally {
-                queryStatement.close();
-            }
-            
-            // Create groups for all activities that are part of a JTA
-            queryStatement = connection.prepareStatement(
-                "SELECT p.tt_activity_id, p.tt_activity_name, p.learn_group_id, p.learn_group_name, m.learn_course_id "
-                    + "FROM activity a "
-                        + "JOIN sync_activities p ON p.tt_activity_id=a.tt_jta_activity_id "
-                        + "JOIN module m ON m.tt_module_id=p.tt_module_id "
-                        + "JOIN activity_type t ON t.tt_type_id=p.tt_type_id "
-                    + "WHERE p.learn_group_id IS NULL "
-                        + "AND p.learn_group_name IS NOT NULL "
-                        + "AND m.learn_course_id IS NOT NULL "
-                        + "AND a.tt_activity_id IN (SELECT DISTINCT tt_activity_id FROM enrolment_add WHERE run_id=?)"
-            );
-            try {
-                queryStatement.setInt(1, run.getRunId());
-                final ResultSet rs = queryStatement.executeQuery();
-                try {
-                    while (rs.next()) {
-                        doCreateCourseGroupAndStoreId(rs, groupDbPersister, updateStatement);
+                        final Id courseId = Id.generateId(Course.DATA_TYPE, rs.getString("learn_course_id"));
+                        final String descriptionText = rs.getString("description");
+                        final FormattedText description;
+
+                        if (null == descriptionText) {
+                            description = null;
+                        } else {
+                            description = new FormattedText(descriptionText, FormattedText.Type.PLAIN_TEXT);
+                        }
+
+                        final Group group = buildCourseGroup(courseId, rs.getString("learn_group_name"), description);
+
+                        groupDbPersister.persist(group);
+
+                        final Timestamp now = new Timestamp(System.currentTimeMillis());
+                        final String activityId = rs.getString("tt_activity_id");
+
+                        updateStatement.recordGroupId(now, activityId, group.getId());
                     }
                 } finally {
                     rs.close();
@@ -272,41 +258,48 @@ public class BlackboardService {
         final CourseDbLoader courseDbLoader = this.getCourseDbLoader();
         final CourseCourseDbLoader courseCourseDbLoader = this.getCourseCourseDbLoader();
         
-        final PreparedStatement statement = connection.prepareStatement(
-                "SELECT tt_module_id, learn_course_code, learn_course_id "
-                    + "FROM module "
-                    + "WHERE learn_course_code IS NOT NULL "
-                        + "AND learn_course_id IS NULL",
-                ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE
-        );
+        final PreparedStatement updateStatement = connection.prepareStatement("UPDATE module "
+            + "SET learn_course_id=? "
+                + "WHERE tt_module_id=?");
         try {
-            final ResultSet rs = statement.executeQuery();
-            while (rs.next()) {
-                final String courseCode = rs.getString("learn_course_code");
-                
-                if (!courseDbLoader.doesCourseIdExist(courseCode)) {
-                    continue;
+            final PreparedStatement queryStatement = connection.prepareStatement(
+                    "SELECT tt_module_id, effective_course_code, learn_course_id "
+                        + "FROM sync_modules_vw "
+                        + "WHERE learn_course_code IS NOT NULL "
+                            + "AND learn_course_id IS NULL"
+            );
+            try {
+                final ResultSet rs = queryStatement.executeQuery();
+                while (rs.next()) {
+                    final String courseCode = rs.getString("effective_course_code");
+
+                    if (!courseDbLoader.doesCourseIdExist(courseCode)) {
+                        continue;
+                    }
+
+                    Course course = courseDbLoader.loadByCourseId(courseCode);
+
+                    // If the course has a parent-child relationship with another
+                    // course, use the parent
+                    try {
+                        final CourseCourse courseCourse = courseCourseDbLoader.loadParent(course.getId());
+                        final Course parentCourse = courseDbLoader.loadById(courseCourse.getParentCourseId());
+
+                        // Successfully found a parent course, replace the child with it.
+                        course = parentCourse;
+                    } catch(KeyNotFoundException e) {
+                        // No parent course, ignore
+                    }
+
+                    updateStatement.setString(1, course.getId().getExternalString());
+                    updateStatement.setString(2, rs.getString("tt_module_id"));
+                    updateStatement.executeUpdate();
                 }
-                
-                Course course = courseDbLoader.loadByCourseId(courseCode);
-                
-                // If the course has a parent-child relationship with another
-                // course, use the parent
-                try {
-                    final CourseCourse courseCourse = courseCourseDbLoader.loadParent(course.getId());
-                    final Course parentCourse = courseDbLoader.loadById(courseCourse.getParentCourseId());
-                    
-                    // Successfully found a parent course, replace the child with it.
-                    course = parentCourse;
-                } catch(KeyNotFoundException e) {
-                    // No parent course, ignore
-                }
-                
-                rs.updateString("learn_course_id", course.getId().getExternalString());
-                rs.updateRow();
+            } finally {
+                queryStatement.close();
             }
         } finally {
-            statement.close();
+            updateStatement.close();
         }
     }
 
@@ -319,39 +312,43 @@ public class BlackboardService {
         throws PersistenceException, SQLException {
         final UserDbLoader userDbLoader = getUserDbLoader();
         
-        // First resolve all activities that have a Learn course, but no group,
-        // and are not JTA child activities.
-        PreparedStatement queryStatement = connection.prepareStatement(
-            "SELECT s.tt_student_set_id, s.tt_host_key username, s.learn_user_id "
-                + "FROM student_set s "
-                + "WHERE s.learn_user_id IS NULL "
-                    + "AND s.tt_host_key IS NOT NULL "
-                    + "AND s.tt_student_set_id IN (SELECT DISTINCT tt_student_set_id FROM enrolment_add WHERE run_id=?)",
-                ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE
-        );
+        final PreparedStatement updateStatement = connection.prepareStatement("UPDATE student_set "
+            + "SET learn_user_id=? "
+            + "WHERE tt_student_set_id=?");
         try {
-            queryStatement.setInt(1, run.getRunId());
-            final ResultSet rs = queryStatement.executeQuery();
+            final PreparedStatement queryStatement = connection.prepareStatement(
+                "SELECT s.tt_student_set_id, s.username, s.learn_user_id "
+                    + "FROM sync_student_set_vw s "
+                    + "WHERE s.learn_user_id IS NULL "
+                        + "AND s.tt_student_set_id IN (SELECT DISTINCT tt_student_set_id FROM enrolment_add WHERE run_id=?)"
+            );
             try {
-                while (rs.next()) {
-                    final String username = rs.getString("username");
-                    final User user;
-                    
-                    try {
-                        user = userDbLoader.loadByUserName(username);
-                    } catch(KeyNotFoundException e) {
-                        // User isn't in Learn, ignore
-                        continue;
+                queryStatement.setInt(1, run.getRunId());
+                final ResultSet rs = queryStatement.executeQuery();
+                try {
+                    while (rs.next()) {
+                        final String username = rs.getString("username");
+                        final User user;
+
+                        try {
+                            user = userDbLoader.loadByUserName(username);
+                        } catch(KeyNotFoundException e) {
+                            // User isn't in Learn, ignore
+                            continue;
+                        }
+
+                        updateStatement.setString(1, user.getId().getExternalString());
+                        updateStatement.setString(2, rs.getString("tt_student_set_id"));
+                        updateStatement.executeUpdate();
                     }
-                    
-                    rs.updateString("learn_user_id", user.getId().getExternalString());
-                    rs.updateRow();
+                } finally {
+                    rs.close();
                 }
             } finally {
-                rs.close();
+                queryStatement.close();
             }
         } finally {
-            queryStatement.close();
+            updateStatement.close();
         }
     }
 
@@ -482,55 +479,15 @@ public class BlackboardService {
     protected UserDbLoader getUserDbLoader() throws PersistenceException {
         return UserDbLoader.Default.getInstance();
     }
-
-    /**
-     * Internal method that fetches Learn course ID and group name from a
-     * result set, creates a suitable group and persists it, then writes the
-     * group ID back into the database. This is only intended for use by
-     * the {@link #generateGroupsForActivities(SynchronisationRun, Connection)}
-     * method.
-     * 
-     * @param rs the result set to extract data from. Must have "tt_activity_id",
-     * "learn_course_id" and "learn_group_name" fields.
-     * @param groupDbPersister the group persister for Learn.
-     * @param updateStatement the update statement to use to write changes back.
-     * First parameter must be group ID (to set), the second the activity ID
-     * (as primary key).
-     * @throws PersistenceException
-     * @throws ValidationException
-     * @throws SQLException 
-     */
-    private void doCreateCourseGroupAndStoreId(final ResultSet rs, final GroupDbPersister groupDbPersister,
-            final ManagedGroupDetailsStatement updateStatement)
-            throws PersistenceException, ValidationException, SQLException {
-        final Id courseId = Id.generateId(Course.DATA_TYPE, rs.getString("learn_course_id"));
-        final String descriptionText = rs.getString("description");
-        final FormattedText description;
-        
-        if (null == descriptionText) {
-            description = null;
-        } else {
-            description = new FormattedText(descriptionText, FormattedText.Type.PLAIN_TEXT);
-        }
-        
-        final Group group = buildCourseGroup(courseId, rs.getString("learn_group_name"), description);
-        
-        groupDbPersister.persist(group);
-        
-        final Timestamp now = new Timestamp(System.currentTimeMillis());
-        final String activityId = rs.getString("tt_activity_id");
-        
-        updateStatement.recordGroupId(now, activityId, group.getId());
-    }
     
     /**
      * Wrapper around a prepared statement for updating the Learn group ID
      * associated with an activity in the database.
      */
-    private class ManagedGroupDetailsStatement extends Object {
+    private class ManagedLearnGroupIDStatement extends Object {
         private final PreparedStatement statement;
         
-        private             ManagedGroupDetailsStatement(final Connection connection)
+        private             ManagedLearnGroupIDStatement(final Connection connection)
             throws SQLException {
             this.statement = connection.prepareStatement("UPDATE activity a "
                 + "SET a.learn_group_id=?, a.learn_group_created=? "

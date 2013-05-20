@@ -159,8 +159,8 @@ CREATE VIEW sync_templates_vw AS
     );
 
 CREATE VIEW sync_activities_vw AS
-    (SELECT a.tt_activity_id, a.tt_activity_name, 
-            a.learn_group_id, a.description, a.tt_type_id, a.tt_template_id,
+    (SELECT a.tt_activity_id, a.tt_activity_name, a.learn_group_id,
+            a.learn_group_name, a.description, a.tt_type_id, a.tt_template_id,
             m.effective_course_code,
             m.learn_course_id, t.set_size
         FROM activity a
@@ -171,27 +171,28 @@ CREATE VIEW sync_activities_vw AS
     );
 
 CREATE VIEW non_jta_sync_activities_vw AS
-    (SELECT a.tt_activity_id, a.tt_activity_name, 
-            a.learn_group_id, a.description, a.tt_type_id, a.tt_template_id,
-            a.effective_course_code, a.learn_course_id, a.set_size
+    (SELECT a.tt_activity_id, a.tt_activity_name, a.learn_group_id,
+            a.learn_group_name, a.description, a.tt_type_id, a.tt_template_id,
+            a.effective_course_code, a.learn_course_id
         FROM sync_activities_vw a
         WHERE a.tt_activity_id NOT IN (SELECT tt_activity_id FROM jta_child_activities_vw)
     );
 CREATE VIEW jta_sync_activities_vw AS
-    (SELECT a.tt_activity_id, a.tt_activity_name, 
-            p.learn_group_id, a.description, a.tt_type_id, a.tt_template_id,
-            p.effective_course_code, p.learn_course_id, a.set_size
+    (SELECT a.tt_activity_id, p.tt_activity_name, p.learn_group_id,
+            p.learn_group_name, p.description, p.tt_type_id, p.tt_template_id,
+            p.effective_course_code, p.learn_course_id
         FROM sync_activities_vw a
             JOIN activity_parents ap ON ap.tt_activity_id=a.tt_activity_id
             JOIN sync_activities_vw p ON p.tt_activity_id=ap.tt_parent_activity_id
         WHERE a.tt_activity_id IN (SELECT tt_activity_id FROM jta_child_activities_vw)
     );
-        
+
 CREATE VIEW sync_student_set_vw AS
-	(SELECT s.tt_student_set_id, s.tt_host_key AS username, s.learn_person_id
-		FROM student_set s
-		WHERE SUBSTR(s.tt_host_key,0,6)!='#SPLUS'
-	);
+    (SELECT s.tt_student_set_id, s.tt_host_key username, s.learn_person_id
+        FROM student_set s
+        WHERE s.tt_host_key IS NOT NULL
+            AND LEFT(s.tt_host_key, 6)!='#SPLUS'
+    );
 
 CREATE VIEW added_enrolment_vw AS
 	(SELECT a.run_id AS run_id,a.previous_run_id, ca.tt_student_set_id, ca.tt_activity_id, 'add' AS change_type
