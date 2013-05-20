@@ -51,8 +51,8 @@ public class TimetablingCloneService extends AbstractCloneService {
     };
     public static final String[][] ACTIVITY_PARENTS_FIELD_MAPPINGS = {
         {"PARENT_ACTS", "tt_parent_activity_id"},
-        {"OBSOLETEFROM", "obsolete_from"},
-        {"LATESTTRANSACTION", "latest_transaction"}
+        {"OBSOLETEFROM", "tt_obsolete_from"},
+        {"LATESTTRANSACTION", "tt_latest_transaction"}
     };
     public static final String[][] ACTIVITY_TEMPLATE_FIELD_MAPPINGS = {
         {"NAME", "tt_template_name"}

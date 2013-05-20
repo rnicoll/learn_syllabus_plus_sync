@@ -116,12 +116,11 @@ CREATE TABLE enrolment_change (
   CONSTRAINT enrolment_change_type FOREIGN KEY (change_type) REFERENCES change_type (change_type)
 );
 
-CREATE VIEW activity_set_size_vw AS
-    (SELECT a.tt_activity_id, COUNT(b.tt_activity_id) AS set_size
-        FROM activity a
-            LEFT JOIN activity_template t ON t.tt_template_id = a.tt_template_id
+CREATE VIEW template_set_size_vw AS
+    (SELECT t.tt_template_id, COUNT(b.tt_activity_id) AS set_size
+        FROM activity_template t
             LEFT JOIN activity b ON t.tt_template_id = b.tt_template_id
-        GROUP BY a.tt_activity_id
+        GROUP BY t.tt_template_id
     );
 
 CREATE VIEW jta_child_activities_vw AS
@@ -137,18 +136,32 @@ CREATE VIEW variant_parent_activities_vw AS
     (SELECT a.tt_activity_id
         FROM variantjtaacts a WHERE a.tt_is_variant_parent='1');
 
+CREATE VIEW sync_modules_vw AS
+    (SELECT m.tt_module_id, m.tt_course_code, m.tt_module_name, m.tt_academic_year,
+        m.merge_course_code, m.learn_course_code, m.learn_course_id,
+        COALESCE(m.merge_course_code, m.learn_course_code) effective_course_code
+        FROM module m
+        WHERE m.webct_active = 'Y'
+    );
+
+CREATE VIEW sync_templates_vw AS
+    (SELECT t.tt_template_id, t.tt_template_name, t.tt_user_text_5, t.learn_group_set_id, s.set_size
+        FROM activity_template t
+            JOIN template_set_size_vw s ON s.tt_template_id = t.tt_template_id
+        WHERE (t.tt_user_text_5 IS NULL OR t.tt_user_text_5!='Not for VLE') 
+            AND s.set_size > '1'
+    );
+
 CREATE VIEW sync_activities_vw AS
     (SELECT a.tt_activity_id, a.tt_activity_name, 
             a.learn_group_id, a.description, a.tt_type_id, a.tt_template_id,
-            COALESCE(m.merge_course_code, m.learn_course_code) effective_course_code,
-            m.learn_course_id, s.set_size
+            m.effective_course_code,
+            m.learn_course_id, t.set_size
         FROM activity a
-            JOIN module m ON m.tt_module_id = a.tt_module_id
-            JOIN activity_set_size_vw s ON s.tt_activity_id = a.tt_activity_id
+            JOIN sync_modules_vw m ON m.tt_module_id = a.tt_module_id
+            JOIN sync_templates_vw t ON t.tt_template_id=a.tt_template_id
         WHERE a.tt_scheduling_method!='0'
             AND a.tt_activity_id NOT IN (SELECT tt_activity_id FROM variant_child_activities_vw)
-            AND m.webct_active = 'Y'
-            AND s.set_size > '1'
     );
 
 CREATE VIEW non_jta_sync_activities_vw AS
