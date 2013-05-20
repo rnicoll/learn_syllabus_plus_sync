@@ -1,6 +1,6 @@
 package uk.ac.ed.learn9.bb.timetabling.dao;
 
-import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
+import uk.ac.ed.learn9.bb.timetabling.data.cache.SynchronisationRun;
 
 /**
  *

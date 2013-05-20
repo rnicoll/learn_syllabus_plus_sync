@@ -16,7 +16,7 @@ import uk.ac.ed.learn9.bb.timetabling.RdbIdSource;
 import uk.ac.ed.learn9.bb.timetabling.SequentialRdbIdSource;
 import uk.ac.ed.learn9.bb.timetabling.dao.ModuleDao;
 import uk.ac.ed.learn9.bb.timetabling.data.AcademicYearCode;
-import uk.ac.ed.learn9.bb.timetabling.data.Module;
+import uk.ac.ed.learn9.bb.timetabling.data.cache.Module;
 import uk.ac.ed.learn9.bb.timetabling.util.DbScriptUtil;
 import uk.ac.ed.learn9.bb.timetabling.util.RdbUtil;
 

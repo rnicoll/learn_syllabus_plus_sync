@@ -20,7 +20,7 @@ import blackboard.platform.log.LogServiceFactory;
 import java.sql.Timestamp;
 
 import uk.ac.ed.learn9.bb.timetabling.dao.SynchronisationRunDao;
-import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
+import uk.ac.ed.learn9.bb.timetabling.data.cache.SynchronisationRun;
 
 /**
  * Service for synchronising activities and enrolments from Timetabling

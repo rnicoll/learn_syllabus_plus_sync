@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import uk.ac.ed.learn9.bb.timetabling.dao.SynchronisationRunDao;
-import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
+import uk.ac.ed.learn9.bb.timetabling.data.cache.SynchronisationRun;
 
 @Transactional
 @Scope("singleton")

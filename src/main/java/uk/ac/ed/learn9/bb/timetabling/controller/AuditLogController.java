@@ -13,7 +13,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 import uk.ac.ed.learn9.bb.timetabling.dao.EnrolmentChangeDao;
-import uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange;
+import uk.ac.ed.learn9.bb.timetabling.data.cache.EnrolmentChange;
 
 @Controller
 public class AuditLogController {

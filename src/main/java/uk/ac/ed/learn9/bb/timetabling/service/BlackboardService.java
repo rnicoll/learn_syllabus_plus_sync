@@ -27,8 +27,8 @@ import blackboard.persist.course.GroupMembershipDbPersister;
 import blackboard.persist.user.UserDbLoader;
 import java.sql.Timestamp;
 import org.springframework.stereotype.Service;
-import uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange;
-import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
+import uk.ac.ed.learn9.bb.timetabling.data.cache.EnrolmentChange;
+import uk.ac.ed.learn9.bb.timetabling.data.cache.SynchronisationRun;
 
 
 /**

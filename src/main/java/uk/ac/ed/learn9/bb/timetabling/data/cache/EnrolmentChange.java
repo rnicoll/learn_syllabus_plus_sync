@@ -1,5 +1,5 @@
 
-package uk.ac.ed.learn9.bb.timetabling.data;
+package uk.ac.ed.learn9.bb.timetabling.data.cache;
 
 import java.io.Serializable;
 import java.sql.Timestamp;

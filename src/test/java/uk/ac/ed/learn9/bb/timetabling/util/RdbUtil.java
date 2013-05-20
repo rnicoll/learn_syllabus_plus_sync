@@ -5,17 +5,67 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import uk.ac.ed.learn9.bb.timetabling.RdbIdSource;
 import uk.ac.ed.learn9.bb.timetabling.data.AcademicYearCode;
-import uk.ac.ed.learn9.bb.timetabling.data.Module;
+import uk.ac.ed.learn9.bb.timetabling.data.cache.ActivityTemplate;
+import uk.ac.ed.learn9.bb.timetabling.data.cache.ActivityType;
+import uk.ac.ed.learn9.bb.timetabling.data.cache.Module;
 
 /**
  * Class for setting up/tearing down test data in the RDB.
  */
 public class RdbUtil {
+    public enum TemplateForVle {
+        NOT_SPECIFIED,
+        NOT_FOR_VLE,
+        FOR_VLE;
+    }
+    
     public static final String TEST_COURSE_CODE = "PGHC11335";
     public static final String TEST_SEMESTER = "SEM1";
     public static final String TEST_OCCURRENCE = "SV1";
     public static final String DEPARTMENT_ID = "BF20A0ADF91117B06331C6ED3F9FC187";
     public static final String WEEK_PATTERN = "11111111111111111111111111111111111111111111111111111111111111111";
+    
+    public static ActivityTemplate createTestActivityTemplate(final Connection rdb, final Module module,
+            final ActivityType activityType, final String templateName,
+            final TemplateForVle forVle, final RdbIdSource idSource)
+        throws SQLException {
+        final ActivityTemplate template = new ActivityTemplate();
+        
+        template.setTemplateId(idSource.getId());
+        template.setTemplateName(templateName);
+        switch (forVle) {
+            case NOT_FOR_VLE:
+                template.setUserText5("Not for VLE");
+                break;
+            case FOR_VLE:
+            default:
+                template.setUserText5(null);
+                break;
+        }
+        
+        final PreparedStatement statement = rdb.prepareStatement(
+            "Insert into TEMPLATE (ID,NAME,HOST_KEY,DEPARTMENT,ACTIVITY_TYPE,"
+                + "MODUL,USER_TEXT_5,WEEK_PATTERN) "
+                + "VALUES (?,?,?,?,?,?,?,?)");
+        try {
+            int paramIdx = 1;
+            
+            statement.setString(paramIdx++, template.getTemplateId());
+            statement.setString(paramIdx++, template.getTemplateName());
+            statement.setString(paramIdx++, RdbUtil.generateHostKey(template.getTemplateId()));
+            statement.setString(paramIdx++, DEPARTMENT_ID);
+            statement.setString(paramIdx++, activityType.getTypeId());
+            statement.setString(paramIdx++, module.getModuleId());
+            statement.setString(paramIdx++, template.getUserText5());
+            statement.setString(paramIdx++, WEEK_PATTERN);
+            
+            statement.executeUpdate();
+        } finally {
+            statement.close();
+        }
+        
+        return template;
+    }
     
     /**
      * Constructs a test module in the reporting database, and returns minimal
@@ -23,7 +73,7 @@ public class RdbUtil {
      * 
      * @param rdb a connection to the reporting database.
      * @param idSource an ID generator.
-     * @return the new module;
+     * @return the new module.
      * @throws SQLException 
      */
     public static Module createTestModule(final Connection rdb, final AcademicYearCode academicYear,
@@ -89,6 +139,17 @@ public class RdbUtil {
         return module;
     }
 
+    /**
+     * Really ugly kludge to generate something a bit like a host key.
+     * 
+     * @param entityId an S+ 32 character ID.
+     * @return a host key.
+     */
+    private static String generateHostKey(final String entityId) {
+        final String subpart = entityId.substring(entityId.length() - 4);
+        return "#SPLUS" + subpart;
+    }
+    
     public static int updateModuleAyr(final Connection rdb, final AcademicYearCode academicYearCode,
             final Module testModule)
         throws SQLException {

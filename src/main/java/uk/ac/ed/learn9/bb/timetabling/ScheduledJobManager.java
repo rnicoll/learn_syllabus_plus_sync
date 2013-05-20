@@ -16,7 +16,7 @@ import org.springframework.context.event.ApplicationContextEvent;
 import org.springframework.context.event.ContextStartedEvent;
 import org.springframework.context.event.ContextStoppedEvent;
 
-import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
+import uk.ac.ed.learn9.bb.timetabling.data.cache.SynchronisationRun;
 import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService;
 
 /**

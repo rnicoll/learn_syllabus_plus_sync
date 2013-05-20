@@ -2,7 +2,7 @@ package uk.ac.ed.learn9.bb.timetabling.dao;
 
 import java.util.List;
 import blackboard.data.course.Course;
-import uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange;
+import uk.ac.ed.learn9.bb.timetabling.data.cache.EnrolmentChange;
 
 public interface EnrolmentChangeDao {
     public EnrolmentChange getById(final int changeId);
