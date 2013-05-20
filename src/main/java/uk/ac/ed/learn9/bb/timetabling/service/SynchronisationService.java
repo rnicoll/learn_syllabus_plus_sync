@@ -303,7 +303,6 @@ public class SynchronisationService extends Object {
             final Connection source = this.getRdbDataSource().getConnection();
 
             try {
-                this.getCloneService().importJtaDetails(source, destination);
                 // this.getMergedCoursesService().resolveMergedCourses(destination);
             } finally {
                 source.close();
@@ -332,7 +331,7 @@ public class SynchronisationService extends Object {
                 this.cloneService.cloneActivityTypes(source, destination);
                 this.cloneService.cloneActivityTemplates(source, destination);
                 this.cloneService.cloneActivities(source, destination);
-                this.cloneService.cloneActivities(source, destination);
+                this.cloneService.cloneVariantJointTaughtActivities(source, destination);
                 this.cloneService.cloneStudentSets(source, destination);
             } finally {
                 destination.close();

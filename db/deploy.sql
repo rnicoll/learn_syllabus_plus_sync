@@ -13,9 +13,9 @@ CREATE TABLE activity_type (
 
 CREATE TABLE module (
   tt_module_id VARCHAR2(32) NOT NULL,
-  tt_course_code VARCHAR2(20) DEFAULT NULL,
+  tt_course_code NVARCHAR2(20) DEFAULT NULL,
   tt_module_name NVARCHAR2(255) DEFAULT NULL,
-  tt_academic_year VARCHAR2(12) DEFAULT NULL,
+  tt_academic_year NVARCHAR2(12) DEFAULT NULL,
   cache_semester_code VARCHAR2(6) DEFAULT NULL,
   cache_occurrence_code VARCHAR2(6) DEFAULT NULL,
   cache_course_code VARCHAR2(12) DEFAULT NULL,
@@ -35,11 +35,21 @@ CREATE TABLE activity (
   tt_template_id VARCHAR2(32) DEFAULT NULL CONSTRAINT activity_template REFERENCES activity_template (tt_template_id),
   tt_type_id VARCHAR2(32) DEFAULT NULL,
   tt_jta_activity_id VARCHAR2(32) DEFAULT NULL,
+  tt_scheduling_method NUMBER(10,0) DEFAULT NULL,
   learn_group_id VARCHAR2(80) DEFAULT NULL,
   learn_group_name NVARCHAR2(255) DEFAULT NULL,
   learn_group_created DATE DEFAULT NULL,
   description CLOB,
   PRIMARY KEY (tt_activity_id)
+);
+
+CREATE TABLE variantjtaaccts (
+    tt_activity_id VARCHAR2(32) NOT NULL CONSTRAINT variant_activity REFERENCES activity (tt_activity_id),
+    tt_is_jta_parent NUMBER(3,0) NOT NULL,
+    tt_is_jta_child NUMBER(3,0) NOT NULL,
+    tt_is_variant_parent NUMBER(3,0) NOT NULL,
+    tt_is_variant_child NUMBER(3,0) NOT NULL,
+    tt_latest_transaction INTEGER DEFAULT NULL
 );
 
 CREATE TABLE synchronisation_run (
@@ -119,7 +129,8 @@ CREATE VIEW sync_activities_vw AS
 		FROM activity a
 			JOIN module m ON m.tt_module_id = a.tt_module_id
 			JOIN activity_set_size_vw s ON s.tt_activity_id = a.tt_activity_id
-		WHERE m.webct_active = 'Y'
+		WHERE a.tt_scheduling_method!='0'
+      AND m.webct_active = 'Y'
 			AND s.set_size > '1'
 	);
   
@@ -161,7 +172,3 @@ CREATE OR REPLACE TRIGGER course_code_ins BEFORE INSERT OR UPDATE ON module
    END;
 /
 SET DEFINE ON;
-
-DELETE FROM ENROLMENT_CHANGE;
-DELETE FROM CACHE_ENROLMENT;
-DELETE FROM MODULE;

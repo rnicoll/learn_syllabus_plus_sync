@@ -1,6 +1,7 @@
 CREATE TABLE activity_template (
   tt_template_id VARCHAR(32) NOT NULL,
   tt_template_name VARCHAR(255) DEFAULT NULL,
+  tt_user_text_5 VARCHAR(255) DEFAULT NULL,
   learn_group_set_id VARCHAR(80) DEFAULT NULL,
   PRIMARY KEY (tt_template_id)
 );
@@ -34,6 +35,7 @@ CREATE TABLE activity (
   tt_template_id VARCHAR(32) DEFAULT NULL,
   tt_type_id VARCHAR(32) DEFAULT NULL,
   tt_jta_activity_id VARCHAR(32) DEFAULT NULL,
+  tt_scheduling_method INTEGER DEFAULT NULL,
   learn_group_id VARCHAR(80) DEFAULT NULL,
   learn_group_name VARCHAR(255) DEFAULT NULL,
   learn_group_created DATETIME DEFAULT NULL,
@@ -41,6 +43,16 @@ CREATE TABLE activity (
   PRIMARY KEY (tt_activity_id),
   CONSTRAINT activity_module FOREIGN KEY (tt_module_id) REFERENCES module (tt_module_id),
   CONSTRAINT activity_template FOREIGN KEY (tt_template_id) REFERENCES activity_template (tt_template_id)
+);
+
+CREATE TABLE variantjtaaccts (
+    tt_activity_id VARCHAR(32) NOT NULL,
+    tt_is_jta_parent INTEGER NOT NULL,
+    tt_is_jta_child INTEGER NOT NULL,
+    tt_is_variant_parent INTEGER NOT NULL,
+    tt_is_variant_child INTEGER NOT NULL,
+    tt_latest_transaction INTEGER DEFAULT NULL,
+    CONSTRAINT variant_activity FOREIGN KEY (tt_activity_id) REFERENCES activity (tt_activity_id)
 );
 
 CREATE TABLE synchronisation_run (
@@ -111,7 +123,8 @@ CREATE VIEW sync_activities_vw AS
 		FROM activity a
 			JOIN module m ON m.tt_module_id = a.tt_module_id
 			JOIN activity_set_size_vw s ON s.tt_activity_id = a.tt_activity_id
-		WHERE m.webct_active = 'Y'
+		WHERE a.tt_scheduling_method!='0'
+                        AND m.webct_active = 'Y'
 			AND s.set_size > '1'
 	);
 
