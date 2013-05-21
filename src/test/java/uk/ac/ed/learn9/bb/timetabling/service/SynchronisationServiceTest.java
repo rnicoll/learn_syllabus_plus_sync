@@ -332,23 +332,6 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     }
 
     /**
-     * Test of startNewRun method, of class SynchronisationService.
-     */
-    /*
-    @Test
-    public void testStartNewRun() throws Exception {
-        System.out.println("startNewRun");
-        Connection destination = null;
-        SynchronisationService instance = this.getService();
-        SynchronisationRun expResult = null;
-        SynchronisationRun result = instance.startNewRun(destination);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-     */
-
-    /**
      * Test of mapStudentSetsToUsers method, of class SynchronisationService.
      */
     /*

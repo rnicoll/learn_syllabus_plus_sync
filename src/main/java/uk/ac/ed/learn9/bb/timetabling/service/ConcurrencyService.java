@@ -31,9 +31,10 @@ public class ConcurrencyService {
         throws SQLException, SynchronisationAlreadyInProgressException {
         PreparedStatement statement = cacheDatabase.prepareStatement(
             "INSERT INTO synchronisation_run_prev (run_id, previous_run_id) "
-                + "(SELECT ?, MAX(run_id) FROM synchronisation_run)");
+                + "(SELECT ?, MAX(run_id) FROM synchronisation_run WHERE run_id!=?)");
         try {
             statement.setInt(1, runId);
+            statement.setInt(2, runId);
             // XXX: Handle constraint violation
             statement.executeUpdate();
         } finally {
@@ -69,7 +70,13 @@ public class ConcurrencyService {
     
     private int getNextId(final Connection cacheDatabase) throws SQLException {
         final int runId;
-        final PreparedStatement idStatement = cacheDatabase.prepareStatement("SELECT SYNCHRONISATION_RUN_SEQ.NEXTVAL FROM DUAL");
+        final PreparedStatement idStatement;
+        
+        if (cacheDatabase.getMetaData().getDatabaseProductName().equals("HSQL Database Engine")) {
+            idStatement = cacheDatabase.prepareStatement("CALL NEXT VALUE FOR SYNCHRONISATION_RUN_SEQ;");
+        } else {
+            idStatement = cacheDatabase.prepareStatement("SELECT SYNCHRONISATION_RUN_SEQ.NEXTVAL FROM DUAL");
+        }
         
         try {
             final ResultSet rs = idStatement.executeQuery();
