@@ -60,6 +60,12 @@ CREATE TABLE variantjtaacts (
     tt_latest_transaction INTEGER DEFAULT NULL
 );
 
+CREATE TABLE run_result (
+  result_code VARCHAR2(20) NOT NULL,
+  result_label VARCHAR2(80) NOT NULL,
+  PRIMARY KEY (result_code)
+);
+
 CREATE TABLE synchronisation_run (
   run_id INTEGER NOT NULL,
   previous_run_id INTEGER DEFAULT NULL,
@@ -67,6 +73,7 @@ CREATE TABLE synchronisation_run (
   cache_copy_completed DATE DEFAULT NULL,
   diff_completed DATE DEFAULT NULL,
   end_time DATE DEFAULT NULL,
+  result_code VARCHAR2(20) DEFAULT NULL REFERENCES run_result(result_code),
   PRIMARY KEY (run_id)
 );
 CREATE INDEX run_diff_uniq ON synchronisation_run(previous_run_id);

@@ -17,9 +17,6 @@ import blackboard.persist.KeyNotFoundException;
 import blackboard.persist.PersistenceException;
 import blackboard.platform.log.LogService;
 import blackboard.platform.log.LogServiceFactory;
-import java.sql.Timestamp;
-
-import uk.ac.ed.learn9.bb.timetabling.dao.SynchronisationRunDao;
 import uk.ac.ed.learn9.bb.timetabling.data.cache.SynchronisationRun;
 
 /**
@@ -47,8 +44,6 @@ public class SynchronisationService extends Object {
     private MergedCoursesService mergedCoursesService;
     @Autowired
     private TimetablingCloneService cloneService;
-    @Autowired
-    private SynchronisationRunDao runDao;
     
     /**
      * Apply student/course group enrolment changes in the cache database,
@@ -75,26 +70,21 @@ public class SynchronisationService extends Object {
      * Generates an up to date difference set between the last time the
      * synchronisation service ran, and now.
      * 
-     * @return the synchronisation run the difference set has been attributed
-     * to. This is used to identify a change set independently of other change
-     * sets generated at other points.
+     * @param run the synchronisation run that we're generating a difference set
+     * for.
      * @throws SQLException 
      */
-    public SynchronisationRun generateDiff()
+    public void generateDiff(final SynchronisationRun run)
             throws SQLException {
         final Connection source = this.getRdbDataSource().getConnection();
 
         try {
             final Connection destination = this.getCacheDataSource().getConnection();
 
-            try {
-                final SynchronisationRun run = this.startNewRun(destination);
-                
+            try {                
                 this.copyStudentSetActivities(run, source, destination);
                 // FIXME: Update records of which courses are synced EUCLID->LEARN
                 this.doGenerateDiff(run, destination);
-                
-                return run;
             } finally {
                 destination.close();
             }
@@ -343,48 +333,6 @@ public class SynchronisationService extends Object {
     }
 
     /**
-     * Starts a new run of the synchronisation process and returns the ID for
-     * the run.
-     *
-     * @param destination the local database.
-     * @return the ID for the new synchronisation run.
-     * @throws SQLException if there was a problem inserting the record.
-     */
-    public SynchronisationRun startNewRun(final Connection destination)
-            throws SQLException {
-        final int runId;
-        final PreparedStatement idStatement = destination.prepareStatement("SELECT SYNCHRONISATION_RUN_SEQ.NEXTVAL FROM DUAL");
-        
-        try {
-            final ResultSet rs = idStatement.executeQuery();
-            try {
-                rs.next();
-                runId = rs.getInt(1);
-            } finally {
-                rs.close();
-            }
-        } finally {
-            idStatement.close();
-        }
-        
-        final Timestamp now = new Timestamp(System.currentTimeMillis());
-        final PreparedStatement statement = destination.prepareStatement(
-            "INSERT INTO synchronisation_run "
-                + "(run_id, previous_run_id, start_time) "
-                + "(SELECT ?, MAX(run_id) previous_run_id, ? FROM synchronisation_run WHERE end_time IS NOT NULL)");
-
-        try {
-            statement.setInt(1, runId);
-            statement.setTimestamp(2, now);
-            statement.executeUpdate();
-        } finally {
-            statement.close();
-        }
-        
-        return this.getRunDao().getRun(runId);
-    }
-
-    /**
      * Copies student set/activity relationships to be synchronised to Learn,
      * from the reporting database. This filters out variant activities as
      * well as whole-course student sets, but does not provide filtering on
@@ -615,20 +563,6 @@ public class SynchronisationService extends Object {
      */
     public void setMergedCoursesService(MergedCoursesService mergedCoursesService) {
         this.mergedCoursesService = mergedCoursesService;
-    }
-
-    /**
-     * @return the synchronisation run data access object.
-     */
-    public SynchronisationRunDao getRunDao() {
-        return runDao;
-    }
-
-    /**
-     * @param runDao the runDao to set
-     */
-    public void setRunDao(final SynchronisationRunDao newRunDao) {
-        this.runDao = newRunDao;
     }
 
     /**

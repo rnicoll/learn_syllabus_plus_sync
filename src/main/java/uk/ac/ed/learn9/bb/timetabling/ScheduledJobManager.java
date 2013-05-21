@@ -17,6 +17,7 @@ import org.springframework.context.event.ContextStartedEvent;
 import org.springframework.context.event.ContextStoppedEvent;
 
 import uk.ac.ed.learn9.bb.timetabling.data.cache.SynchronisationRun;
+import uk.ac.ed.learn9.bb.timetabling.service.ConcurrencyService;
 import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService;
 
 /**
@@ -29,7 +30,9 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
     public static final long RUN_INTERVAL = 24 * 60 * 60 * 1000L;
     
     @Autowired
-    private SynchronisationService service;
+    private ConcurrencyService concurrencyService;
+    @Autowired
+    private SynchronisationService synchronisationService;
     
     private final Timer timer = new Timer("Timetabling Group Sync", true);
     private boolean cancelled = false;
@@ -99,35 +102,59 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
     }
 
     /**
+     * @return the concurrencyService
+     */
+    public ConcurrencyService getConcurrencyService() {
+        return concurrencyService;
+    }
+
+    /**
      * Retrieves the synchronisation service for this task.
      * 
      * @return the synchronisation service
      */
-    public SynchronisationService getService() {
-        return service;
+    public SynchronisationService getSynchronisationService() {
+        return synchronisationService;
+    }
+
+    /**
+     * @param concurrencyService the concurrencyService to set
+     */
+    public void setConcurrencyService(ConcurrencyService concurrencyService) {
+        this.concurrencyService = concurrencyService;
     }
 
     /**
      * @param service the service to set
      */
-    public void setService(SynchronisationService service) {
-        this.service = service;
+    public void setSynchronisationService(SynchronisationService service) {
+        this.synchronisationService = service;
     }
     
     public class Task extends TimerTask {
         @Override
         public void run() {
             ScheduledJobManager.this.logService.logInfo("Running Learn/Timetabling synchronisation.");
+            SynchronisationRun run;
             
-            final SynchronisationService service = ScheduledJobManager.this.getService();
             try {
-                doSynchronisation(service);
-            } catch(PersistenceException e) {
-                ScheduledJobManager.this.logService.logError("Error while persisting/loading entities in Learn.", e);
+                run = ScheduledJobManager.this.getConcurrencyService().startNewRun();
             } catch(SQLException e) {
-                ScheduledJobManager.this.logService.logError("Database error while synchronising groups from Timetabling.", e);
-            } catch(ValidationException e) {
-                ScheduledJobManager.this.logService.logError("Error validating entities to be persisted in Learn.", e);
+                ScheduledJobManager.this.logService.logError("Database error while starting new synchronisation run.", e);
+                run = null;
+            }
+            
+            if (null != run) {
+                final SynchronisationService service = ScheduledJobManager.this.getSynchronisationService();
+                try {
+                    doSynchronisation(run, service);
+                } catch(PersistenceException e) {
+                    ScheduledJobManager.this.logService.logError("Error while persisting/loading entities in Learn.", e);
+                } catch(SQLException e) {
+                    ScheduledJobManager.this.logService.logError("Database error while synchronising groups from Timetabling.", e);
+                } catch(ValidationException e) {
+                    ScheduledJobManager.this.logService.logError("Error validating entities to be persisted in Learn.", e);
+                }
             }
             
             if (!ScheduledJobManager.this.cancelled) {
@@ -135,33 +162,35 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
             }
         }
 
-        private void doSynchronisation(final SynchronisationService service)
+        private void doSynchronisation(final SynchronisationRun run,
+                final SynchronisationService synchronisationService)
             throws PersistenceException, SQLException, ValidationException {
-            service.synchroniseTimetablingData();
+            synchronisationService.synchroniseTimetablingData();
             if (ScheduledJobManager.this.cancelled) {
                 return;
             }
-            final SynchronisationRun run = service.generateDiff();
+                    
+            synchronisationService.generateDiff(run);
             if (ScheduledJobManager.this.cancelled) {
                 return;
             }
-            service.updateGroupDescriptions();
+            synchronisationService.updateGroupDescriptions();
             if (ScheduledJobManager.this.cancelled) {
                 return;
             }
-            service.mapModulesToCourses();
+            synchronisationService.mapModulesToCourses();
             if (ScheduledJobManager.this.cancelled) {
                 return;
             }
-            service.createGroupsForActivities(run);
+            synchronisationService.createGroupsForActivities(run);
             if (ScheduledJobManager.this.cancelled) {
                 return;
             }
-            service.mapStudentSetsToUsers(run);
+            synchronisationService.mapStudentSetsToUsers(run);
             if (ScheduledJobManager.this.cancelled) {
                 return;
             }
-            service.applyEnrolmentChanges(run);
+            synchronisationService.applyEnrolmentChanges(run);
         }
     }
 }
