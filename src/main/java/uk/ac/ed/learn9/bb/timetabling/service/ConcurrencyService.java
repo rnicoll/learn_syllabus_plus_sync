@@ -126,7 +126,7 @@ public class ConcurrencyService {
         return this.getRunDao().getRun(runId);
     }
     
-    private void insertRunRecord(final Connection cacheDatabase, final int runId,
+    protected void insertRunRecord(final Connection cacheDatabase, final int runId,
             final Timestamp now)
         throws SQLException {
         final PreparedStatement insertStatement = cacheDatabase.prepareStatement(
@@ -147,9 +147,10 @@ public class ConcurrencyService {
      * 
      * @param cacheDatabase
      * @param now the current time.
+     * @return the number of sessions timed out.
      * @throws SQLException 
      */
-    public void timeoutOldSessions(final Connection cacheDatabase,
+    public int timeoutOldSessions(final Connection cacheDatabase,
             final Timestamp now)
             throws SQLException {
         final Timestamp timeout = new Timestamp(now.getTime() - SESSION_TIMEOUT);
@@ -165,6 +166,7 @@ public class ConcurrencyService {
             statement.setTimestamp(paramIdx++, now);
             statement.setString(paramIdx++, RESULT_CODE_TIMEOUT);
             statement.setTimestamp(paramIdx++, timeout);
+            return statement.executeUpdate();
         } finally {
             statement.close();
         }

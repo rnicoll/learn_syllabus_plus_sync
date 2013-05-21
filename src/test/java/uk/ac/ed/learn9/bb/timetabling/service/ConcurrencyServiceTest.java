@@ -5,19 +5,19 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import javax.sql.DataSource;
+import static org.junit.Assert.*;
 import org.junit.After;
 import org.junit.Test;
-import static org.junit.Assert.*;
 import org.junit.Before;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
-import uk.ac.ed.learn9.bb.timetabling.dao.SynchronisationRunDao;
 import uk.ac.ed.learn9.bb.timetabling.data.cache.SynchronisationRun;
+import uk.ac.ed.learn9.bb.timetabling.service.ConcurrencyService.SynchronisationAlreadyInProgressException;
 import uk.ac.ed.learn9.bb.timetabling.util.DbScriptUtil;
 
 @ContextConfiguration(locations={"classpath:applicationContext-test.xml"})
 public class ConcurrencyServiceTest extends AbstractJUnit4SpringContextTests {
+    private static final long A_FEW_DAYS_IN_MILLIS = 3 * 24 * 60 * 60 * 1000L;
     
     public ConcurrencyServiceTest() {
     }
@@ -61,6 +61,17 @@ public class ConcurrencyServiceTest extends AbstractJUnit4SpringContextTests {
     }
 
     /**
+     * Test of startNewRun method, of class ConcurrencyService.
+     */
+    @Test(expected=SynchronisationAlreadyInProgressException.class)
+    public void testStartNewRunCollision() throws Exception {
+        System.out.println("startNewRun");
+        final ConcurrencyService instance = this.getService();
+        final SynchronisationRun resultA = instance.startNewRun();
+        final SynchronisationRun resultB = instance.startNewRun();
+    }
+
+    /**
      * Test of timeoutOldSessions method, of class ConcurrencyService.
      */
     @Test
@@ -70,8 +81,12 @@ public class ConcurrencyServiceTest extends AbstractJUnit4SpringContextTests {
         Connection cacheDatabase = instance.getCacheDataSource().getConnection();
         try {
             final Timestamp now = new Timestamp(System.currentTimeMillis());
+            final Timestamp aWhileAgo = new Timestamp(now.getTime() - A_FEW_DAYS_IN_MILLIS);
+            int runId = 1;
             
-            instance.timeoutOldSessions(cacheDatabase, now);
+            instance.insertRunRecord(cacheDatabase, runId++, aWhileAgo);
+            instance.insertRunRecord(cacheDatabase, runId++, now);
+            assertEquals(1, instance.timeoutOldSessions(cacheDatabase, now));
         } finally {
             cacheDatabase.close();
         }
