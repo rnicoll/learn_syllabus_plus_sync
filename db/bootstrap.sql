@@ -15,3 +15,5 @@ INSERT INTO run_result (result_code, result_label)
   VALUES ('fatal', 'Synchronisation failed due to an unrecoverable error.');
 INSERT INTO run_result (result_code, result_label)
   VALUES ('timeout', 'Synchronisation timed out.');
+INSERT INTO run_result (result_code, result_label)
+  VALUES ('abandoned', 'Synchronisation abadoned due to concurrent process.');

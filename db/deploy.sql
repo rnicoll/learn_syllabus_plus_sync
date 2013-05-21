@@ -68,7 +68,6 @@ CREATE TABLE run_result (
 
 CREATE TABLE synchronisation_run (
   run_id INTEGER NOT NULL,
-  previous_run_id INTEGER DEFAULT NULL,
   start_time DATE NOT NULL,
   cache_copy_completed DATE DEFAULT NULL,
   diff_completed DATE DEFAULT NULL,
@@ -76,7 +75,13 @@ CREATE TABLE synchronisation_run (
   result_code VARCHAR2(20) DEFAULT NULL REFERENCES run_result(result_code),
   PRIMARY KEY (run_id)
 );
-CREATE INDEX run_diff_uniq ON synchronisation_run(previous_run_id);
+
+CREATE TABLE synchronisation_run_prev (
+  run_id INTEGER NOT NULL REFERENCES synchronisation_run(run_id),
+  previous_run_id INTEGER NULL REFERENCES synchronisation_run(run_id),
+  PRIMARY KEY(run_id),
+  UNIQUE(previous_run_id)
+);
 
 CREATE SEQUENCE SYNCHRONISATION_RUN_SEQ;
 
@@ -204,19 +209,19 @@ CREATE VIEW sync_student_set_vw AS
 
 CREATE VIEW added_enrolment_vw AS
     (SELECT a.run_id AS run_id,a.previous_run_id, ca.tt_student_set_id, ca.tt_activity_id, 'add' AS change_type
-        FROM synchronisation_run a
+        FROM synchronisation_run_prev a
             JOIN cache_enrolment ca ON ca.run_id = a.run_id
             JOIN sync_activity_vw act ON act.tt_activity_id = ca.tt_activity_id
             JOIN sync_student_set_vw stu ON stu.tt_student_set_id = ca.tt_student_set_id
-            LEFT JOIN synchronisation_run b ON b.run_id = a.previous_run_id
+            LEFT JOIN synchronisation_run_prev b ON b.run_id = a.previous_run_id
             LEFT JOIN cache_enrolment cb ON cb.run_id = b.run_id AND cb.tt_student_set_id = ca.tt_student_set_id AND cb.tt_activity_id = ca.tt_activity_id
         WHERE cb.tt_student_set_id IS NULL
     );
 
 CREATE VIEW removed_enrolment_vw AS
     (SELECT a.run_id AS run_id,a.previous_run_id AS previous_run_id,ca.tt_student_set_id AS tt_student_set_id,ca.tt_activity_id AS tt_activity_id,'remove' AS change_type
-        FROM synchronisation_run a
-            JOIN synchronisation_run b ON b.run_id = a.previous_run_id 
+        FROM synchronisation_run_prev a
+            JOIN synchronisation_run_prev b ON b.run_id = a.previous_run_id 
             JOIN cache_enrolment cb ON cb.run_id = b.run_id
             JOIN sync_activity_vw act ON act.tt_activity_id = cb.tt_activity_id
             JOIN sync_student_set_vw stu ON stu.tt_student_set_id = cb.tt_student_set_id

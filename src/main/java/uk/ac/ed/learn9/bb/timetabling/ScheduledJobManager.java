@@ -27,7 +27,8 @@ import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService;
 public class ScheduledJobManager extends Object implements ApplicationListener<ApplicationContextEvent> {
     public static final int START_HOUR_OF_DAY = 6;
     public static final int START_MINUTE = 0;
-    public static final long RUN_INTERVAL = 24 * 60 * 60 * 1000L;
+    public static final long RUN_INTERVAL_MILLIS = 24 * 60 * 60 * 1000L;
+    public static final int MAX_FUZZ_MILLIS = 60 * 1000;
     
     @Autowired
     private ConcurrencyService concurrencyService;
@@ -71,12 +72,13 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
      * Schedules the synchronisation task.
      */
     public void scheduleRun() {
+        final long fuzz = Math.round(Math.random() * MAX_FUZZ_MILLIS);
         final long delay = calculateDelay(System.currentTimeMillis());
         
         this.logService.logInfo("Scheduling synchronisation job after a delay of "
             + delay + "ms.");
         
-        this.timer.schedule(this.task, delay);
+        this.timer.schedule(this.task, delay + fuzz);
     }
 
     /**
@@ -139,6 +141,10 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
             
             try {
                 run = ScheduledJobManager.this.getConcurrencyService().startNewRun();
+            }  catch (ConcurrencyService.SynchronisationAlreadyInProgressException ex) {
+                // This is expected under normal circumstances, due to more than one
+                // possible server trying to run the job. Ignore.
+                run = null;
             } catch(SQLException e) {
                 ScheduledJobManager.this.logService.logError("Database error while starting new synchronisation run.", e);
                 run = null;

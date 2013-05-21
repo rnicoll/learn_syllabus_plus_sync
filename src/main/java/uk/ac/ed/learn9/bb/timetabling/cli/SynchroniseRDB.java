@@ -7,6 +7,7 @@ import blackboard.persist.PersistenceException;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import uk.ac.ed.learn9.bb.timetabling.data.cache.SynchronisationRun;
 import uk.ac.ed.learn9.bb.timetabling.service.ConcurrencyService;
+import uk.ac.ed.learn9.bb.timetabling.service.ConcurrencyService.SynchronisationAlreadyInProgressException;
 
 import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService;
 
@@ -15,7 +16,7 @@ import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService;
  */
 public class SynchroniseRDB extends Object {
     public static void main(final String[] argv)
-        throws SQLException, PersistenceException, ValidationException {
+        throws SQLException, PersistenceException, ValidationException, SynchronisationAlreadyInProgressException {
         final ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
         final ConcurrencyService concurrencyService = context.getBean(ConcurrencyService.class);
         final SynchronisationService synchronisationService = context.getBean(SynchronisationService.class);
