@@ -19,6 +19,7 @@ public class Activity extends Object implements Serializable {
     private String activityName;
     private Module module;
     private String learnGroupId;
+    private String learnGroupName;
     private String description;
 
     /**
@@ -42,12 +43,12 @@ public class Activity extends Object implements Serializable {
     }
 
     /**
-     * @return the module this activity belongs to.
+     * @return the description of the group, as generated automatically from
+     * the activity data.
      */
-    @ManyToOne
-    @JoinColumn(name="tt_module_id")
-    public Module getModule() {
-        return module;
+    @Column(name="description", nullable=true, length=400)
+    public String getDescription() {
+        return description;
     }
 
     /**
@@ -63,19 +64,20 @@ public class Activity extends Object implements Serializable {
     }
 
     /**
-     * @return the description of the group, as generated automatically from
-     * the activity data.
+     * @return the learnGroupName
      */
-    @Column(name="description", nullable=true, length=400)
-    public String getDescription() {
-        return description;
+    @Column(name="learn_group_name", nullable=true, length=80)
+    public String getLearnGroupName() {
+        return learnGroupName;
     }
 
     /**
-     * @param description the description to set
+     * @return the module this activity belongs to.
      */
-    public void setDescription(String description) {
-        this.description = description;
+    @ManyToOne
+    @JoinColumn(name="tt_module_id")
+    public Module getModule() {
+        return module;
     }
 
     /**
@@ -90,6 +92,20 @@ public class Activity extends Object implements Serializable {
      */
     public void setActivityName(String activityName) {
         this.activityName = activityName;
+    }
+
+    /**
+     * @param description the description to set
+     */
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    /**
+     * @param learnGroupName the learnGroupName to set
+     */
+    public void setLearnGroupName(String learnGroupName) {
+        this.learnGroupName = learnGroupName;
     }
 
     /**

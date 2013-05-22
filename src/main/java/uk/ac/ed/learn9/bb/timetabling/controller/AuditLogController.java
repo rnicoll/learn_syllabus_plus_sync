@@ -36,7 +36,7 @@ public class AuditLogController {
         changes.addAll(this.getEnrolmentChangeDao().getByCourse(course));
         Collections.sort(changes);
         
-        modelAndView.addObject("audit_log", changes);
+        modelAndView.addObject("changes", changes);
         
         return modelAndView;
     }

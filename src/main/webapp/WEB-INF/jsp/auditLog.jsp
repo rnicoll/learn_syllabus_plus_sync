@@ -4,6 +4,7 @@
 <%@ taglib uri="/bbData"  prefix="bbData"%>
 <%@ taglib uri="/bbUI" prefix="bbUI" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 
 <bbNG:learningSystemPage title="Timetabling Groups" authentication="Y" entitlement="course.content.VIEW">
 
@@ -14,9 +15,30 @@
    </bbNG:breadcrumbBar>
   </bbNG:pageHeader>
  
-  <jsp:include page="/getForm">
-      <jsp:param name="content_id" value="${content_id}"/>
-      <jsp:param name="formText" value="${formText}"/>
-  </jsp:include>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Activity</th>
+                <th>Group</th>
+                <th>Action</th>
+                <th>Completed</th>
+                <th>Outcome</th>
+            </tr>
+        </thead>
+        <tbody>
+  <c:forEach items="${changes}" var="change">
+            <tr>
+                <td>${fn:escapeXml(change.getUsername())}</td>
+                <td>${fn:escapeXml(change.getActivityName())}</td>>
+                <td>${fn:escapeXml(change.getGroupName())}</td>
+                <td>${fn:escapeXml(change.getChangeType())}</td>
+                <td><!-- FIXME --></td>
+                <td><!-- FIXME --></td>
+  </c:forEach>
+            </tr>
+        </tbody>
+    </table>
 
 </bbNG:learningSystemPage>

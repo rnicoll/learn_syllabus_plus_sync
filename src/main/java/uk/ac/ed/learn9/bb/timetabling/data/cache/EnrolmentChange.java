@@ -9,6 +9,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 /**
  * Represents a change to enrolments, where a student is to be added to a group
@@ -69,6 +70,32 @@ public class EnrolmentChange extends Object implements Comparable<EnrolmentChang
     }
 
     /**
+     * Returns the activity that the student is being added to.
+     * 
+     * @return the activity that the student is being added to.
+     */
+    @ManyToOne
+    @JoinColumn(name="TT_ACTIVITY_ID")
+    public Activity getActivity() {
+        return activity;
+    }
+    
+    @Transient
+    public String getActivityName() {
+        return this.getActivity().getActivityName();
+    }
+
+    @Column(name="change_type", nullable=false, length=12)
+    public String getChangeType() {
+        return this.changeType;
+    }
+    
+    @Transient
+    public String getGroupName() {
+        return this.getActivity().getLearnGroupName();
+    }
+
+    /**
      * Returns the synchronisation run this change belongs to.
      * 
      * @return the synchronisation run this change belongs to.
@@ -80,27 +107,10 @@ public class EnrolmentChange extends Object implements Comparable<EnrolmentChang
     }
 
     /**
-     * Returns the activity that the student is being added to.
-     * 
-     * @return the activity that the student is being added to.
-     */
-    @ManyToOne
-    @JoinColumn(name="TT_ACTIVITY_ID")
-    public Activity getActivity() {
-        return activity;
-    }
-
-    @Column(name="change_type", nullable=false, length=12)
-    public String getChangeType() {
-        return this.changeType;
-    }
-
-    /**
      * @return the studentSet
      */
     @ManyToOne
     @JoinColumn(name="TT_STUDENT_SET_ID")
-    
     public StudentSet getStudentSet() {
         return studentSet;
     }
@@ -111,6 +121,11 @@ public class EnrolmentChange extends Object implements Comparable<EnrolmentChang
     @Column(name="update_completed")
     public Timestamp getUpdateCompleted() {
         return updateCompleted;
+    }
+    
+    @Transient
+    public String getUserName() {
+        return this.getStudentSet().getHostKey();
     }
 
     /**
