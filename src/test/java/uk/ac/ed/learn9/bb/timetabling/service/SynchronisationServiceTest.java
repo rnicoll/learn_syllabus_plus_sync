@@ -14,13 +14,16 @@ import org.junit.After;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.Before;
+import org.springframework.beans.BeansException;
 
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 import uk.ac.ed.learn9.bb.timetabling.RdbIdSource;
 import uk.ac.ed.learn9.bb.timetabling.SequentialRdbIdSource;
+import uk.ac.ed.learn9.bb.timetabling.dao.ActivityDao;
 import uk.ac.ed.learn9.bb.timetabling.dao.ModuleDao;
 import uk.ac.ed.learn9.bb.timetabling.data.AcademicYearCode;
+import uk.ac.ed.learn9.bb.timetabling.data.cache.Activity;
 import uk.ac.ed.learn9.bb.timetabling.data.cache.ActivityTemplate;
 import uk.ac.ed.learn9.bb.timetabling.data.cache.ActivityType;
 import uk.ac.ed.learn9.bb.timetabling.data.cache.Module;
@@ -154,12 +157,13 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
         AcademicYearCode academicYearCode = new AcademicYearCode("2012/3");
         final Connection rdbConnection = instance.getRdbDataSource().getConnection();
         try {
+            // Test simply creating a module
             final RdbIdSource rdbIdSource = new SequentialRdbIdSource();
             final Module expResultModule = RdbUtil.createTestModule(rdbConnection, academicYearCode, rdbIdSource);
         
             instance.synchroniseTimetablingData();
 
-            final ModuleDao moduleDao = this.applicationContext.getBean(ModuleDao.class);
+            final ModuleDao moduleDao = getModuleDao();
             List<Module> modules = moduleDao.getAll();
 
             assertEquals(1, modules.size());
@@ -184,6 +188,28 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
             assertEquals(expResultModule.getModuleId(), resultModule.getModuleId());
             assertEquals(expResultModule.getTimetablingCourseCode(), resultModule.getTimetablingCourseCode());
             assertEquals(academicYearCode.toString(), resultModule.getTimetablingAcademicYear());
+            
+            // Test building a full activity
+            
+            final ActivityType tutorialType = RdbUtil.createTestActivityType(rdbConnection, "Tutorial", rdbIdSource);
+            final ActivityTemplate activityTemplateSync = RdbUtil.createTestActivityTemplate(rdbConnection, expResultModule,
+                    tutorialType, "Tutorials", RdbUtil.TemplateForVle.FOR_VLE, rdbIdSource);
+            int activityId = 1;
+            
+            final Activity expResultActivity
+                = RdbUtil.createTestActivity(rdbConnection, activityTemplateSync,
+                    expResultModule, RdbUtil.SchedulingMethod.SCHEDULED, activityId++, rdbIdSource);
+            
+            instance.synchroniseTimetablingData();
+            
+            final ActivityDao activityDao = this.getActivityDao();
+            final List<Activity> activities = activityDao.getAll();
+            
+            assertEquals(1, activities.size());
+            
+            final Activity resultActivity = activities.get(0);
+            
+            assertEquals(expResultActivity.getActivityId(), resultActivity.getActivityId());
         } finally {
             rdbConnection.close();
         }
@@ -278,7 +304,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
         
             instance.synchroniseTimetablingData();
 
-            final ModuleDao moduleDao = this.applicationContext.getBean(ModuleDao.class);
+            final ModuleDao moduleDao = getModuleDao();
             List<Module> modules = moduleDao.getAll();
 
             assertEquals(1, modules.size());
@@ -329,6 +355,14 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
         } finally {
             rdbConnection.close();
         }
+    }
+
+    public ActivityDao getActivityDao() throws BeansException {
+        return this.applicationContext.getBean(ActivityDao.class);
+    }
+
+    public ModuleDao getModuleDao() throws BeansException {
+        return this.applicationContext.getBean(ModuleDao.class);
     }
 
     /**

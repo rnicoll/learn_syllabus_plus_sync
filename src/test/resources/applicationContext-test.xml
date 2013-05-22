@@ -69,6 +69,9 @@
          class="uk.ac.ed.learn9.bb.timetabling.ScheduledJobManager"/>
     
     <!-- Service beans -->
+    <bean id="activityDao" class="uk.ac.ed.learn9.bb.timetabling.dao.impl.ActivityDaoImpl">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
     <bean id="activityTemplateDao" class="uk.ac.ed.learn9.bb.timetabling.dao.impl.ActivityTemplateDaoImpl">
         <property name="sessionFactory" ref="sessionFactory"/>
     </bean>

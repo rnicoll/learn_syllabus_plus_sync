@@ -5,22 +5,22 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import uk.ac.ed.learn9.bb.timetabling.dao.ActivityTemplateDao;
-import uk.ac.ed.learn9.bb.timetabling.data.cache.ActivityTemplate;
+import uk.ac.ed.learn9.bb.timetabling.dao.ActivityTypeDao;
+import uk.ac.ed.learn9.bb.timetabling.data.cache.ActivityType;
 
 @Transactional
 @Scope("singleton")
 @Component("templateDao")
-public class ActivityTypeDaoImpl extends HibernateDaoSupport implements ActivityTemplateDao {
+public class ActivityTypeDaoImpl extends HibernateDaoSupport implements ActivityTypeDao {
 
     @Override
-    public ActivityTemplate getById(final int changeId) {
-        return (ActivityTemplate)this.getSession().get(ActivityTemplate.class, changeId);
+    public ActivityType getById(final int typeId) {
+        return (ActivityType)this.getSession().get(ActivityType.class, typeId);
     }
 
     @Override
-    public List<ActivityTemplate> getAll() {
-        return this.getSession().createQuery("FROM uk.ac.ed.learn9.bb.timetabling.data.cache.ActivityTemplate").list();
+    public List<ActivityType> getAll() {
+        return this.getSession().createQuery("FROM uk.ac.ed.learn9.bb.timetabling.data.cache.ActivityType").list();
     }
     
 }
