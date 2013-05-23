@@ -1,8 +1,5 @@
 package uk.ac.ed.learn9.bb.timetabling.data;
 
-
-
-
 import java.io.Serializable;
 import java.sql.Timestamp;
 import javax.persistence.Column;

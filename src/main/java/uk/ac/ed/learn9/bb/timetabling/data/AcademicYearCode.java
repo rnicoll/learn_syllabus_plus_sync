@@ -1,7 +1,7 @@
 package uk.ac.ed.learn9.bb.timetabling.data;
 
 /**
- * Type-safe object for wrapping academic year codes.
+ * Type-safe object for wrapping academic year codes as stored in EUCLID.
  */
 public class AcademicYearCode extends AbstractCode<AcademicYearCode> {
     public              AcademicYearCode(final String setValue)

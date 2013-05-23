@@ -1,7 +1,5 @@
 package uk.ac.ed.learn9.bb.timetabling.data;
 
-
-
 import java.io.Serializable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -38,7 +36,10 @@ public class Module extends Object implements Serializable {
     }
 
     /**
-     * @return the ID of the course in Learn.
+     * Get the ID of the course in Learn, where such a course exists.
+     * 
+     * @return the ID of the course in Learn, or null if no matching course
+     * has been identified yet.
      */
     @Column(name="learn_course_id", nullable=true, length=80)
     public String getLearnCourseId() {
@@ -46,7 +47,10 @@ public class Module extends Object implements Serializable {
     }
 
     /**
-     * @return the timetablingCourseCode
+     * Get the course code as stored in timetabling, for example
+     * "HIAR10079_SS1_SEM1".
+     * 
+     * @return the course code as stored in timetabling.
      */
     @Column(name="tt_course_code", nullable=true, length=20)
     public String getTimetablingCourseCode() {
@@ -54,7 +58,10 @@ public class Module extends Object implements Serializable {
     }
 
     /**
-     * @return the timetablingModuleName
+     * Gets the name of the module in Timetabling, for example 
+     * "Fractures: The Origin, Development and Influence of Cubist Painting".
+     * 
+     * @return the name of the module in Timetabling.
      */
     @Column(name="tt_module_name", nullable=true, length=255)
     public String getTimetablingModuleName() {
@@ -62,7 +69,10 @@ public class Module extends Object implements Serializable {
     }
 
     /**
-     * @return the timetablingAcademicYear
+     * Gets the academic year recorded against the module in Timetabling,
+     * for example "2012/3".
+     * 
+     * @return the academic year recorded against the module in Timetabling.
      */
     @Column(name="tt_academic_year", nullable=true, length=12)
     public String getTimetablingAcademicYear() {
@@ -70,7 +80,10 @@ public class Module extends Object implements Serializable {
     }
 
     /**
-     * @return the cacheSemesterCode
+     * Gets the semester code derived from the timetabling course code.
+     * 
+     * @return the semester code derived from the timetabling course code, or
+     * null if no semester code could be determined.
      */
     @Column(name="cache_semester_code", nullable=true, length=6, updatable=false)
     public String getCacheSemesterCode() {
@@ -78,7 +91,10 @@ public class Module extends Object implements Serializable {
     }
 
     /**
-     * @return the cacheOccurrenceCode
+     * Gets the occurrence code derived from the timetabling course code.
+     * 
+     * @return the occurrence code derived from the timetabling course code, or
+     * null if no occurrence code could be determined.
      */
     @Column(name="cache_occurrence_code", nullable=true, length=6, updatable=false)
     public String getCacheOccurrenceCode() {
@@ -94,7 +110,11 @@ public class Module extends Object implements Serializable {
     }
 
     /**
-     * @return the mergeCourseCode
+     * Gets the Learn course code of the course that this module is merged
+     * into.
+     * 
+     * @return the Learn course code of the course that this module is merged
+     * into, or null if no merging is to be done (the normal case).
      */
     @Column(name="merge_course_code", nullable=true, length=40)
     public String getMergeCourseCode() {
@@ -102,7 +122,11 @@ public class Module extends Object implements Serializable {
     }
 
     /**
-     * @return the learnAcademicYear
+     * Gets the academic year code as used to generate the Learn course
+     * code, as in "2012-3".
+     * 
+     * @return the academic year code as used to generate the Learn course
+     * code
      */
     @Column(name="learn_academic_year", nullable=true, length=6, updatable=false)
     public String getLearnAcademicYear() {
@@ -110,7 +134,10 @@ public class Module extends Object implements Serializable {
     }
 
     /**
-     * @return the learnCourseCode
+     * Gets the course code for this module in Learn, for example
+     * "HIAR100792012-3SS1SEM1".
+     * 
+     * @return the course code for this module in Learn.
      */
     @Column(name="learn_course_code", nullable=true, length=40, updatable=false)
     public String getLearnCourseCode() {
@@ -118,7 +145,11 @@ public class Module extends Object implements Serializable {
     }
 
     /**
-     * @return the webctActive
+     * Gets whether this course is synchronised from EUCLID to Learn (the
+     * name of the field reflects the name of the field in EUCLID, which is
+     * now out of date).
+     * 
+     * @return whether this course is synchronised from EUCLID to Learn.
      */
     @Column(name="webct_active", nullable=true)
     @Type(type="yes_no")

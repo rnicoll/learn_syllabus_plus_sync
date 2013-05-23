@@ -1,7 +1,5 @@
 package uk.ac.ed.learn9.bb.timetabling.data;
 
-
-
 import java.io.Serializable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -25,6 +23,8 @@ public class Activity extends Object implements Serializable {
     private String description;
 
     /**
+     * Returns the ID of the activity (a 32 character identifier used by Timetabling).
+     * 
      * @return the activity ID. This is a primary key copied from the Timetabling
      * system.
      */
@@ -45,8 +45,10 @@ public class Activity extends Object implements Serializable {
     }
 
     /**
-     * @return the description of the group, as generated automatically from
-     * the activity data.
+     * Returns the description of the group. This is generated from the activity
+     * data name, template, type and module as part of the synchronisation process.
+     * 
+     * @return the description of the group.
      */
     @Column(name="description", nullable=true, length=400)
     public String getDescription() {
@@ -66,7 +68,10 @@ public class Activity extends Object implements Serializable {
     }
 
     /**
-     * @return the learnGroupName
+     * Returns the name of the group in Learn, when it's first created. This
+     * is generated as part of the synchronisation process.
+     * 
+     * @return the Learn group name.
      */
     @Column(name="learn_group_name", nullable=true, length=80)
     public String getLearnGroupName() {
@@ -83,42 +88,43 @@ public class Activity extends Object implements Serializable {
     }
 
     /**
-     * @param activityId the activityId to set
+     * @param activityId the ID of this activity.
      */
     public void setActivityId(String activityId) {
         this.activityId = activityId;
     }
 
     /**
-     * @param activityName the activityName to set
+     * @param activityName the name of this activity.
      */
     public void setActivityName(String activityName) {
         this.activityName = activityName;
     }
 
     /**
-     * @param description the description to set
+     * @param description the description for this activity's group.
      */
     public void setDescription(String description) {
         this.description = description;
     }
 
     /**
-     * @param learnGroupName the learnGroupName to set
+     * @param learnGroupName the name of this activity's group in Learn.
      */
     public void setLearnGroupName(String learnGroupName) {
         this.learnGroupName = learnGroupName;
     }
 
     /**
-     * @param module the module to set
+     * @param module the module this activity belongs to.
      */
     public void setModule(Module module) {
         this.module = module;
     }
 
     /**
-     * @param learnGroupId the learnGroupId to set
+     * @param learnGroupId the ID of the group in Learn that this activity
+     * relates to.
      */
     public void setLearnGroupId(String learnGroupId) {
         this.learnGroupId = learnGroupId;

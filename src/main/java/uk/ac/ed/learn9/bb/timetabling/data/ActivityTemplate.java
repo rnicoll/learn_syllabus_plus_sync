@@ -1,7 +1,5 @@
 package uk.ac.ed.learn9.bb.timetabling.data;
 
-
-
 import java.io.Serializable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -9,7 +7,9 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 /**
- * Represents an activity template in timetabling.
+ * Represents an activity template in timetabling. Activity templates generally
+ * are used to collect a set of related activities (for example all tutorials
+ * within a set), and therefore may reflect a group set in Learn.
  */
 @Entity
 @Table(name="activity_template")
@@ -20,7 +20,9 @@ public class ActivityTemplate extends Object implements Serializable {
     private String learnGroupSetId;
 
     /**
-     * @return the activityTemplate ID. This is a primary key copied from the Timetabling
+     * Returns the ID of this template in Learn (a 32 character primary key).
+     * 
+     * @return the activity template ID. This is a primary key copied from the Timetabling
      * system.
      */
     @Id
@@ -30,27 +32,13 @@ public class ActivityTemplate extends Object implements Serializable {
     }
 
     /**
-     * Returns the name of the activityTemplate.
+     * Returns the name of the activity template.
      * 
-     * @return the name of the activityTemplate.
+     * @return the name of the activity template.
      */
     @Column(name="tt_template_name", nullable=true, length=255)
     public String getTemplateName() {
         return templateName;
-    }
-
-    /**
-     * @param activityTemplateId the ID to set for this activity template.
-     */
-    public void setTemplateId(String activityTemplateId) {
-        this.templateId = activityTemplateId;
-    }
-
-    /**
-     * @param activityTemplateName the name to set for this activity template.
-     */
-    public void setTemplateName(String activityTemplateName) {
-        this.templateName = activityTemplateName;
     }
 
     /**
@@ -76,11 +64,29 @@ public class ActivityTemplate extends Object implements Serializable {
         return learnGroupSetId;
     }
 
-    public void setUserText5(String userText5) {
-        this.userText5 = userText5;
-    }
-
     public void setLearnGroupSetId(String learnGroupSetId) {
         this.learnGroupSetId = learnGroupSetId;
+    }
+
+    /**
+     * @param activityTemplateId the ID to set for this activity template.
+     */
+    public void setTemplateId(String activityTemplateId) {
+        this.templateId = activityTemplateId;
+    }
+
+    /**
+     * @param activityTemplateName the name to set for this activity template.
+     */
+    public void setTemplateName(String activityTemplateName) {
+        this.templateName = activityTemplateName;
+    }
+
+    /**
+     * Sets the value of the USER_TEXT_5 field as cached from Timetabling.
+     * @param userText5 
+     */
+    public void setUserText5(String userText5) {
+        this.userText5 = userText5;
     }
 }

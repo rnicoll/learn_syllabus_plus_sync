@@ -1,12 +1,14 @@
 package uk.ac.ed.learn9.bb.timetabling.data;
 
-
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+/**
+ * An activity type provides a human-readable short description of the purpose
+ * of an activity, for example "Tutorial", "Lab", "Lecture", etc.
+ */
 @Entity
 @Table(name="activity_type")
 public class ActivityType extends Object {

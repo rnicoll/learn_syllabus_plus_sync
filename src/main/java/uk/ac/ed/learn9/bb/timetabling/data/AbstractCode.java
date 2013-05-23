@@ -1,9 +1,7 @@
 package uk.ac.ed.learn9.bb.timetabling.data;
 
 /**
- * Type-safe object for wrapping course codes. This is used because course
- * code syntax is different in Timetabling and Learn, and therefore it helps
- * ensure the two are not mixed up.
+ * Type-safe object for wrapping string-based primary key codes.
  */
 public abstract class AbstractCode<T extends AbstractCode> extends Object implements Comparable<T>, CharSequence {
     private final String val;
