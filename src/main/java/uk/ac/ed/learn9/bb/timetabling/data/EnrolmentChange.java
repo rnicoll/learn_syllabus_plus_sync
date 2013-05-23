@@ -11,7 +11,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 
 /**
- * Represents a change to enrolments, where a student is to be added to a group
+ * A change to enrolments, where a student is to be added to a group
  * in Learn.
  */
 @Entity

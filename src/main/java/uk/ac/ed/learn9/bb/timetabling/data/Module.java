@@ -8,7 +8,7 @@ import javax.persistence.Table;
 import org.hibernate.annotations.Type;
 
 /**
- * Represents an module in timetabling, which can be mapped to a course in Learn.
+ * A module in timetabling, which can be mapped to a course in Learn.
  */
 @Entity
 @Table(name="module")

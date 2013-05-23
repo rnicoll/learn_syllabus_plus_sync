@@ -1,7 +1,5 @@
 package uk.ac.ed.learn9.bb.timetabling.data;
 
-
-
 import java.io.Serializable;
 import java.util.Date;
 import javax.persistence.Column;
@@ -11,6 +9,9 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
+/**
+ * A record of a synchronisation process run.
+ */
 @Entity
 @Table(name="synchronisation_run")
 public class SynchronisationRun extends Object implements Serializable {

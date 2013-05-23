@@ -7,8 +7,12 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 
+/**
+ * A student set in timetabling, which can contain zero or more students.
+ * For the purposes of synchronisation to Learn, we only care about the
+ * sets with exactly one student in.
+ */
 @Entity
 @Table(name="student_set")
 public class StudentSet extends Object implements Serializable {
@@ -17,6 +21,8 @@ public class StudentSet extends Object implements Serializable {
     private String learnUserId;
 
     /**
+     * Gets the ID for the student set (a 32 character string).
+     * 
      * @return the student-set ID.
      */
     @Id
@@ -41,7 +47,11 @@ public class StudentSet extends Object implements Serializable {
     }
 
     /**
-     * @return the ID of the User object in Learn.
+     * Gets the ID of the User object in Learn that this student set relates
+     * to, where applicable.
+     * 
+     * @return the ID of the User object in Learn that this student set relates
+     * to, returns null if no matching user has been found (yet).
      */
     @Column(name="learn_user_id", nullable=true, length=80)
     public String getLearnUserId() {
@@ -49,7 +59,9 @@ public class StudentSet extends Object implements Serializable {
     }
 
     /**
-     * @param studentSetId the studentSetId to set
+     * Sets the ID of this student set.
+     * 
+     * @param studentSetId the ID of the student set.
      */
     public void setStudentSetId(String studentSetId) {
         this.studentSetId = studentSetId;
@@ -63,6 +75,8 @@ public class StudentSet extends Object implements Serializable {
     }
 
     /**
+     * Sets the host key of this student set.
+     * 
      * @param hostKey the hostKey to set
      */
     public void setHostKey(String hostKey) {
