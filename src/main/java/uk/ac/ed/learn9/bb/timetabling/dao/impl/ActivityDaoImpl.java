@@ -20,7 +20,7 @@ public class ActivityDaoImpl extends HibernateDaoSupport implements ActivityDao 
 
     @Override
     public List<Activity> getAll() {
-        return this.getSession().createQuery("FROM uk.ac.ed.learn9.bb.timetabling.data.cache.Activity").list();
+        return this.getSession().createQuery("FROM uk.ac.ed.learn9.bb.timetabling.data.Activity").list();
     }
     
 }

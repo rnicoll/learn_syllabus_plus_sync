@@ -20,7 +20,7 @@ public class ModuleDaoImpl extends HibernateDaoSupport implements ModuleDao {
 
     @Override
     public List<Module> getAll() {
-        return this.getSession().createQuery("FROM uk.ac.ed.learn9.bb.timetabling.data.cache.Module").list();
+        return this.getSession().createQuery("FROM uk.ac.ed.learn9.bb.timetabling.data.Module").list();
     }
     
 }

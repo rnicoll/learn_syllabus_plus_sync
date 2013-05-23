@@ -20,7 +20,7 @@ public class ActivityTypeDaoImpl extends HibernateDaoSupport implements Activity
 
     @Override
     public List<ActivityType> getAll() {
-        return this.getSession().createQuery("FROM uk.ac.ed.learn9.bb.timetabling.data.cache.ActivityType").list();
+        return this.getSession().createQuery("FROM uk.ac.ed.learn9.bb.timetabling.data.ActivityType").list();
     }
     
 }

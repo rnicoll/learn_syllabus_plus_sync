@@ -20,6 +20,6 @@ public class ActivityTemplateDaoImpl extends HibernateDaoSupport implements Acti
 
     @Override
     public List<ActivityTemplate> getAll() {
-        return this.getSession().createQuery("FROM uk.ac.ed.learn9.bb.timetabling.data.cache.ActivityTemplate").list();
+        return this.getSession().createQuery("FROM uk.ac.ed.learn9.bb.timetabling.data.ActivityTemplate").list();
     }
 }
