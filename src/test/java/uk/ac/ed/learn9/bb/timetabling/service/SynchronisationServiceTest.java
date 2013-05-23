@@ -23,10 +23,10 @@ import uk.ac.ed.learn9.bb.timetabling.SequentialRdbIdSource;
 import uk.ac.ed.learn9.bb.timetabling.dao.ActivityDao;
 import uk.ac.ed.learn9.bb.timetabling.dao.ModuleDao;
 import uk.ac.ed.learn9.bb.timetabling.data.AcademicYearCode;
-import uk.ac.ed.learn9.bb.timetabling.data.cache.Activity;
-import uk.ac.ed.learn9.bb.timetabling.data.cache.ActivityTemplate;
-import uk.ac.ed.learn9.bb.timetabling.data.cache.ActivityType;
-import uk.ac.ed.learn9.bb.timetabling.data.cache.Module;
+import uk.ac.ed.learn9.bb.timetabling.data.Activity;
+import uk.ac.ed.learn9.bb.timetabling.data.ActivityTemplate;
+import uk.ac.ed.learn9.bb.timetabling.data.ActivityType;
+import uk.ac.ed.learn9.bb.timetabling.data.Module;
 import uk.ac.ed.learn9.bb.timetabling.util.DbScriptUtil;
 import uk.ac.ed.learn9.bb.timetabling.util.RdbUtil;
 

@@ -5,13 +5,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.Calendar;
-import java.util.Date;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import uk.ac.ed.learn9.bb.timetabling.dao.SynchronisationRunDao;
-import uk.ac.ed.learn9.bb.timetabling.data.cache.SynchronisationRun;
+import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 
 /**
  * Used to ensure each synchronisation run is performed serially (there are no

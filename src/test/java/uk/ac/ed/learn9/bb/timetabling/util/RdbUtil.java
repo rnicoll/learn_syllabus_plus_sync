@@ -6,10 +6,10 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import uk.ac.ed.learn9.bb.timetabling.RdbIdSource;
 import uk.ac.ed.learn9.bb.timetabling.data.AcademicYearCode;
-import uk.ac.ed.learn9.bb.timetabling.data.cache.Activity;
-import uk.ac.ed.learn9.bb.timetabling.data.cache.ActivityTemplate;
-import uk.ac.ed.learn9.bb.timetabling.data.cache.ActivityType;
-import uk.ac.ed.learn9.bb.timetabling.data.cache.Module;
+import uk.ac.ed.learn9.bb.timetabling.data.Activity;
+import uk.ac.ed.learn9.bb.timetabling.data.ActivityTemplate;
+import uk.ac.ed.learn9.bb.timetabling.data.ActivityType;
+import uk.ac.ed.learn9.bb.timetabling.data.Module;
 
 /**
  * Class for setting up/tearing down test data in the RDB.

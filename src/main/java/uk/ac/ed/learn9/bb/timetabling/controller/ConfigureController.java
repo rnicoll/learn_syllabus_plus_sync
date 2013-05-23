@@ -7,6 +7,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.ModelAndView;
 
+/**
+ * Unused controller that could be used for a settings page if needed later.
+ */
 @Controller
 public class ConfigureController extends Object {
     /**

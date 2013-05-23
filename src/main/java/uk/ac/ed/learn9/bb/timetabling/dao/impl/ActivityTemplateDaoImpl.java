@@ -6,7 +6,7 @@ import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ed.learn9.bb.timetabling.dao.ActivityTemplateDao;
-import uk.ac.ed.learn9.bb.timetabling.data.cache.ActivityTemplate;
+import uk.ac.ed.learn9.bb.timetabling.data.ActivityTemplate;
 
 @Transactional
 @Scope("singleton")

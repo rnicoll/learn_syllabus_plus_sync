@@ -1,4 +1,6 @@
-package uk.ac.ed.learn9.bb.timetabling.data.cache;
+package uk.ac.ed.learn9.bb.timetabling.data;
+
+
 
 import java.io.Serializable;
 import javax.persistence.Column;

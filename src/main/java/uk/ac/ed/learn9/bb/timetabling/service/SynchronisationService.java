@@ -17,7 +17,7 @@ import blackboard.persist.KeyNotFoundException;
 import blackboard.persist.PersistenceException;
 import blackboard.platform.log.LogService;
 import blackboard.platform.log.LogServiceFactory;
-import uk.ac.ed.learn9.bb.timetabling.data.cache.SynchronisationRun;
+import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 
 /**
  * Service for synchronising activities and enrolments from Timetabling

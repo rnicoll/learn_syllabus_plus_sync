@@ -11,7 +11,7 @@ import org.junit.Test;
 import org.junit.Before;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
-import uk.ac.ed.learn9.bb.timetabling.data.cache.SynchronisationRun;
+import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 import uk.ac.ed.learn9.bb.timetabling.service.ConcurrencyService.SynchronisationAlreadyInProgressException;
 import uk.ac.ed.learn9.bb.timetabling.util.DbScriptUtil;
 
