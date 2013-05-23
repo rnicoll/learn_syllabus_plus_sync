@@ -1,19 +1,19 @@
-INSERT INTO change_type (change_type) VALUES ('add');
-INSERT INTO change_type (change_type) VALUES ('remove');
+INSERT INTO change_type (change_type) VALUES ('ADD');
+INSERT INTO change_type (change_type) VALUES ('REMOVE');
 
-INSERT INTO change_result (result_code, label, retry) VALUES ('success', 'Success', '0');
-INSERT INTO change_result (result_code, label, retry) VALUES ('course_missing', 'Course does not exist', '1');
-INSERT INTO change_result (result_code, label, retry) VALUES ('not_on_course', 'Student is not on the course', '1');
-INSERT INTO change_result (result_code, label, retry) VALUES ('group_missing', 'Group does not exist', '0');
-INSERT INTO change_result (result_code, label, retry) VALUES ('already_removed', 'Student has already been removed from the group', '0');
-INSERT INTO change_result (result_code, label, retry) VALUES ('already_in_group', 'Student has already been added to the group', '0');
+INSERT INTO change_result (result_code, label, retry) VALUES ('SUCCESS', 'Success', '0');
+INSERT INTO change_result (result_code, label, retry) VALUES ('COURSE_MISSING', 'Course does not exist', '1');
+INSERT INTO change_result (result_code, label, retry) VALUES ('GROUP_MISSING', 'Group does not exist', '0');
+INSERT INTO change_result (result_code, label, retry) VALUES ('STUDENT_MISSING', 'Student does not exist', '1');
+INSERT INTO change_result (result_code, label, retry) VALUES ('NOT_ON_COURSE', 'Student is not on the course', '1');
+INSERT INTO change_result (result_code, label, retry) VALUES ('ALREADY_REMOVED', 'Student has already been removed from the group', '0');
+INSERT INTO change_result (result_code, label, retry) VALUES ('ALREADY_IN_GROUP', 'Student has already been added to the group', '0');
 
-
 INSERT INTO run_result (result_code, result_label)
-  VALUES ('success', 'Synchronisation completed successfully.');
+  VALUES ('SUCCESS', 'Synchronisation completed successfully.');
 INSERT INTO run_result (result_code, result_label)
-  VALUES ('fatal', 'Synchronisation failed due to an unrecoverable error.');
+  VALUES ('FATAL', 'Synchronisation failed due to an unrecoverable error.');
 INSERT INTO run_result (result_code, result_label)
-  VALUES ('timeout', 'Synchronisation timed out.');
+  VALUES ('TIMEOUT', 'Synchronisation timed out.');
 INSERT INTO run_result (result_code, result_label)
-  VALUES ('abandoned', 'Synchronisation abadoned due to concurrent process.');
+  VALUES ('ABANDONED', 'Synchronisation abadoned due to concurrent process.');

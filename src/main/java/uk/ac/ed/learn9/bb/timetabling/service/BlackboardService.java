@@ -1,6 +1,5 @@
 package uk.ac.ed.learn9.bb.timetabling.service;
 
-import blackboard.base.FormattedText;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -8,25 +7,29 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
+
+import blackboard.base.FormattedText;
+import blackboard.data.ValidationException;
 import blackboard.data.course.Course;
 import blackboard.data.course.CourseCourse;
-import blackboard.data.course.Group;
-import blackboard.data.ValidationException;
 import blackboard.data.course.CourseMembership;
+import blackboard.data.course.Group;
 import blackboard.data.course.GroupMembership;
 import blackboard.data.user.User;
 import blackboard.persist.Id;
 import blackboard.persist.KeyNotFoundException;
 import blackboard.persist.PersistenceException;
-import blackboard.persist.course.CourseDbLoader;
 import blackboard.persist.course.CourseCourseDbLoader;
+import blackboard.persist.course.CourseDbLoader;
 import blackboard.persist.course.CourseMembershipDbLoader;
 import blackboard.persist.course.GroupDbLoader;
 import blackboard.persist.course.GroupDbPersister;
 import blackboard.persist.course.GroupMembershipDbLoader;
 import blackboard.persist.course.GroupMembershipDbPersister;
 import blackboard.persist.user.UserDbLoader;
+
 import org.springframework.stereotype.Service;
+
 import uk.ac.ed.learn9.bb.timetabling.data.cache.EnrolmentChange;
 import uk.ac.ed.learn9.bb.timetabling.data.cache.SynchronisationRun;
 
@@ -39,151 +42,164 @@ public class BlackboardService {
     public static final String GROUP_ROLE_IDENTIFIER_STUDENT = "student";
 
     /**
-     * Applies all changes that remove an enrolment of a student on a course
-     * group.
-     * 
-     * @param connection a connection to the cache database.
-     * @param run the synchronisation run to pull changes to be actioned, from.
-     * @throws SQLException
-     * @throws PersistenceException
-     * @throws ValidationException 
-     */
-    public void applyRemoveEnrolmentChanges(final Connection connection, final SynchronisationRun run)
-        throws SQLException, PersistenceException, ValidationException {
-        final GroupMembershipDbLoader groupMembershipLoader = this.getGroupMembershipDbLoader();
-        final GroupMembershipDbPersister groupMembershipDbPersister = this.getGroupMembershipDbPersister();
-        
-        final PreparedStatement updateStatement = connection.prepareStatement(
-            "UPDATE enrolment_change "
-                + "SET update_completed=NOW() "
-                + "WHERE change_id=? "
-                    + "AND update_completed IS NULL"
-        );
-        
-        try {
-            final PreparedStatement queryStatement = connection.prepareStatement(
-                "SELECT c.change_id, m.learn_course_id, a.learn_group_id, s.learn_user_id "
-                    + "FROM enrolment_change c "
-                        + "JOIN activity a on a.tt_activity_id=c.tt_activity_id "
-                        + "JOIN module m ON m.tt_module_id=a.tt_module_id "
-                        + "JOIN student_set s ON s.tt_student_set_id=c.tt_student_set_id "
-                    + "WHERE c.run_id=? "
-                        + "AND c.change_type=? "
-                        + "AND m.learn_course_id IS NOT NULL "
-                        + "AND a.learn_group_id IS NOT NULL "
-                        + "AND s.learn_user_id IS NOT NULL "
-                        + "AND c.update_completed IS NULL"
-            );
-            try {
-                queryStatement.setInt(1, run.getRunId());
-                queryStatement.setString(2, EnrolmentChange.CHANGE_TYPE_REMOVE);
-                
-                final ResultSet rs = queryStatement.executeQuery();
-                try {
-                    while (rs.next()) {
-                        final int changeId = rs.getInt("change_id");
-                        final Id groupId = Id.generateId(Course.DATA_TYPE, rs.getString("learn_group_id"));
-                        final Id studentId = Id.generateId(User.DATA_TYPE, rs.getString("learn_student_id"));
-                        
-                        try {
-                            removeUserFromGroup(groupId, studentId, groupMembershipLoader, groupMembershipDbPersister);
-                        } catch(KeyNotFoundException e) {
-                            continue;
-                        }
-                        
-                        updateStatement.setInt(1, changeId);
-                        updateStatement.executeUpdate();
-                    }
-                } finally {
-                    rs.close();
-                }
-            } finally {
-                queryStatement.close();
-            }
-        } finally {
-            updateStatement.close();
-        }
-    }
-
-    /**
-     * Applies pending 'add' changes to Learn.
+     * Applies pending changes to Learn.
      * 
      * @param connection a connection to the local database.
      * @param run the synchronisation run to take changes from.
      * @throws SQLException if there was a problem with the local database.
-     * @throws PersistenceException
-     * @throws ValidationException 
+     * @throws PersistenceException if there was a problem loading or saving data
+     * from/to Learn.
+     * @throws ValidationException if a newly generated group enrolment was invalid.
      */
-    public void applyAddEnrolmentChanges(final Connection connection, final SynchronisationRun run)
+    public void applyEnrolmentChanges(final Connection connection, final SynchronisationRun run)
         throws SQLException, PersistenceException, ValidationException {
-        final CourseMembershipDbLoader courseMembershipLoader = this.getCourseMembershipDbLoader();
-        final GroupMembershipDbPersister groupMembershipDbPersister = this.getGroupMembershipDbPersister();
-        
-        final PreparedStatement updateStatement = connection.prepareStatement(
-            "UPDATE enrolment_change "
-                + "SET update_completed=NOW() "
-                + "WHERE change_id=? "
-                    + "AND update_completed IS NULL"
-        );
+        final ChangeOutcomeUpdateStatement outcome = new ChangeOutcomeUpdateStatement(connection);
         
         try {
             final PreparedStatement queryStatement = connection.prepareStatement(
-                "SELECT c.change_id, m.learn_course_id, a.learn_group_id, s.learn_user_id "
+                "SELECT c.change_id, m.learn_course_id, a.learn_group_id, s.learn_user_id, c.change_type "
                     + "FROM enrolment_change c "
                         + "JOIN activity a on a.tt_activity_id=c.tt_activity_id "
                         + "JOIN module m ON m.tt_module_id=a.tt_module_id "
                         + "JOIN student_set s ON s.tt_student_set_id=c.tt_student_set_id "
                     + "WHERE c.run_id=? "
-                        + "AND c.change_type=? "
-                        + "AND m.learn_course_id IS NOT NULL "
-                        + "AND a.learn_group_id IS NOT NULL "
-                        + "AND s.learn_user_id IS NOT NULL "
                         + "AND c.update_completed IS NULL "
-                    + "ORDER BY m.learn_course_id"
+                    + "ORDER BY m.learn_course_id, c.change_id"
             );
             try {
                 queryStatement.setInt(1, run.getRunId());
-                queryStatement.setString(2, EnrolmentChange.CHANGE_TYPE_REMOVE);
-                
-                Id currentCourseId = null;
-                Map<Id, CourseMembership> studentCourseMemberships = null;
-                
-                final ResultSet rs = queryStatement.executeQuery();
-                try {
-                    while (rs.next()) {
-                        final int changeId = rs.getInt("change_id");
-                        final Id courseId = Id.generateId(Course.DATA_TYPE, rs.getString("learn_course_id"));
-                        final Id groupId = Id.generateId(Course.DATA_TYPE, rs.getString("learn_group_id"));
-                        
-                        if (null == currentCourseId
-                                || !currentCourseId.equals(courseId)) {
-                            // Load student memberships on the current course
-                            currentCourseId = courseId;
-                            studentCourseMemberships = getStudentCourseMemberships(courseMembershipLoader, courseId);
-                        }
-                        
-                        final Id studentId = Id.generateId(User.DATA_TYPE, rs.getString("learn_student_id"));
-                        final CourseMembership courseMembership = studentCourseMemberships.get(studentId);
-                        
-                        if (null == courseMembership) {
-                            // Student is not on this course - probably a delay
-                            // bringing in data from Learn, but we can ignore
-                            continue;
-                        }
-                        
-                        groupMembershipDbPersister.persist(buildGroupMembership(courseMembership, groupId));
-                        
-                        updateStatement.setInt(1, changeId);
-                        updateStatement.executeUpdate();
-                    }
-                } finally {
-                    rs.close();
-                }
+                applyEnrolmentChanges(queryStatement, outcome);
             } finally {
                 queryStatement.close();
             }
         } finally {
-            updateStatement.close();
+            outcome.close();
+        }
+    }
+
+    /**
+     * Applies any changes that have been generated, but not yet applied to
+     * Learn.
+     * 
+     * @param connection a connection to the local database.
+     * @throws SQLException if there was a problem with the local database.
+     * @throws PersistenceException if there was a problem loading or saving data
+     * from/to Learn.
+     * @throws ValidationException if a newly generated group enrolment was invalid.
+     */
+    public void applyPreviouslyFailedEnrolmentChanges(final Connection connection)
+        throws SQLException, PersistenceException, ValidationException {
+        final ChangeOutcomeUpdateStatement outcome = new ChangeOutcomeUpdateStatement(connection);
+        
+        try {
+            final PreparedStatement queryStatement = connection.prepareStatement(
+                "SELECT c.change_id, m.learn_course_id, a.learn_group_id, s.learn_user_id, c.change_type "
+                    + "FROM enrolment_change c "
+                        + "JOIN activity a on a.tt_activity_id=c.tt_activity_id "
+                        + "JOIN module m ON m.tt_module_id=a.tt_module_id "
+                        + "JOIN student_set s ON s.tt_student_set_id=c.tt_student_set_id "
+                        + "JOIN change_result r ON r.result_code=c.result_code "
+                    + "WHERE c.update_completed IS NULL "
+                        + "AND r.retry='1' "
+                    + "ORDER BY m.learn_course_id, c.change_id"
+            );
+            try {
+                applyEnrolmentChanges(queryStatement, outcome);
+            } finally {
+                queryStatement.close();
+            }
+        } finally {
+            outcome.close();
+        }
+    }
+
+    /**
+     * Applies a set of enrolment changes to Learn.
+     * 
+     * @param queryStatement a prepared statement ready to be executed. Results
+     * must be ordered by course ID first, then by change ID.
+     * @param outcome a prepared outcome persistence object.
+     * @throws PersistenceException
+     * @throws SQLException
+     * @throws ValidationException 
+     */
+    private void applyEnrolmentChanges(final PreparedStatement queryStatement, final ChangeOutcomeUpdateStatement outcome)
+            throws PersistenceException, SQLException, ValidationException {
+        final CourseMembershipDbLoader courseMembershipDbLoader = this.getCourseMembershipDbLoader();
+        final GroupMembershipDbLoader groupMembershipDbLoader = this.getGroupMembershipDbLoader();
+        final GroupMembershipDbPersister groupMembershipDbPersister = this.getGroupMembershipDbPersister();
+        
+        Id currentCourseId = null;
+        Map<Id, CourseMembership> studentCourseMemberships = null;
+        
+        final ResultSet rs = queryStatement.executeQuery();
+        try {
+            while (rs.next()) {
+                final EnrolmentChange.Type changeType = EnrolmentChange.Type.valueOf(rs.getString("change_type"));
+                final int changeId = rs.getInt("change_id");
+                String temp = rs.getString("learn_course_id");
+                
+                if (null == temp) {
+                    outcome.markCourseMissing(changeId);
+                    continue;
+                }
+                
+                final Id courseId = Id.generateId(Course.DATA_TYPE, temp);
+                
+                temp = rs.getString("learn_group_id");
+                if (null == temp) {
+                    outcome.markGroupMissing(changeId);
+                    continue;
+                }
+                
+                final Id groupId = Id.generateId(Group.DATA_TYPE, temp);
+                
+                if (null == currentCourseId
+                        || !currentCourseId.equals(courseId)) {
+                    // Load student memberships on the current course
+                    currentCourseId = courseId;
+                    studentCourseMemberships = getStudentCourseMemberships(courseMembershipDbLoader, courseId);
+                }
+                
+                temp = rs.getString("learn_student_id");
+                if (null == temp) {
+                    outcome.markStudentMissing(changeId);
+                    continue;
+                }
+                
+                final Id studentId = Id.generateId(User.DATA_TYPE, temp);
+                switch (changeType) {
+                    case ADD:
+                        final CourseMembership courseMembership = studentCourseMemberships.get(studentId);
+
+                        if (null == courseMembership) {
+                            // Student is not on this course - probably a delay
+                            // bringing in data from Learn, but we can ignore
+                            outcome.markNotOnCourse(changeId);
+                            continue;
+                        }
+
+                        groupMembershipDbPersister.persist(buildGroupMembership(courseMembership, groupId));
+
+                        outcome.markSuccess(changeId);
+                        break;
+                    case REMOVE:
+                        try {
+                            final GroupMembership groupMembership = groupMembershipDbLoader.loadByGroupAndUserId(groupId, studentId);
+
+                            groupMembershipDbPersister.deleteById(groupMembership.getId());
+                            outcome.markSuccess(changeId);
+                        } catch (KeyNotFoundException e) {
+                            outcome.markAlreadyRemoved(changeId);
+                        }
+                        break;
+                    default:
+                        throw new RuntimeException("Unexpected change type \""
+                            + changeType + "\".");
+                }
+            }
+        } finally {
+            rs.close();
         }
     }
     
@@ -409,22 +425,6 @@ public class BlackboardService {
         }
         
         return studentCourseMemberships;
-    }
-
-    /**
-     * Removes a user from a group in Learn.
-     * 
-     * @param groupId
-     * @param studentId
-     * @param groupMembershipLoader
-     * @param groupMembershipDbPersister
-     * @throws PersistenceException 
-     */
-    public void removeUserFromGroup(final Id groupId, final Id studentId, final GroupMembershipDbLoader groupMembershipLoader, final GroupMembershipDbPersister groupMembershipDbPersister)
-            throws KeyNotFoundException, PersistenceException {
-        final GroupMembership groupMembership = groupMembershipLoader.loadByGroupAndUserId(groupId, studentId);
-
-        groupMembershipDbPersister.deleteById(groupMembership.getId());
     }
 
     /**

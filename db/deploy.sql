@@ -208,7 +208,7 @@ CREATE VIEW sync_student_set_vw AS
     );
 
 CREATE VIEW added_enrolment_vw AS
-    (SELECT a.run_id AS run_id,a.previous_run_id, ca.tt_student_set_id, ca.tt_activity_id, 'add' AS change_type
+    (SELECT a.run_id AS run_id,a.previous_run_id, ca.tt_student_set_id, ca.tt_activity_id, 'ADD' AS change_type
         FROM synchronisation_run_prev a
             JOIN cache_enrolment ca ON ca.run_id = a.run_id
             JOIN sync_activity_vw act ON act.tt_activity_id = ca.tt_activity_id
@@ -219,7 +219,7 @@ CREATE VIEW added_enrolment_vw AS
     );
 
 CREATE VIEW removed_enrolment_vw AS
-    (SELECT a.run_id AS run_id,a.previous_run_id AS previous_run_id,ca.tt_student_set_id AS tt_student_set_id,ca.tt_activity_id AS tt_activity_id,'remove' AS change_type
+    (SELECT a.run_id AS run_id,a.previous_run_id AS previous_run_id,ca.tt_student_set_id AS tt_student_set_id,ca.tt_activity_id AS tt_activity_id,'REMOVE' AS change_type
         FROM synchronisation_run_prev a
             JOIN synchronisation_run_prev b ON b.run_id = a.previous_run_id 
             JOIN cache_enrolment cb ON cb.run_id = b.run_id

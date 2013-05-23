@@ -206,7 +206,7 @@ CREATE VIEW sync_student_set_vw AS
     );
 
 CREATE VIEW added_enrolment_vw AS
-    (SELECT a.run_id AS run_id,a.previous_run_id, ca.tt_student_set_id, ca.tt_activity_id, 'add' AS change_type
+    (SELECT a.run_id AS run_id,a.previous_run_id, ca.tt_student_set_id, ca.tt_activity_id, 'ADD' AS change_type
         FROM synchronisation_run_prev a
             JOIN cache_enrolment ca ON ca.run_id = a.run_id
             JOIN sync_activity_vw act ON act.tt_activity_id = ca.tt_activity_id
@@ -217,7 +217,7 @@ CREATE VIEW added_enrolment_vw AS
     );
 
 CREATE VIEW removed_enrolment_vw AS
-    (SELECT a.run_id AS run_id,a.previous_run_id AS previous_run_id,ca.tt_student_set_id AS tt_student_set_id,ca.tt_activity_id AS tt_activity_id,'remove' AS change_type
+    (SELECT a.run_id AS run_id,a.previous_run_id AS previous_run_id,ca.tt_student_set_id AS tt_student_set_id,ca.tt_activity_id AS tt_activity_id,'REMOVE' AS change_type
         FROM synchronisation_run_prev a
             JOIN synchronisation_run_prev b ON b.run_id = a.previous_run_id 
             JOIN cache_enrolment cb ON cb.run_id = b.run_id
@@ -249,12 +249,22 @@ CREATE TRIGGER course_code_upd BEFORE UPDATE ON module
      SET newrow.learn_course_code=CONCAT(newrow.cache_course_code, newrow.learn_academic_year, newrow.cache_occurrence_code, newrow.cache_semester_code);
    END;
    
+INSERT INTO change_type (change_type) VALUES ('ADD');
+INSERT INTO change_type (change_type) VALUES ('REMOVE');
+
+INSERT INTO change_result (result_code, label, retry) VALUES ('SUCCESS', 'Success', '0');
+INSERT INTO change_result (result_code, label, retry) VALUES ('COURSE_MISSING', 'Course does not exist', '1');
+INSERT INTO change_result (result_code, label, retry) VALUES ('GROUP_MISSING', 'Group does not exist', '0');
+INSERT INTO change_result (result_code, label, retry) VALUES ('STUDENT_MISSING', 'Student does not exist', '1');
+INSERT INTO change_result (result_code, label, retry) VALUES ('NOT_ON_COURSE', 'Student is not on the course', '1');
+INSERT INTO change_result (result_code, label, retry) VALUES ('ALREADY_REMOVED', 'Student has already been removed from the group', '0');
+INSERT INTO change_result (result_code, label, retry) VALUES ('ALREADY_IN_GROUP', 'Student has already been added to the group', '0');
 
 INSERT INTO run_result (result_code, result_label)
-  VALUES ('success', 'Synchronisation completed successfully.');
+  VALUES ('SUCCESS', 'Synchronisation completed successfully.');
 INSERT INTO run_result (result_code, result_label)
-  VALUES ('fatal', 'Synchronisation failed due to an unrecoverable error.');
+  VALUES ('FATAL', 'Synchronisation failed due to an unrecoverable error.');
 INSERT INTO run_result (result_code, result_label)
-  VALUES ('timeout', 'Synchronisation timed out.');
+  VALUES ('TIMEOUT', 'Synchronisation timed out.');
 INSERT INTO run_result (result_code, result_label)
-  VALUES ('abandoned', 'Synchronisation abadoned due to concurrent process.');
+  VALUES ('ABANDONED', 'Synchronisation abadoned due to concurrent process.');

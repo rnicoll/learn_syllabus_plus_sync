@@ -59,8 +59,8 @@ public class SynchronisationService extends Object {
         final Connection connection = this.getCacheDataSource().getConnection();
         
         try {
-            this.getBlackboardService().applyAddEnrolmentChanges(connection, run);
-            this.getBlackboardService().applyRemoveEnrolmentChanges(connection, run);
+            this.getBlackboardService().applyPreviouslyFailedEnrolmentChanges(connection);
+            this.getBlackboardService().applyEnrolmentChanges(connection, run);
         } finally {
             connection.close();
         }

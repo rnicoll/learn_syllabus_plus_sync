@@ -18,8 +18,10 @@ import javax.persistence.Transient;
 @Entity
 @Table(name="enrolment_add")
 public class EnrolmentChange extends Object implements Comparable<EnrolmentChange>, Serializable {
-    public static final String CHANGE_TYPE_ADD = "add";
-    public static final String CHANGE_TYPE_REMOVE = "remove";
+    public enum Type {
+        ADD,
+        REMOVE;
+    }
     
     private int changeId;
     private String changeType;
