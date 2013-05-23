@@ -13,7 +13,7 @@
           class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"
           p:location="jdbc.properties" />
 
-    <bean id="cacheDataSource"
+    <bean id="stagingDataSource"
           class="org.springframework.jdbc.datasource.DriverManagerDataSource"
           p:driverClassName="${jdbc.driverClassName}"
           p:url="${jdbc.url}"
@@ -37,7 +37,7 @@
     <!-- Hibernate persistence support -->
 
     <bean id="sessionFactory" class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
-        <property name="dataSource" ref="cacheDataSource"/>
+        <property name="dataSource" ref="stagingDataSource"/>
         <property name="annotatedClasses">
             <list>
                 <value>uk.ac.ed.learn9.bb.timetabling.data.ActivityTemplate</value>
@@ -93,7 +93,7 @@
         <property name="runDao" ref="runDao"/>
     </bean>
     <bean id="eugexService" class="uk.ac.ed.learn9.bb.timetabling.service.EugexService">
-        <property name="cacheDataSource" ref="cacheDataSource"/>
+        <property name="stagingDataSource" ref="stagingDataSource"/>
         <property name="eugexDataSource" ref="eugexDataSource"/>
     </bean>
     
@@ -102,12 +102,12 @@
     <bean id="mergedCoursesService" class="uk.ac.ed.learn9.bb.timetabling.service.MergedCoursesService" />
     
     <bean id="synchronisationService" class="uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService">
-        <property name="cacheDataSource" ref="cacheDataSource"/>
         <property name="blackboardService" ref="blackboardService"/>
+        <property name="cloneService" ref="timetablingCloneService"/>
         <property name="eugexDataSource" ref="eugexDataSource"/>
         <property name="eugexService" ref="eugexService"/>
-        <property name="cloneService" ref="timetablingCloneService"/>
         <property name="rdbDataSource" ref="rdbDataSource"/>
+        <property name="stagingDataSource" ref="stagingDataSource"/>
     </bean>
 
 </beans>

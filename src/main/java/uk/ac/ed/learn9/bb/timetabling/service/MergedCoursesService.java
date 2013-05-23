@@ -1,7 +1,7 @@
 package uk.ac.ed.learn9.bb.timetabling.service;
 
 import java.sql.Connection;
-import java.util.List;
+import java.util.Collection;
 import org.springframework.stereotype.Service;
 import uk.ac.ed.learn9.bb.timetabling.data.BlackboardCourseCode;
 
@@ -15,19 +15,27 @@ public class MergedCoursesService {
      * course. Where the given parent course doesn't have any courses
      * merged to create it, an empty list is returned.
      *
-     * @param parentCourseCode
-     * @return 
+     * @param parentCourseCode the course code of the parent course to check
+     * for courses merged into.
+     * @return a collection of courses merged into the given course. Empty (not null)
+     * if there are no merged courses under the given course.
      */
-    public List<BlackboardCourseCode> getMergedCourses(final BlackboardCourseCode parentCourseCode) {
+    public Collection<BlackboardCourseCode> getMergedCourses(final BlackboardCourseCode parentCourseCode) {
+        assert null != parentCourseCode;
+        
         throw new UnsupportedOperationException("Not yet implemented");
     }
     
     /**
-     * Returns the course that this course is 
-     * @param childCourseCode
-     * @return 
+     * Returns the course that a child course is merged into, where applicable.
+     * 
+     * @param childCourseCode the course code of the child course to check for.
+     * @return the course code of the parent course, or null if the course
+     * is not merged.
      */
     public BlackboardCourseCode getParentCourse(final BlackboardCourseCode childCourseCode) {
+        assert null != childCourseCode;
+        
         throw new UnsupportedOperationException("Not yet implemented");
     }
     
@@ -35,9 +43,9 @@ public class MergedCoursesService {
      * Resolves the courses in Learn that activities map to, and stores the
      * corrected associations in the database.
      * 
-     * @param source 
+     * @param stagingDatabase a connection to the staging database.
      */
-    public void resolveMergedCourses(final Connection source) {
+    public void resolveMergedCourses(final Connection stagingDatabase) {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 }

@@ -28,10 +28,8 @@ import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 public class SynchronisationService extends Object {
     public static final String GROUP_NAME_PREFIX = "TT_";
     
-    public static final String COURSE_CODE_REGEXP = "^[A-Z][A-Z0-9]+_[A-Z][A-Z0-9]+_[A-Z][A-Z0-9]+$";
-    
     @Autowired
-    private DataSource cacheDataSource;
+    private DataSource stagingDataSource;
     @Autowired
     private DataSource rdbDataSource;
     @Autowired
@@ -47,16 +45,22 @@ public class SynchronisationService extends Object {
     
     /**
      * Apply student/course group enrolment changes in the staging database,
-     * into Learn.
+     * into Learn. This re-attempts any previously failed changes first
+     * (for example to fix problems where a student-enrolment on a course was
+     * missing during an earlier attempt), then applies the new changes from
+     * the given run.
      * 
-     * @param run
-     * @throws PersistenceException
-     * @throws SQLException
-     * @throws ValidationException 
+     * @param run the synchronisation run to apply changes for. Previously
+     * failed changes will also be re-attempted.
+     * @throws PersistenceException if there was a problem loading or saving
+     * data in Learn.
+     * @throws SQLException if there was a problem accessing one of the databases.
+     * @throws ValidationException if there was a problem validating data to be
+     * written back to Learn.
      */
     public void applyEnrolmentChanges(final SynchronisationRun run)
         throws PersistenceException, SQLException, ValidationException {
-        final Connection connection = this.getCacheDataSource().getConnection();
+        final Connection connection = this.getStagingDataSource().getConnection();
         
         try {
             this.getBlackboardService().applyPreviouslyFailedEnrolmentChanges(connection);
@@ -72,14 +76,15 @@ public class SynchronisationService extends Object {
      * 
      * @param run the synchronisation run that we're generating a difference set
      * for.
-     * @throws SQLException 
+     * 
+     * @throws SQLException if there was a problem accessing one of the databases.
      */
     public void generateDiff(final SynchronisationRun run)
             throws SQLException {
         final Connection source = this.getRdbDataSource().getConnection();
 
         try {
-            final Connection destination = this.getCacheDataSource().getConnection();
+            final Connection destination = this.getStagingDataSource().getConnection();
 
             try {                
                 this.copyStudentSetActivities(run, source, destination);
@@ -102,7 +107,7 @@ public class SynchronisationService extends Object {
      * @param groupType the type of group, for example "Lecture", "Tutorial",
      * "Lab".
      * @param activitiesInSet the number of activities in the set.
-     * @return 
+     * @return the human readable description for the group.
      */
     public String buildGroupDescription(final String activityName, final String groupType,
             final Integer activitiesInSet) {
@@ -206,11 +211,11 @@ public class SynchronisationService extends Object {
      * Creates groups in Learn to match activities which have student enrolments
      * to be synchronised.
      * 
-     * @throws SQLException if there was a problem access one of the databases.
+     * @throws SQLException if there was a problem accessing one of the databases.
      */
     public void createGroupsForActivities(final SynchronisationRun run)
             throws PersistenceException, SQLException, ValidationException {
-        final Connection destination = this.getCacheDataSource().getConnection();
+        final Connection destination = this.getStagingDataSource().getConnection();
         try {
             generateGroupNames(destination);
             this.getBlackboardService().generateGroupsForActivities(destination);
@@ -222,14 +227,16 @@ public class SynchronisationService extends Object {
     /**
      * Generates names of groups, to be used in Learn where needed. These are
      * written into the database so they can be inspected later if needed.
+     * 
+     * @throws SQLException if there was a problem accessing the database.
      */
-    public void generateGroupNames(final Connection connection)
+    public void generateGroupNames(final Connection stagingDatabase)
             throws SQLException {
         final LogService logService = LogServiceFactory.getInstance();
         
         final Map<String, String> activityGroupNames = new HashMap<String, String>();
         // Find groups that need their names completed.
-        final PreparedStatement queryStatement = connection.prepareStatement(
+        final PreparedStatement queryStatement = stagingDatabase.prepareStatement(
                 "SELECT a.tt_activity_id, a.tt_activity_name, a.learn_group_id, a.learn_group_name, m.tt_module_name, t.tt_type_name "
                     + "FROM sync_activity_vw a "
                         + "JOIN sync_module_vw m ON m.tt_module_id=a.tt_module_id "
@@ -263,7 +270,7 @@ public class SynchronisationService extends Object {
         }
         
         // Write out the group names
-        final PreparedStatement updateStatement = connection.prepareStatement(
+        final PreparedStatement updateStatement = stagingDatabase.prepareStatement(
                 "UPDATE activity SET learn_group_name=? WHERE tt_activity_id=?"
         );
         try {
@@ -283,11 +290,11 @@ public class SynchronisationService extends Object {
      * details of joint taught activities (so that the child activities can be
      * mapped to the correct module and then onwards to the correct course).
      * 
-     * @throws SQLException if there was a problem access one of the databases.
+     * @throws SQLException if there was a problem accessing one of the databases.
      */
     public void mapModulesToCourses()
             throws PersistenceException, SQLException {
-        final Connection destination = this.getCacheDataSource().getConnection();
+        final Connection destination = this.getStagingDataSource().getConnection();
 
         try {
             final Connection source = this.getRdbDataSource().getConnection();
@@ -307,14 +314,14 @@ public class SynchronisationService extends Object {
      * cached copy of the data to use without resorting to trying to perform
      * in-memory joins across two distinct databases.
      * 
-     * @throws SQLException 
+     * @throws SQLException if there was a problem accessing one of the databases.
      */
     public void synchroniseTimetablingData()
             throws SQLException {
         final Connection source = this.getRdbDataSource().getConnection();
 
         try {
-            final Connection destination = this.getCacheDataSource().getConnection();
+            final Connection destination = this.getStagingDataSource().getConnection();
 
             try {
                 this.cloneService.cloneModules(source, destination);
@@ -383,6 +390,8 @@ public class SynchronisationService extends Object {
      * @param run the synchronisation run to attribute changes to.
      * @param stagingDatabase a connection to the staging database.
      * @return the number of changes entered into the database.
+     * 
+     * @throws SQLException if there was a problem accessing the database.
      */
     private int doGenerateDiff(final SynchronisationRun run, final Connection stagingDatabase)
         throws SQLException {
@@ -410,11 +419,10 @@ public class SynchronisationService extends Object {
     /**
      * Identifies students sets with group enrolments to be copied to Learn,
      * and maps them to their IDs in Learn.
-     * @param run 
      */
-    public void mapStudentSetsToUsers(SynchronisationRun run)
+    public void mapStudentSetsToUsers()
         throws PersistenceException, SQLException {
-        final Connection connection = this.getCacheDataSource().getConnection();
+        final Connection connection = this.getStagingDataSource().getConnection();
         try {
             this.getBlackboardService().mapStudentSetsToUsers(connection);
         } finally {
@@ -433,15 +441,21 @@ public class SynchronisationService extends Object {
     
     /**
      * Updates the descriptions of activities in the database and in Learn.
+     * 
+     * @throws PersistenceException if there was a problem loading or saving
+     * data in Learn.
+     * @throws SQLException if there was a problem accessing the staging database.
+     * @throws ValidationException if there was a problem validating the updated
+     * group.
      */
     public void updateGroupDescriptions() 
             throws SQLException, PersistenceException, ValidationException {
-        final Connection connection = this.getCacheDataSource().getConnection();
-        final PreparedStatement updateStatement = connection.prepareStatement(
+        final Connection stagingDatabase = this.getStagingDataSource().getConnection();
+        final PreparedStatement updateStatement = stagingDatabase.prepareStatement(
                 "UPDATE activity SET description=? WHERE tt_activity_id=?"
         );
         try {
-            final PreparedStatement selectStatement = connection.prepareStatement(
+            final PreparedStatement selectStatement = stagingDatabase.prepareStatement(
                 "SELECT a.tt_activity_id, a.tt_activity_name, a.learn_group_id, t.tt_type_name, a.description, a.set_size "
                     + "FROM sync_activities_vw a "
                         + "JOIN activity_type t ON t.tt_type_id=a.tt_type_id");
@@ -479,31 +493,37 @@ public class SynchronisationService extends Object {
     }
 
     /**
-     * @return the staging database data source.
+     * Gets the timetabling data cloning service.
+     * 
+     * @return the timetabling data cloning service.
      */
-    public DataSource getCacheDataSource() {
-        return cacheDataSource;
+    public TimetablingCloneService getCloneService() {
+        return cloneService;
     }
 
     /**
-     * @return the eugexService
-     */
-    public EugexService getEugexService() {
-        return eugexService;
-    }
-
-    /**
-     * @return the eugexDataSource
+     * Gets the data source for the EUGEX database.
+     * 
+     * @return the data source for the EUGEX database.
      */
     public DataSource getEugexDataSource() {
         return eugexDataSource;
     }
 
     /**
-     * @param eugexDataSource the eugexDataSource to set
+     * Gets the EUGEX service.
+     * 
+     * @return the EUGEX service.
      */
-    public void setEugexDataSource(DataSource eugexDataSource) {
-        this.eugexDataSource = eugexDataSource;
+    public EugexService getEugexService() {
+        return eugexService;
+    }
+
+    /**
+     * @return the mergedCoursesService
+     */
+    public MergedCoursesService getMergedCoursesService() {
+        return mergedCoursesService;
     }
     
     /**
@@ -516,10 +536,28 @@ public class SynchronisationService extends Object {
     }
 
     /**
-     * @param dataSource the local database data source to set.
+     * Gets the data source for the staging database.
+     * 
+     * @return the staging database data source.
      */
-    public void setCacheDataSource(DataSource dataSource) {
-        this.cacheDataSource = dataSource;
+    public DataSource getStagingDataSource() {
+        return stagingDataSource;
+    }
+
+    /**
+     * @param cloneService the cloneService to set
+     */
+    public void setCloneService(TimetablingCloneService cloneService) {
+        this.cloneService = cloneService;
+    }
+
+    /**
+     * Sets the EUGEX database data source.
+     * 
+     * @param eugexDataSource the EUGEX database data source to set.
+     */
+    public void setEugexDataSource(DataSource eugexDataSource) {
+        this.eugexDataSource = eugexDataSource;
     }
 
     /**
@@ -539,24 +577,12 @@ public class SynchronisationService extends Object {
     }
 
     /**
-     * @return the cloneService
+     * Sets the staging database data source.
+     * 
+     * @param dataSource the staging database data source to set.
      */
-    public TimetablingCloneService getCloneService() {
-        return cloneService;
-    }
-
-    /**
-     * @param cloneService the cloneService to set
-     */
-    public void setCloneService(TimetablingCloneService cloneService) {
-        this.cloneService = cloneService;
-    }
-
-    /**
-     * @return the mergedCoursesService
-     */
-    public MergedCoursesService getMergedCoursesService() {
-        return mergedCoursesService;
+    public void setStagingDataSource(DataSource dataSource) {
+        this.stagingDataSource = dataSource;
     }
 
     /**

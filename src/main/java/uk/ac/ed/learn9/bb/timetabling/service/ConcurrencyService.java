@@ -17,17 +17,68 @@ import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
  */
 @Service
 public class ConcurrencyService {
-    public static final String RESULT_CODE_TIMEOUT = "timeout";
+    /**
+     * Result codes for the possible outcomes of running a synchronisation
+     * process.
+     */
+    public enum Result {
+        ABANDONED,
+        FATAL,
+        SUCCESS,
+        TIMEOUT;
+    }
+    
     public static final long SESSION_TIMEOUT = 23 * 60 * 60 * 1000L;
     
     @Autowired
-    private DataSource cacheDataSource;
+    private DataSource stagingDataSource;
     @Autowired
     private SynchronisationRunDao runDao;
+    
+    /**
+     * Marks a session as abandoned.
+     * 
+     * @param stagingDatabase a connection to the staging database.
+     * @param now the current time.
+     * @param runId the ID of the session to mark abandoned.
+     * @return whether the change was written out successfully. Failure typically
+     * indicates the session has already finished.
+     */
+    public boolean abandonSession(final Connection stagingDatabase, final int runId, final Timestamp now)
+            throws SQLException {        
+        final PreparedStatement statement = stagingDatabase.prepareStatement(
+            "UPDATE synchronisation_run "
+                + "SET end_time=?, result_code=? "
+                + "WHERE run_id=? AND end_time IS NULL"
+            );
+        try {
+            int paramIdx = 1;
+            
+            statement.setTimestamp(paramIdx++, now);
+            statement.setString(paramIdx++, Result.ABANDONED.name());
+            statement.setInt(paramIdx++, runId);
+            return statement.executeUpdate() > 0;
+        } finally {
+            statement.close();
+        }
+    }
 
-    private void assignPreviousRun(final Connection cacheDatabase, final int runId)
+    /**
+     * Allocates a value for the previous synchronisation run that this run should
+     * generate a difference set against.
+     * 
+     * @param stagingDatabase a connection to the staging database.
+     * @param runId the ID of the synchronisation run to assign a previous
+     * run to.
+     * @return the ID of the previous run. May be null if this is the first
+     * synchronisation run.
+     * @throws SQLException
+     * @throws ConcurrencyService.SynchronisationAlreadyInProgressException if
+     * there's already a synchronisation run in progress.
+     */
+    private Integer assignPreviousRun(final Connection stagingDatabase, final int runId)
         throws SQLException, SynchronisationAlreadyInProgressException {
-        PreparedStatement statement = cacheDatabase.prepareStatement(
+        PreparedStatement statement = stagingDatabase.prepareStatement(
             "INSERT INTO synchronisation_run_prev (run_id, previous_run_id) "
                 + "(SELECT ?, MAX(run_id) FROM synchronisation_run WHERE run_id!=?)");
         try {
@@ -39,9 +90,7 @@ public class ConcurrencyService {
             statement.close();
         }
         
-        cacheDatabase.commit();
-        
-        statement = cacheDatabase.prepareStatement("SELECT r.run_id, r.end_time "
+        statement = stagingDatabase.prepareStatement("SELECT r.run_id, r.end_time "
             + "FROM synchronisation_run r "
                 + "JOIN synchronisation_run_prev p ON p.previous_run_id=r.run_id "
             + "WHERE p.run_id=?");
@@ -57,23 +106,33 @@ public class ConcurrencyService {
                     throw new SynchronisationAlreadyInProgressException("The synchronisation run #"
                         + previousRunId + " is already in progress.");
                 }
+                
+                return previousRunId;
             } else {
                 // There is no previous run, so we don't have to check if it
                 // has finished.
+                return null;
             }
         } finally {
             statement.close();
         }
     }
     
-    private int getNextId(final Connection cacheDatabase) throws SQLException {
+    /**
+     * Gets the next ID for a synchronisation run, from the staging database.
+     * 
+     * @param stagingDatabase a connection to the staging database.
+     * @return the next ID value.
+     * @throws SQLException if there was a problem with the database.
+     */
+    private int getNextId(final Connection stagingDatabase) throws SQLException {
         final int runId;
         final PreparedStatement idStatement;
         
-        if (cacheDatabase.getMetaData().getDatabaseProductName().equals("HSQL Database Engine")) {
-            idStatement = cacheDatabase.prepareStatement("CALL NEXT VALUE FOR SYNCHRONISATION_RUN_SEQ;");
+        if (stagingDatabase.getMetaData().getDatabaseProductName().equals("HSQL Database Engine")) {
+            idStatement = stagingDatabase.prepareStatement("CALL NEXT VALUE FOR SYNCHRONISATION_RUN_SEQ;");
         } else {
-            idStatement = cacheDatabase.prepareStatement("SELECT SYNCHRONISATION_RUN_SEQ.NEXTVAL FROM DUAL");
+            idStatement = stagingDatabase.prepareStatement("SELECT SYNCHRONISATION_RUN_SEQ.NEXTVAL FROM DUAL");
         }
         
         try {
@@ -95,39 +154,48 @@ public class ConcurrencyService {
      * Starts a new run of the synchronisation process and returns the ID for
      * the run.
      *
-     * @param destination the local database.
      * @return the ID for the new synchronisation run.
      * @throws SQLException if there was a problem inserting the record.
+     * @throws ConcurrencyService.SynchronisationAlreadyInProgressException if
+     * there's already a synchronisation run in progress.
      */
     public SynchronisationRun startNewRun()
             throws SynchronisationAlreadyInProgressException, SQLException {
         final int runId;
         final Timestamp now = new Timestamp(System.currentTimeMillis());
-        final Connection cacheDatabase = this.getCacheDataSource().getConnection();
+        final Connection stagingDatabase = this.getStagingDataSource().getConnection();
         
         try {
-            runId = this.getNextId(cacheDatabase);
+            runId = this.getNextId(stagingDatabase);
             
-            cacheDatabase.setAutoCommit(false);
+            stagingDatabase.setAutoCommit(false);
             try {
-                insertRunRecord(cacheDatabase, runId, now);
-                assignPreviousRun(cacheDatabase, runId);
-                cacheDatabase.commit();
+                insertRunRecord(stagingDatabase, runId, now);
+                try {
+                    assignPreviousRun(stagingDatabase, runId);
+                } catch(SynchronisationAlreadyInProgressException already) {
+                    this.abandonSession(stagingDatabase, runId, now);
+                    stagingDatabase.commit();
+                    throw already;
+                }
+                stagingDatabase.commit();
             } finally {
-                cacheDatabase.rollback();
-                cacheDatabase.setAutoCommit(true);
+                // Rollback any uncomitted changes in case of a serious
+                // error.
+                stagingDatabase.rollback();
+                stagingDatabase.setAutoCommit(true);
             }
         } finally {
-            cacheDatabase.close();
+            stagingDatabase.close();
         }
         
         return this.getRunDao().getRun(runId);
     }
     
-    protected void insertRunRecord(final Connection cacheDatabase, final int runId,
+    protected void insertRunRecord(final Connection stagingDatabase, final int runId,
             final Timestamp now)
         throws SQLException {
-        final PreparedStatement insertStatement = cacheDatabase.prepareStatement(
+        final PreparedStatement insertStatement = stagingDatabase.prepareStatement(
             "INSERT INTO synchronisation_run "
                 + "(run_id, start_time) "
                 + "VALUES (?, ?)");
@@ -143,17 +211,17 @@ public class ConcurrencyService {
     /**
      * Marks sessions that probably belong to crashed threads, as timed out.
      * 
-     * @param cacheDatabase
+     * @param stagingDatabase a connection to the staging database.
      * @param now the current time.
      * @return the number of sessions timed out.
      * @throws SQLException 
      */
-    public int timeoutOldSessions(final Connection cacheDatabase,
+    public int timeoutOldSessions(final Connection stagingDatabase,
             final Timestamp now)
             throws SQLException {
         final Timestamp timeout = new Timestamp(now.getTime() - SESSION_TIMEOUT);
         
-        final PreparedStatement statement = cacheDatabase.prepareStatement(
+        final PreparedStatement statement = stagingDatabase.prepareStatement(
             "UPDATE synchronisation_run "
                 + "SET end_time=?, result_code=? "
                 + "WHERE end_time IS NULL AND start_time<?"
@@ -162,33 +230,30 @@ public class ConcurrencyService {
             int paramIdx = 1;
             
             statement.setTimestamp(paramIdx++, now);
-            statement.setString(paramIdx++, RESULT_CODE_TIMEOUT);
+            statement.setString(paramIdx++, Result.TIMEOUT.name());
             statement.setTimestamp(paramIdx++, timeout);
             return statement.executeUpdate();
         } finally {
             statement.close();
         }
     }
-
+    
     /**
-     * @return the cacheDataSource
+     * Gets the data source for the staging database.
+     * 
+     * @return the staging database data source.
      */
-    public DataSource getCacheDataSource() {
-        return cacheDataSource;
+    public DataSource getStagingDataSource() {
+        return stagingDataSource;
     }
 
     /**
-     * @return the runDao
+     * Gets the DAO for synchronisation runs.
+     * 
+     * @return the DAO for synchronisation runs.
      */
     public SynchronisationRunDao getRunDao() {
         return runDao;
-    }
-
-    /**
-     * @param cacheDataSource the cacheDataSource to set
-     */
-    public void setCacheDataSource(DataSource cacheDataSource) {
-        this.cacheDataSource = cacheDataSource;
     }
 
     /**
@@ -196,6 +261,15 @@ public class ConcurrencyService {
      */
     public void setRunDao(SynchronisationRunDao runDao) {
         this.runDao = runDao;
+    }
+
+    /**
+     * Sets the staging database data source.
+     * 
+     * @param dataSource the staging database data source to set.
+     */
+    public void setStagingDataSource(DataSource dataSource) {
+        this.stagingDataSource = dataSource;
     }
 
     /**

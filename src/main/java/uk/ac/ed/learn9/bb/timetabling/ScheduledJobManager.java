@@ -192,7 +192,7 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
             if (ScheduledJobManager.this.cancelled) {
                 return;
             }
-            synchronisationService.mapStudentSetsToUsers(run);
+            synchronisationService.mapStudentSetsToUsers();
             if (ScheduledJobManager.this.cancelled) {
                 return;
             }

@@ -28,7 +28,7 @@ public class ConcurrencyServiceTest extends AbstractJUnit4SpringContextTests {
     
     @Before
     public void before() throws IOException, SQLException {
-        final Connection syncConnection = this.getService().getCacheDataSource().getConnection();
+        final Connection syncConnection = this.getService().getStagingDataSource().getConnection();
         
         try {
             final File syncDbSchema = this.applicationContext.getResource(SynchronisationServiceTest.LOCATION_SYNC_DB_SCHEMA_RESOURCE).getFile();
@@ -40,7 +40,7 @@ public class ConcurrencyServiceTest extends AbstractJUnit4SpringContextTests {
     
     @After
     public void after() throws IOException, SQLException {
-        final Connection syncConnection = this.getService().getCacheDataSource().getConnection();
+        final Connection syncConnection = this.getService().getStagingDataSource().getConnection();
         
         try {
             final File syncDbSchema = this.applicationContext.getResource(SynchronisationServiceTest.LOCATION_SYNC_DB_DROP_RESOURCE).getFile();
@@ -78,7 +78,7 @@ public class ConcurrencyServiceTest extends AbstractJUnit4SpringContextTests {
     public void testTimeoutOldSessions() throws Exception {
         System.out.println("timeoutOldSessions");
         ConcurrencyService instance = this.getService();
-        Connection cacheDatabase = instance.getCacheDataSource().getConnection();
+        Connection cacheDatabase = instance.getStagingDataSource().getConnection();
         try {
             final Timestamp now = new Timestamp(System.currentTimeMillis());
             final Timestamp aWhileAgo = new Timestamp(now.getTime() - A_FEW_DAYS_IN_MILLIS);

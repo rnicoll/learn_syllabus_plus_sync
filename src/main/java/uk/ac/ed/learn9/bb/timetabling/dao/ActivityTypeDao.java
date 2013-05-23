@@ -11,7 +11,7 @@ public interface ActivityTypeDao {
     /**
      * Retrieves an activity type by its ID.
      * 
-     * @param activityId a timetabling ID (as in a 32 character unique identifier).
+     * @param typeId a timetabling ID (as in a 32 character unique identifier).
      * @return the activity type.
      */
     public ActivityType getById(final int typeId);

@@ -46,7 +46,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     
     @Before
     public void before() throws IOException, SQLException {
-        final Connection syncConnection = this.getService().getCacheDataSource().getConnection();
+        final Connection syncConnection = this.getService().getStagingDataSource().getConnection();
         
         try {
             final File syncDbSchema = this.applicationContext.getResource(LOCATION_SYNC_DB_SCHEMA_RESOURCE).getFile();
@@ -67,7 +67,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     
     @After
     public void after() throws IOException, SQLException {
-        final Connection syncConnection = this.getService().getCacheDataSource().getConnection();
+        final Connection syncConnection = this.getService().getStagingDataSource().getConnection();
         
         try {
             final File syncDbSchema = this.applicationContext.getResource(LOCATION_SYNC_DB_DROP_RESOURCE).getFile();
@@ -263,7 +263,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
             final Set<String> expResultIds = Collections.singleton(activityTemplateSync.getTemplateId());
             final Set<String> resultIds = new HashSet<String>();
             
-            final Connection cacheConnection = instance.getCacheDataSource().getConnection();
+            final Connection cacheConnection = instance.getStagingDataSource().getConnection();
             try {
                 final PreparedStatement selectStatement = cacheConnection.prepareStatement("SELECT tt_template_id "
                     + "FROM sync_template_vw");
@@ -344,7 +344,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
             RdbUtil.createTestActivity(rdbConnection, activityTemplateSync,
                     module, RdbUtil.SchedulingMethod.SCHEDULED, activityId++, rdbIdSource);
             
-            final Connection cacheConnection = instance.getCacheDataSource().getConnection();
+            final Connection cacheConnection = instance.getStagingDataSource().getConnection();
             try {
                 instance.synchroniseTimetablingData();
                 instance.generateGroupNames(cacheConnection);

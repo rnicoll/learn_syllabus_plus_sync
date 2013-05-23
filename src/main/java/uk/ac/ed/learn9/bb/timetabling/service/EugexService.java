@@ -14,33 +14,41 @@ import org.springframework.stereotype.Service;
 @Service
 public class EugexService {
     @Autowired
-    private DataSource cacheDataSource;
+    private DataSource stagingDataSource;
     @Autowired
     private DataSource eugexDataSource;
 
     /**
      * Synchronises details of courses in EUGEX marked as active in the VLE,
-     * to the local database.
+     * to the staging database.
      * @throws SQLException 
      */
     public void synchroniseVleActiveCourses()
             throws SQLException {
-        final Connection cacheDatabase = this.getCacheDataSource().getConnection();
+        final Connection stagingDatabase = this.getStagingDataSource().getConnection();
         try {
             final Connection eugexDatabase = this.getEugexDataSource().getConnection();
             try {
-                this.doSynchroniseVleActiveCourses(cacheDatabase, eugexDatabase);
+                this.synchroniseVleActiveCourses(stagingDatabase, eugexDatabase);
             } finally {
                 eugexDatabase.close();
             }
         } finally {
-            cacheDatabase.close();
+            stagingDatabase.close();
         }
     }
 
-    private void doSynchroniseVleActiveCourses(Connection cacheDatabase, Connection eugexDatabase)
+    /**
+     * Synchronises details of courses that are copied from EUGEX to Learn,
+     * from the EUGEX database into the staging database.
+     * 
+     * @param stagingDatabase a connection to the staging database.
+     * @param eugexDatabase a connection to the EUGEX database.
+     * @throws SQLException 
+     */
+    private void synchroniseVleActiveCourses(final Connection stagingDatabase, final Connection eugexDatabase)
         throws SQLException {
-        cacheDatabase.setAutoCommit(false);
+        stagingDatabase.setAutoCommit(false);
         try {
             final PreparedStatement sourceStatement = eugexDatabase.prepareStatement(
                 "SELECT VCL1_COURSE_CODE course_code, VCL2_COURSE_OCCURENCE occurrence_code, "
@@ -50,14 +58,14 @@ public class EugexService {
                 
             );
             try {
-                final PreparedStatement destinationStatement = cacheDatabase.prepareStatement(
-                    "SELECT tt_module_id, webct_active, cache_course_code course_code, "
-                            + "cache_occurrence_code occurrence_code, tt_academic_year academic_year, "
-                            + "cache_semester_code period_code "
+                final PreparedStatement destinationStatement = stagingDatabase.prepareStatement(
+                    "SELECT tt_module_id, webct_active, staging_course_code course_code, "
+                            + "staging_occurrence_code occurrence_code, tt_academic_year academic_year, "
+                            + "staging_semester_code period_code "
                         + "FROM module "
-                        + "WHERE cache_course_code IS NOT NULL "
+                        + "WHERE staging_course_code IS NOT NULL "
                             + "AND tt_academic_year IS NOT NULL "
-                        + "ORDER BY tt_academic_year, cache_course_code, cache_occurrence_code, cache_semester_code",
+                        + "ORDER BY tt_academic_year, staging_course_code, staging_occurrence_code, staging_semester_code",
                     ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE
                 );
                 try {
@@ -78,10 +86,11 @@ public class EugexService {
             } finally {
                 sourceStatement.close();
             }
-            cacheDatabase.commit();
+            stagingDatabase.commit();
         } finally {
-            cacheDatabase.rollback();
-            cacheDatabase.setAutoCommit(true);
+            // Roll back any uncommitted changes, then set autocommit on again.
+            stagingDatabase.rollback();
+            stagingDatabase.setAutoCommit(true);
         }
     }
 
@@ -147,31 +156,39 @@ public class EugexService {
     }
 
     /**
-     * @return the cacheDataSource
-     */
-    public DataSource getCacheDataSource() {
-        return cacheDataSource;
-    }
-
-    /**
-     * @return the eugexDataSource
+     * Gets the data source for the EUGEX database.
+     * 
+     * @return the data source for the EUGEX database.
      */
     public DataSource getEugexDataSource() {
         return eugexDataSource;
     }
 
     /**
-     * @param cacheDataSource the cacheDataSource to set
+     * Gets the data source for the staging database.
+     * 
+     * @return the staging database data source.
      */
-    public void setCacheDataSource(DataSource cacheDataSource) {
-        this.cacheDataSource = cacheDataSource;
+    public DataSource getStagingDataSource() {
+        return stagingDataSource;
     }
 
     /**
-     * @param eugexDataSource the eugexDataSource to set
+     * Sets the EUGEX database data source.
+     * 
+     * @param eugexDataSource the EUGEX database data source to set.
      */
     public void setEugexDataSource(DataSource eugexDataSource) {
         this.eugexDataSource = eugexDataSource;
+    }
+
+    /**
+     * Sets the staging database data source.
+     * 
+     * @param dataSource the staging database data source to set.
+     */
+    public void setStagingDataSource(DataSource dataSource) {
+        this.stagingDataSource = dataSource;
     }
     
     private static class CourseKey extends Object implements Comparable<CourseKey> {
