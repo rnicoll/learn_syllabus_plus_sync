@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
 import blackboard.data.course.Course;
@@ -25,7 +26,6 @@ import blackboard.persist.course.GroupDbPersister;
 import blackboard.persist.course.GroupMembershipDbLoader;
 import blackboard.persist.course.GroupMembershipDbPersister;
 import blackboard.persist.user.UserDbLoader;
-import java.sql.Timestamp;
 import org.springframework.stereotype.Service;
 import uk.ac.ed.learn9.bb.timetabling.data.cache.EnrolmentChange;
 import uk.ac.ed.learn9.bb.timetabling.data.cache.SynchronisationRun;
@@ -278,20 +278,21 @@ public class BlackboardService {
                     }
 
                     Course course = courseDbLoader.loadByCourseId(courseCode);
+                    Id courseId;
 
                     // If the course has a parent-child relationship with another
                     // course, use the parent
                     try {
                         final CourseCourse courseCourse = courseCourseDbLoader.loadParent(course.getId());
-                        final Course parentCourse = courseDbLoader.loadById(courseCourse.getParentCourseId());
 
                         // Successfully found a parent course, replace the child with it.
-                        course = parentCourse;
+                        courseId = courseCourse.getParentCourseId();
                     } catch(KeyNotFoundException e) {
                         // No parent course, ignore
+                        courseId = course.getId();
                     }
 
-                    updateStatement.setString(1, course.getId().getExternalString());
+                    updateStatement.setString(1, courseId.getExternalString());
                     updateStatement.setString(2, rs.getString("tt_module_id"));
                     updateStatement.executeUpdate();
                 }
