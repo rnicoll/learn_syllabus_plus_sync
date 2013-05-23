@@ -8,6 +8,9 @@ import java.sql.Timestamp;
 /**
  * Wrapper around prepared statements for setting the outcome of a change
  * to be applied to Learn.
+ * 
+ * @see BlackboardService#applyPreviouslyFailedEnrolmentChanges(java.sql.Connection) 
+ * @see BlackboardService#applyEnrolmentChanges(java.sql.Connection, uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun) 
  */
 class ChangeOutcomeUpdateStatement {
     public enum Result {

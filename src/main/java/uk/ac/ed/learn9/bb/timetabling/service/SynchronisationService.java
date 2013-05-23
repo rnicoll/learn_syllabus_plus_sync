@@ -46,7 +46,7 @@ public class SynchronisationService extends Object {
     private TimetablingCloneService cloneService;
     
     /**
-     * Apply student/course group enrolment changes in the cache database,
+     * Apply student/course group enrolment changes in the staging database,
      * into Learn.
      * 
      * @param run
@@ -213,7 +213,7 @@ public class SynchronisationService extends Object {
         final Connection destination = this.getCacheDataSource().getConnection();
         try {
             generateGroupNames(destination);
-            this.getBlackboardService().generateGroupsForActivities(run, destination);
+            this.getBlackboardService().generateGroupsForActivities(destination);
         } finally {
             destination.close();
         }
@@ -303,7 +303,7 @@ public class SynchronisationService extends Object {
     }
     
     /**
-     * Clones data from Timetabling into the cache database. These provide a
+     * Clones data from Timetabling into the staging database. These provide a
      * cached copy of the data to use without resorting to trying to perform
      * in-memory joins across two distinct databases.
      * 
@@ -381,15 +381,16 @@ public class SynchronisationService extends Object {
      * ran, and this time. This process handles excluding whole-class activities.
      * 
      * @param run the synchronisation run to attribute changes to.
-     * @param connection a connection to the cache database.
+     * @param stagingDatabase a connection to the staging database.
+     * @return the number of changes entered into the database.
      */
-    private void doGenerateDiff(final SynchronisationRun run, final Connection connection)
+    private int doGenerateDiff(final SynchronisationRun run, final Connection stagingDatabase)
         throws SQLException {
         // Two views exist in the database to determine added and removed enrolments,
         // we only have to insert a copy into the relevant table so we can track
         // outcomes.
         
-        final PreparedStatement addStatement = connection.prepareStatement(
+        final PreparedStatement insertStatement = stagingDatabase.prepareStatement(
             "INSERT INTO enrolment_change "
                 + "(run_id, change_type, tt_student_set_id, tt_activity_id) "
                 + "(SELECT a.run_id, a.change_type, a.tt_student_set_id, a.tt_activity_id "
@@ -398,11 +399,11 @@ public class SynchronisationService extends Object {
 		+ "FROM removed_enrolment_vw r  WHERE r.run_id=?)"
         );
         try {
-            addStatement.setInt(1, run.getRunId());
-            addStatement.setInt(2, run.getRunId());
-            addStatement.executeUpdate();
+            insertStatement.setInt(1, run.getRunId());
+            insertStatement.setInt(2, run.getRunId());
+            return insertStatement.executeUpdate();
         } finally {
-            addStatement.close();
+            insertStatement.close();
         }
     }
 
@@ -415,7 +416,7 @@ public class SynchronisationService extends Object {
         throws PersistenceException, SQLException {
         final Connection connection = this.getCacheDataSource().getConnection();
         try {
-            this.getBlackboardService().mapStudentSetsToUsers(connection, run);
+            this.getBlackboardService().mapStudentSetsToUsers(connection);
         } finally {
             connection.close();
         }
@@ -478,7 +479,7 @@ public class SynchronisationService extends Object {
     }
 
     /**
-     * @return the local database data source.
+     * @return the staging database data source.
      */
     public DataSource getCacheDataSource() {
         return cacheDataSource;

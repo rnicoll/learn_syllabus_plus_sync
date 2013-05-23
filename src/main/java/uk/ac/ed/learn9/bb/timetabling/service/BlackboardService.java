@@ -42,7 +42,8 @@ public class BlackboardService {
     public static final String GROUP_ROLE_IDENTIFIER_STUDENT = "student";
 
     /**
-     * Applies pending changes to Learn.
+     * Applies pending changes to Learn. Normally this would be called by
+     * {@link SynchronisationService#applyEnrolmentChanges(uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun)}.
      * 
      * @param connection a connection to the local database.
      * @param run the synchronisation run to take changes from.
@@ -79,7 +80,8 @@ public class BlackboardService {
 
     /**
      * Applies any changes that have been generated, but not yet applied to
-     * Learn.
+     * Learn. Normally this would be called by
+     * {@link SynchronisationService#applyEnrolmentChanges(uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun)}.
      * 
      * @param connection a connection to the local database.
      * @throws SQLException if there was a problem with the local database.
@@ -206,15 +208,17 @@ public class BlackboardService {
     /**
      * Generates groups for activities in timetabling that can be mapped to courses
      * in Learn.
+     * 
+     * @param stagingDatabase a connection to the staging database.
      */
-    public void generateGroupsForActivities(final SynchronisationRun run, final Connection connection)
+    public void generateGroupsForActivities(final Connection stagingDatabase)
             throws KeyNotFoundException, PersistenceException, SQLException, ValidationException {
         final GroupDbPersister groupDbPersister = this.getGroupDbPersister();
         
         final ManagedLearnGroupIDStatement updateStatement
-            = new ManagedLearnGroupIDStatement(connection);
+            = new ManagedLearnGroupIDStatement(stagingDatabase);
         try {
-            PreparedStatement queryStatement = connection.prepareStatement(
+            PreparedStatement queryStatement = stagingDatabase.prepareStatement(
                 "(SELECT tt_activity_id, tt_activity_name, learn_group_id, learn_group_name, "
                     + "learn_course_id, description "
                     + "FROM non_jta_sync_activity_vw WHERE learn_group_id IS NULL)"
@@ -224,7 +228,6 @@ public class BlackboardService {
                     + "FROM jta_sync_activity_vw WHERE learn_group_id IS NULL)"
             );
             try {
-                queryStatement.setInt(1, run.getRunId());
                 final ResultSet rs = queryStatement.executeQuery();
                 try {
                     while (rs.next()) {
@@ -262,23 +265,23 @@ public class BlackboardService {
      * Resolves modules from the timetabling system into the relevant course in
      * Learn, where applicable.
      * 
-     * @param connection a connection to the cache database.
+     * @param stagingDatabase a connection to the staging database.
      * @throws KeyNotFoundException if there was an inconsistency in the Learn
      * database.
      * @throws PersistenceException if there was a problem loading a course
      * from the Learn database.
      * @throws SQLException if there was a problem accessing the cache database.
      */
-    public void mapModulesToCourses(final Connection connection)
+    public void mapModulesToCourses(final Connection stagingDatabase)
             throws KeyNotFoundException, PersistenceException, SQLException {
         final CourseDbLoader courseDbLoader = this.getCourseDbLoader();
         final CourseCourseDbLoader courseCourseDbLoader = this.getCourseCourseDbLoader();
         
-        final PreparedStatement updateStatement = connection.prepareStatement("UPDATE module "
+        final PreparedStatement updateStatement = stagingDatabase.prepareStatement("UPDATE module "
             + "SET learn_course_id=? "
                 + "WHERE tt_module_id=?");
         try {
-            final PreparedStatement queryStatement = connection.prepareStatement(
+            final PreparedStatement queryStatement = stagingDatabase.prepareStatement(
                     "SELECT tt_module_id, effective_course_code, learn_course_id "
                         + "FROM sync_module_vw "
                         + "WHERE learn_course_code IS NOT NULL "
@@ -323,24 +326,22 @@ public class BlackboardService {
     /**
      * Identifies students sets with group enrolments to be copied to Learn,
      * and maps them to their IDs in Learn.
-     * @param run 
+     * @param stagingDatabase a connection to the staging database.
      */
-    public void mapStudentSetsToUsers(final Connection connection, final SynchronisationRun run)
+    public void mapStudentSetsToUsers(final Connection stagingDatabase)
         throws PersistenceException, SQLException {
         final UserDbLoader userDbLoader = getUserDbLoader();
         
-        final PreparedStatement updateStatement = connection.prepareStatement("UPDATE student_set "
+        final PreparedStatement updateStatement = stagingDatabase.prepareStatement("UPDATE student_set "
             + "SET learn_user_id=? "
             + "WHERE tt_student_set_id=?");
         try {
-            final PreparedStatement queryStatement = connection.prepareStatement(
+            final PreparedStatement queryStatement = stagingDatabase.prepareStatement(
                 "SELECT s.tt_student_set_id, s.username, s.learn_user_id "
                     + "FROM sync_student_set_vw s "
-                    + "WHERE s.learn_user_id IS NULL "
-                        + "AND s.tt_student_set_id IN (SELECT DISTINCT tt_student_set_id FROM enrolment_add WHERE run_id=?)"
+                    + "WHERE s.learn_user_id IS NULL"
             );
             try {
-                queryStatement.setInt(1, run.getRunId());
                 final ResultSet rs = queryStatement.executeQuery();
                 try {
                     while (rs.next()) {
@@ -376,7 +377,7 @@ public class BlackboardService {
      * @param groupName the name of the group.
      * @return the new group.
      */
-    public Group buildCourseGroup(final Id courseId, final String groupName, final FormattedText description) {
+    private Group buildCourseGroup(final Id courseId, final String groupName, final FormattedText description) {
         // Create the new group
         final Group group = new Group();
         group.setCourseId(courseId);
@@ -390,8 +391,9 @@ public class BlackboardService {
     /**
      * Constructs a user's membership on a group and returns it.
      * 
-     * @param courseMembership
-     * @param groupId
+     * @param courseMembership the membership of the student onto the course
+     * the group belongs to.
+     * @param groupId the ID of the group to enrol the student onto.
      * @return the group membership.
      */
     public GroupMembership buildGroupMembership(final CourseMembership courseMembership,
@@ -495,6 +497,11 @@ public class BlackboardService {
                 + "WHERE a.tt_activity_id=?");
         }
         
+        /**
+         * Closes the prepared statement underlying this object.
+         * 
+         * @throws SQLException 
+         */
         public void close() throws SQLException {
             this.statement.close();
         }
