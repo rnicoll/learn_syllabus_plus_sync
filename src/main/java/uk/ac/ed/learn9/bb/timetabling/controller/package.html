@@ -8,7 +8,20 @@
 
 <body>
 
-<p>Contains controllers for handling web requests from end-users.</p>
+<p>Contains controllers for handling web requests from end-users. Note that
+rendering of views based on these controllers is done using JSP files,
+which are located under the path "src/main/webapps/WEB-INF/jsp".</p>
+
+<ul>
+    <li>{@link uk.ac.ed.learn9.bb.timetabling.controller.AuditLogController}
+        is the main page displayed to instructors, within their courses,
+        and provides details of changes made to enrolments of students on groups.</li>
+    <li>{@link uk.ac.ed.learn9.bb.timetabling.controller.MergedCoursesController}
+        provides instructors with details of courses merged into a course in Learn.</li>
+    <li>{@link uk.ac.ed.learn9.bb.timetabling.controller.ConfigureController}
+        is intended as a settings page, but also allows the synchronisation process
+        to be run manually.</li>
+</ul>
 
 </body>
 
