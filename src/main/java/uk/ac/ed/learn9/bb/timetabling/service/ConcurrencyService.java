@@ -16,8 +16,12 @@ import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
  * concurrent runs).
  */
 @Service
-public class ConcurrencyService {    
-    public static final long SESSION_TIMEOUT = 23 * 60 * 60 * 1000L;
+public class ConcurrencyService {
+    /**
+     * How long to wait before assuming a synchronisation run has failed, and
+     * mark it as timed out.
+     */
+    public static final long SYNCHRONISATION_TIMEOUT_MILLIS = 23 * 60 * 60 * 1000L;
     
     @Autowired
     private DataSource stagingDataSource;
@@ -208,7 +212,7 @@ public class ConcurrencyService {
     public int timeoutOldSessions(final Connection stagingDatabase,
             final Timestamp now)
             throws SQLException {
-        final Timestamp timeout = new Timestamp(now.getTime() - SESSION_TIMEOUT);
+        final Timestamp timeout = new Timestamp(now.getTime() - SYNCHRONISATION_TIMEOUT_MILLIS);
         
         final PreparedStatement statement = stagingDatabase.prepareStatement(
             "UPDATE synchronisation_run "
