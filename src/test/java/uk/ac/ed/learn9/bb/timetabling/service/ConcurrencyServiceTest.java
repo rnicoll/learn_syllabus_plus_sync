@@ -26,24 +26,41 @@ public class ConcurrencyServiceTest extends AbstractJUnit4SpringContextTests {
         return this.applicationContext.getBean(ConcurrencyService.class);
     }
     
+    /**
+     * Constructs schemas for the test staging database, before each test is run.
+     * 
+     * @throws IOException if there was a problem accessing the database creation
+     * script.
+     * @throws SQLException if there was a problem applying the database creation
+     * script.
+     * @see #after() 
+     */
     @Before
     public void before() throws IOException, SQLException {
         final Connection syncConnection = this.getService().getStagingDataSource().getConnection();
         
         try {
-            final File syncDbSchema = this.applicationContext.getResource(SynchronisationServiceTest.LOCATION_SYNC_DB_SCHEMA_RESOURCE).getFile();
+            final File syncDbSchema = this.applicationContext.getResource(SynchronisationServiceTest.LOCATION_STAGING_DB_SCHEMA_RESOURCE).getFile();
             DbScriptUtil.runScript(syncConnection, syncDbSchema);
         } finally {
             syncConnection.close();
         }
     }
     
+    /**
+     * Drops the staging database schema, after each test is run, to ensure there
+     * are no side-effects from each test.
+     * 
+     * @throws IOException if there was a problem accessing the database drop script.
+     * @throws SQLException if there was a problem applying the database drop script.
+     * @see #before() 
+     */
     @After
     public void after() throws IOException, SQLException {
         final Connection syncConnection = this.getService().getStagingDataSource().getConnection();
         
         try {
-            final File syncDbSchema = this.applicationContext.getResource(SynchronisationServiceTest.LOCATION_SYNC_DB_DROP_RESOURCE).getFile();
+            final File syncDbSchema = this.applicationContext.getResource(SynchronisationServiceTest.LOCATION_STAGING_DB_DROP_RESOURCE).getFile();
             DbScriptUtil.runScript(syncConnection, syncDbSchema);
         } finally {
             syncConnection.close();

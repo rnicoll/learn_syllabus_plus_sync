@@ -32,10 +32,26 @@ import uk.ac.ed.learn9.bb.timetabling.util.RdbUtil;
 
 @ContextConfiguration(locations={"classpath:applicationContext-test.xml"})
 public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests {
+    /**
+     * Location of the script used to generate the test reporting database schema,
+     * expressed in the Spring resource location format.
+     */
     public static final String LOCATION_RDB_DB_SCHEMA_RESOURCE = "classpath:rdb_db_schema.sql";
+    /**
+     * Location of the script used to destroy the test reporting database schema,
+     * expressed in the Spring resource location format.
+     */
     public static final String LOCATION_RDB_DB_DROP_RESOURCE = "classpath:rdb_db_drop.sql";
-    public static final String LOCATION_SYNC_DB_SCHEMA_RESOURCE = "classpath:sync_db_schema.sql";
-    public static final String LOCATION_SYNC_DB_DROP_RESOURCE = "classpath:sync_db_drop.sql";
+    /**
+     * Location of the script used to generate the test staging database schema,
+     * expressed in the Spring resource location format.
+     */
+    public static final String LOCATION_STAGING_DB_SCHEMA_RESOURCE = "classpath:sync_db_schema.sql";
+    /**
+     * Location of the script used to destroy the test staging database schema,
+     * expressed in the Spring resource location format.
+     */
+    public static final String LOCATION_STAGING_DB_DROP_RESOURCE = "classpath:sync_db_drop.sql";
     
     public SynchronisationServiceTest() {
     }
@@ -44,12 +60,22 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
         return this.applicationContext.getBean(SynchronisationService.class);
     }
     
+    /**
+     * Constructs schemas for the test reporting and staging databases, before
+     * each test is run.
+     * 
+     * @throws IOException if there was a problem accessing the database creation
+     * scripts.
+     * @throws SQLException if there was a problem applying the database creation
+     * scripts.
+     * @see #after() 
+     */
     @Before
     public void before() throws IOException, SQLException {
         final Connection syncConnection = this.getService().getStagingDataSource().getConnection();
         
         try {
-            final File syncDbSchema = this.applicationContext.getResource(LOCATION_SYNC_DB_SCHEMA_RESOURCE).getFile();
+            final File syncDbSchema = this.applicationContext.getResource(LOCATION_STAGING_DB_SCHEMA_RESOURCE).getFile();
             DbScriptUtil.runScript(syncConnection, syncDbSchema);
         } finally {
             syncConnection.close();
@@ -65,12 +91,22 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
         }
     }
     
+    /**
+     * Drops the schemas for the test reporting and staging databases, after
+     * each test is run, to ensure there are no side-effects from each test.
+     * 
+     * @throws IOException if there was a problem accessing the database drop
+     * scripts.
+     * @throws SQLException if there was a problem applying the database drop
+     * scripts.
+     * @see #before() 
+     */
     @After
     public void after() throws IOException, SQLException {
         final Connection syncConnection = this.getService().getStagingDataSource().getConnection();
         
         try {
-            final File syncDbSchema = this.applicationContext.getResource(LOCATION_SYNC_DB_DROP_RESOURCE).getFile();
+            final File syncDbSchema = this.applicationContext.getResource(LOCATION_STAGING_DB_DROP_RESOURCE).getFile();
             DbScriptUtil.runScript(syncConnection, syncDbSchema);
         } finally {
             syncConnection.close();

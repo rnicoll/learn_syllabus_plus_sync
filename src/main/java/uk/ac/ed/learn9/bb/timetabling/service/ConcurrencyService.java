@@ -36,6 +36,8 @@ public class ConcurrencyService {
      * @param runId the ID of the session to mark abandoned.
      * @return whether the change was written out successfully. Failure typically
      * indicates the session has already finished.
+     * @throws SQLException if there was a problem communicating with the staging
+     * database.
      */
     public boolean abandonSession(final Connection stagingDatabase, final int runId, final Timestamp now)
             throws SQLException {        
@@ -65,7 +67,8 @@ public class ConcurrencyService {
      * run to.
      * @return the ID of the previous run. May be null if this is the first
      * synchronisation run.
-     * @throws SQLException
+     * @throws SQLException if there was a problem communicating with the staging
+     * database.
      * @throws ConcurrencyService.SynchronisationAlreadyInProgressException if
      * there's already a synchronisation run in progress.
      */
@@ -185,6 +188,14 @@ public class ConcurrencyService {
         return this.getRunDao().getRun(runId);
     }
     
+    /**
+     * Writes a record for a new synchronisation run starting, into the database.
+     * 
+     * @param stagingDatabase a connection to the staging database.
+     * @param runId the ID of the new run.
+     * @param now the current time.
+     * @throws SQLException if there's a problem communicating with the database.
+     */
     protected void insertRunRecord(final Connection stagingDatabase, final int runId,
             final Timestamp now)
         throws SQLException {
@@ -270,6 +281,11 @@ public class ConcurrencyService {
      * started, because it is already in progress.
      */
     public static class SynchronisationAlreadyInProgressException extends Exception {
+        /**
+         * Constructor for the exception with a message and no underlying cause.
+         * 
+         * @param message the message to report.
+         */
         public SynchronisationAlreadyInProgressException(final String message) {
             super(message);
         }

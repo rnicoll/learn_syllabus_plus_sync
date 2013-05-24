@@ -38,7 +38,10 @@ import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
  */
 @Service
 public class BlackboardService {
-
+    /**
+     * Identifier of role students have within a group, for creating new
+     * group memberships.
+     */
     public static final String GROUP_ROLE_IDENTIFIER_STUDENT = "student";
 
     /**
@@ -483,6 +486,14 @@ public class BlackboardService {
         return CourseDbLoader.Default.getInstance();
     }
 
+    /**
+     * Gets an instance of a {@link CourseCourseDbLoader}. This method exists to allow
+     * overriding for test-cases.
+     *
+     * @return a course-course relationship loader.
+     * @throws PersistenceException if there was a problem constructing the
+     * loader.
+     */
     protected CourseCourseDbLoader getCourseCourseDbLoader() throws PersistenceException {
         return CourseCourseDbLoader.Default.getInstance();
     }

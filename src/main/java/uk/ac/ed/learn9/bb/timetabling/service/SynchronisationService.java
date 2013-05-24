@@ -26,6 +26,10 @@ import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
  */
 @Service
 public class SynchronisationService extends Object {
+    /**
+     * The string to prefix all generated group names with, to identify them
+     * as imported from Timetabling.
+     */
     public static final String GROUP_NAME_PREFIX = "TT_";
     
     @Autowired
@@ -232,6 +236,7 @@ public class SynchronisationService extends Object {
      * Generates names of groups, to be used in Learn where needed. These are
      * written into the database so they can be inspected later if needed.
      * 
+     * @param stagingDatabase a connection to the cache database.
      * @throws SQLException if there was a problem accessing the database.
      */
     public void generateGroupNames(final Connection stagingDatabase)

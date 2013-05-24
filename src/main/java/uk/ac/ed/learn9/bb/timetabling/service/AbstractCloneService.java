@@ -32,6 +32,9 @@ public abstract class AbstractCloneService extends Object {
      * destination table. Tables with compound primary keys are not supported.
      * @param fieldMappings a mapping from source field names to destination
      * fields, for non-primary key fields to be cloned.
+     * 
+     * @throws SQLException if there was a problem accessing one of the
+     * databases.
      */
     public void cloneTable(final Connection source, final Connection destination,
             final String sourceTable, final String destinationTable,
@@ -65,6 +68,7 @@ public abstract class AbstractCloneService extends Object {
     /**
      * Clones the data in from one query statement into another.
      *
+     * @param destinationTable the name of the table to write records to.
      * @param sourceStatement the prepared statement to read data from.
      * @param destinationStatement the prepared statement to write data into.
      * @param sourcePkField the name of the primary key field on the source
@@ -73,6 +77,9 @@ public abstract class AbstractCloneService extends Object {
      * destination table. Tables with compound primary keys are not supported.
      * @param fieldMappings a mapping from source field names to destination
      * fields, for non-primary key fields to be cloned.
+     * 
+     * @throws SQLException if there was a problem accessing one of the
+     * databases.
      */
     public void cloneQuery(final String destinationTable,
             final PreparedStatement sourceStatement, final PreparedStatement destinationStatement,
@@ -96,6 +103,7 @@ public abstract class AbstractCloneService extends Object {
     /**
      * Clones the data in from one result set into another.
      *
+     * @param destinationTable the name of the table to write records to.
      * @param sourceRs the result set to read data from.
      * @param destinationRs the result set to write data into.
      * @param sourcePkField the name of the primary key field on the source

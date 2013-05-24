@@ -133,7 +133,7 @@ public class TimetablingCloneService extends AbstractCloneService {
      * to groups in Learn.
      * 
      * @param source a connection to the reporting database.
-     * @param destination a connection to the cache database.
+     * @param destination a connection to the staging database.
      * @throws SQLException if there was a problem accessing one of the
      * databases.
      */
@@ -159,7 +159,7 @@ public class TimetablingCloneService extends AbstractCloneService {
      * activity's module.
      * 
      * @param source a connection to the reporting database.
-     * @param destination a connection to the cache database.
+     * @param destination a connection to the staging database.
      * @throws SQLException if there was a problem accessing one of the
      * databases.
      */
@@ -183,7 +183,7 @@ public class TimetablingCloneService extends AbstractCloneService {
      * all tutorials in a set of tutorial groups).
      * 
      * @param source a connection to the reporting database.
-     * @param destination a connection to the cache database.
+     * @param destination a connection to the staging database.
      * @throws SQLException if there was a problem accessing one of the
      * databases.
      */
@@ -206,7 +206,7 @@ public class TimetablingCloneService extends AbstractCloneService {
      * types are used to generate the description of a group in Learn.
      * 
      * @param source a connection to the reporting database.
-     * @param destination a connection to the cache database.
+     * @param destination a connection to the staging database.
      * @throws SQLException if there was a problem accessing one of the
      * databases.
      */
@@ -228,6 +228,11 @@ public class TimetablingCloneService extends AbstractCloneService {
      * Synchronises student sets from the timetabling reporting database into the
      * local database. These are primarily used for caching details of the relevant
      * User object in Learn.
+     * 
+     * @param source a connection to the reporting database.
+     * @param destination a connection to the staging database.
+     * @throws SQLException if there was a problem accessing one of the
+     * databases.
      */
     public void cloneVariantJointTaughtActivities(final Connection source, final Connection destination)
             throws SQLException {
@@ -248,7 +253,7 @@ public class TimetablingCloneService extends AbstractCloneService {
      * to courses in Learn.
      * 
      * @param source a connection to the reporting database.
-     * @param destination a connection to the cache database.
+     * @param destination a connection to the staging database.
      * @throws SQLException if there was a problem accessing one of the
      * databases.
      */
@@ -270,6 +275,11 @@ public class TimetablingCloneService extends AbstractCloneService {
      * Synchronises student sets from the timetabling reporting database into the
      * local database. These are primarily used for caching details of the relevant
      * User object in Learn.
+     * 
+     * @param source a connection to the reporting database.
+     * @param destination a connection to the staging database.
+     * @throws SQLException if there was a problem accessing one of the
+     * databases.
      */
     public void cloneStudentSets(final Connection source, final Connection destination)
             throws SQLException {

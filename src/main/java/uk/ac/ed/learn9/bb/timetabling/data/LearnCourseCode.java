@@ -33,6 +33,7 @@ public class LearnCourseCode extends AbstractCourseCode<LearnCourseCode> {
      * @param ayrCode an academic year code, for example "2013/4".
      * @param occurrence the occurrence of the course, for example "SV1".
      * @param semester the semester the course is running in, for example "SEM1".
+     * @return the course code as used in Learn.
      */
     public static LearnCourseCode buildCode(final String courseCode,
             final AcademicYearCode ayrCode, final String occurrence, final String semester) {

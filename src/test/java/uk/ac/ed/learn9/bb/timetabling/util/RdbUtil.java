@@ -22,7 +22,14 @@ public class RdbUtil {
      * (and therefore not).
      */
     public enum SchedulingMethod {
+        /**
+         * The activity has not been scheduled (and therefore is not to be
+         * synchronised).
+         */
         NOT_SCHEDULED,
+        /**
+         * The activity has been scheduled (and therefore should be synchronised).
+         */
         SCHEDULED;
     }
     
@@ -63,16 +70,30 @@ public class RdbUtil {
      */
     public static final String WEEK_PATTERN = "11111111111111111111111111111111111111111111111111111111111111111";
     
+    /**
+     * Creates an activity in the test reporting database.
+     * 
+     * @param rdb a connection to the TEST reporting database.
+     * @param activityTemplate the activity template to base this activity on.
+     * @param module the module the activity will belong to.
+     * @param schedulingMethod whether the activity has been scheduled.
+     * @param activityOrdinality a number for this activity within the activities
+     * under the same template.
+     * @param idSource the RDB ID generator to use for ID values.
+     * @return the newly generated activity, for reference.
+     * @throws SQLException if there was a problem communicating with the reporting
+     * database.
+     */
     public static Activity createTestActivity(final Connection rdb,
         final ActivityTemplate activityTemplate, final Module module,
-        final SchedulingMethod schedulingMethod, final int activityId,
+        final SchedulingMethod schedulingMethod, final int activityOrdinality,
         final RdbIdSource idSource)
         throws SQLException {
         final Activity activity = new Activity();
         
         activity.setActivityId(idSource.getId());
         activity.setActivityName(activityTemplate.getTemplateName() + "/"
-            + activityId);
+            + activityOrdinality);
         activity.setModule(module);
         
         final PreparedStatement statement = rdb.prepareStatement(
@@ -119,6 +140,16 @@ public class RdbUtil {
         return activity;
     }
     
+    /**
+     * Creates an activity type in the test reporting database.
+     * 
+     * @param rdb a connection to the TEST reporting database.
+     * @param typeName the name of the activity type.
+     * @param idSource the RDB ID generator to use for ID values.
+     * @return the newly generated activity, for reference.
+     * @throws SQLException if there was a problem communicating with the reporting
+     * database.
+     */
     public static ActivityType createTestActivityType(final Connection rdb, final String typeName,
             final RdbIdSource idSource)
         throws SQLException {
@@ -146,6 +177,21 @@ public class RdbUtil {
         return activityType;
     }
     
+    /**
+     * Creates an activity template in the test reporting database.
+     * 
+     * @param rdb a connection to the TEST reporting database.
+     * @param module the module this activity template belongs to.
+     * @param activityType the default type for activities generated from this
+     * template.
+     * @param templateName the name of the activity template.
+     * @param forVle how to mark whether this activity template is intended for
+     * synchronisation to the VLE.
+     * @param idSource the RDB ID generator to use for ID values.
+     * @return the newly generated activity, for reference.
+     * @throws SQLException if there was a problem communicating with the reporting
+     * database.
+     */
     public static ActivityTemplate createTestActivityTemplate(final Connection rdb, final Module module,
             final ActivityType activityType, final String templateName,
             final TemplateForVle forVle, final RdbIdSource idSource)

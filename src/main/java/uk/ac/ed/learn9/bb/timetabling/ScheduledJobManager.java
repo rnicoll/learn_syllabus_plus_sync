@@ -53,6 +53,9 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
     private Task task = new Task();
     private LogService logService;
     
+    /**
+     * Default constructor.
+     */
     public              ScheduledJobManager() {
         
     }
@@ -100,6 +103,7 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
      * Calculates the delay (in milliseconds) before running the synchronisation
      * again.
      * 
+     * @param nowMillis the current time in milliseconds.
      * @return the delay in milliseconds.
      */
     public long calculateDelay(final long nowMillis) {
