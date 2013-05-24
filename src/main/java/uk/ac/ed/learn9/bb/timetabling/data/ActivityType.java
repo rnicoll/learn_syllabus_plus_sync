@@ -16,7 +16,10 @@ public class ActivityType extends Object {
     private String typeName;
 
     /**
-     * @return the ID of this activity type.
+     * Gets the ID of this activity type from Timetabling (a 32 character identifier).
+     * 
+     * @return the ID of this activity type. This is a primary key copied from the Timetabling
+     * system.
      */
     @Id
     @Column(name="tt_type_id", length=32, nullable=false)
@@ -25,6 +28,9 @@ public class ActivityType extends Object {
     }
 
     /**
+     * Returns the human readable name of this activity type, for example "Lecture",
+     * "Tutorial", etc.
+     * 
      * @return the name of this activity type.
      */
     @Column(name="tt_type_name", length=255, nullable=true)

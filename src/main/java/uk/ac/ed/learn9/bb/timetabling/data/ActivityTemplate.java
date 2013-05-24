@@ -20,7 +20,7 @@ public class ActivityTemplate extends Object implements Serializable {
     private String learnGroupSetId;
 
     /**
-     * Returns the ID of this template in Learn (a 32 character primary key).
+     * Returns the ID of this template in Learn (a 32 character identifier).
      * 
      * @return the activity template ID. This is a primary key copied from the Timetabling
      * system.

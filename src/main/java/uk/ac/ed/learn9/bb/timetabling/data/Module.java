@@ -27,6 +27,8 @@ public class Module extends Object implements Serializable {
     private Boolean webctActive;
 
     /**
+     * Gets the ID of this module (a 32 character identifier).
+     * 
      * @return the ID of the module in Timetabling.
      */
     @Id
@@ -161,14 +163,18 @@ public class Module extends Object implements Serializable {
     }
 
     /**
-     * @param timetablingCourseCode the timetablingCourseCode to set
+     * Sets the timetabling course code for this module.
+     * 
+     * @param timetablingCourseCode the course code to set.
      */
     public void setTimetablingCourseCode(String timetablingCourseCode) {
         this.timetablingCourseCode = timetablingCourseCode;
     }
 
     /**
-     * @param timetablingModuleName the timetablingModuleName to set
+     * Sets the name of this module.
+     * 
+     * @param timetablingModuleName the module name to set.
      */
     public void setTimetablingModuleName(String timetablingModuleName) {
         this.timetablingModuleName = timetablingModuleName;

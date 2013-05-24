@@ -17,30 +17,79 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class TimetablingCloneService extends AbstractCloneService {
-
+    /**
+     * Name of the activity table in the reporting database.
+     */
     public static final String REPORTING_ACTIVITY_TABLE = "ACTIVITY";
+    /**
+     * Name of the activity parents table in the reporting database.
+     */
     public static final String REPORTING_ACTIVITY_PARENTS_TABLE = "ACTIVITY_PARENTS";
+    /**
+     * Name of the activity type table in the reporting database.
+     */
     public static final String REPORTING_ACTIVITY_TYPE_TABLE = "ACTIVITYTYPES";
+    /**
+     * Name of the activity template table in the reporting database.
+     */
     public static final String REPORTING_ACTIVITY_TEMPLATE_TABLE = "TEMPLATE";
+    /**
+     * Name of the module table in the reporting database.
+     */
     public static final String REPORTING_MODULE_TABLE = "MODULE";
+    /**
+     * Name of the student sets table in the reporting database.
+     */
     public static final String REPORTING_STUDENT_SET_TABLE = "STUDENT_SET";
+    /**
+     * Name of the variant/JTA activity table in the reporting database.
+     */
     public static final String REPORTING_VARIANT_JTA_TABLE = "VARIANTJTAACTS";
     
-    public static final String CACHE_ACTIVITY_TABLE = "activity";
-    public static final String CACHE_ACTIVITY_PARENTS_TABLE = "ACTIVITY_PARENTS";
-    public static final String CACHE_ACTIVITY_TYPE_TABLE = "activity_type";
-    public static final String CACHE_ACTIVITY_TEMPLATE_TABLE = "activity_template";
-    public static final String CACHE_MODULE_TABLE = "module";
-    public static final String CACHE_STUDENT_SET_TABLE = "student_set";
-    public static final String CACHE_VARIANT_JTA_TABLE = "variantjtaacts";
+    /**
+     * Name of the activity table in the staging database.
+     */
+    public static final String STAGING_ACTIVITY_TABLE = "activity";
+    /**
+     * Name of the activity parents table in the staging database.
+     */
+    public static final String STAGING_ACTIVITY_PARENTS_TABLE = "ACTIVITY_PARENTS";
+    /**
+     * Name of the activity type table in the staging database.
+     */
+    public static final String STAGING_ACTIVITY_TYPE_TABLE = "activity_type";
+    /**
+     * Name of the activity template table in the staging database.
+     */
+    public static final String STAGING_ACTIVITY_TEMPLATE_TABLE = "activity_template";
+    /**
+     * Name of the module table in the staging database.
+     */
+    public static final String STAGING_MODULE_TABLE = "module";
+    /**
+     * Name of the student sets table in the staging database.
+     */
+    public static final String STAGING_STUDENT_SET_TABLE = "student_set";
+    /**
+     * Name of the variant/JTA activity table in the staging database.
+     */
+    public static final String STAGING_VARIANT_JTA_TABLE = "variantjtaacts";
     
-    public static final String CACHE_ACTIVITY_PRIMARY_KEY = "tt_activity_id";
-    public static final String CACHE_ACTIVITY_PARENTS_PRIMARY_KEY = "tt_activity_id";
-    public static final String CACHE_ACTIVITY_TEMPLATE_PRIMARY_KEY = "tt_template_id";
-    public static final String CACHE_ACTIVITY_TYPE_PRIMARY_KEY = "tt_type_id";
-    public static final String CACHE_MODULE_PRIMARY_KEY = "tt_module_id";
-    public static final String CACHE_STUDENT_SET_PRIMARY_KEY = "tt_student_set_id";
-    public static final String CACHE_VARIANT_JTA_PRIMARY_KEY = CACHE_ACTIVITY_PRIMARY_KEY;
+    /**
+     * Name of the primary key field for activities in the staging database.
+     */
+    public static final String STAGING_ACTIVITY_PRIMARY_KEY = "tt_activity_id";
+    public static final String STAGING_ACTIVITY_PARENTS_PRIMARY_KEY = "tt_activity_id";
+    public static final String STAGING_ACTIVITY_TEMPLATE_PRIMARY_KEY = "tt_template_id";
+    public static final String STAGING_ACTIVITY_TYPE_PRIMARY_KEY = "tt_type_id";
+    public static final String STAGING_MODULE_PRIMARY_KEY = "tt_module_id";
+    public static final String STAGING_STUDENT_SET_PRIMARY_KEY = "tt_student_set_id";
+    public static final String STAGING_VARIANT_JTA_PRIMARY_KEY = STAGING_ACTIVITY_PRIMARY_KEY;
+    
+    /**
+     * Name of the primary key field for all Timetabling tables.
+     */
+    public static final String PRIMARY_KEY_TIMETABLING_TABLES = "ID";
     
     public static final String[][] ACTIVITY_FIELD_MAPPINGS = {
         {"NAME", "tt_activity_name"},
@@ -97,8 +146,8 @@ public class TimetablingCloneService extends AbstractCloneService {
         }
 
         cloneTable(source, destination,
-                REPORTING_ACTIVITY_TABLE, CACHE_ACTIVITY_TABLE,
-                "ID", CACHE_ACTIVITY_PRIMARY_KEY,
+                REPORTING_ACTIVITY_TABLE, STAGING_ACTIVITY_TABLE,
+                PRIMARY_KEY_TIMETABLING_TABLES, STAGING_ACTIVITY_PRIMARY_KEY,
                 fieldMappings);
     }
 
@@ -123,8 +172,8 @@ public class TimetablingCloneService extends AbstractCloneService {
         }
 
         cloneTable(source, destination,
-                REPORTING_ACTIVITY_PARENTS_TABLE, CACHE_ACTIVITY_PARENTS_TABLE,
-                "ID", CACHE_ACTIVITY_PARENTS_PRIMARY_KEY,
+                REPORTING_ACTIVITY_PARENTS_TABLE, STAGING_ACTIVITY_PARENTS_TABLE,
+                PRIMARY_KEY_TIMETABLING_TABLES, STAGING_ACTIVITY_PARENTS_PRIMARY_KEY,
                 fieldMappings);
     }
 
@@ -147,8 +196,8 @@ public class TimetablingCloneService extends AbstractCloneService {
         }
 
         cloneTable(source, destination,
-                REPORTING_ACTIVITY_TEMPLATE_TABLE, CACHE_ACTIVITY_TEMPLATE_TABLE,
-                "ID", CACHE_ACTIVITY_TEMPLATE_PRIMARY_KEY,
+                REPORTING_ACTIVITY_TEMPLATE_TABLE, STAGING_ACTIVITY_TEMPLATE_TABLE,
+                PRIMARY_KEY_TIMETABLING_TABLES, STAGING_ACTIVITY_TEMPLATE_PRIMARY_KEY,
                 fieldMappings);
     }
 
@@ -170,8 +219,8 @@ public class TimetablingCloneService extends AbstractCloneService {
         }
 
         cloneTable(source, destination,
-                REPORTING_ACTIVITY_TYPE_TABLE, CACHE_ACTIVITY_TYPE_TABLE,
-                "ID", CACHE_ACTIVITY_TYPE_PRIMARY_KEY,
+                REPORTING_ACTIVITY_TYPE_TABLE, STAGING_ACTIVITY_TYPE_TABLE,
+                PRIMARY_KEY_TIMETABLING_TABLES, STAGING_ACTIVITY_TYPE_PRIMARY_KEY,
                 fieldMappings);
     }
 
@@ -189,8 +238,8 @@ public class TimetablingCloneService extends AbstractCloneService {
         }
 
         cloneTable(source, destination,
-                REPORTING_VARIANT_JTA_TABLE, CACHE_VARIANT_JTA_TABLE,
-                "ID", CACHE_VARIANT_JTA_PRIMARY_KEY,
+                REPORTING_VARIANT_JTA_TABLE, STAGING_VARIANT_JTA_TABLE,
+                PRIMARY_KEY_TIMETABLING_TABLES, STAGING_VARIANT_JTA_PRIMARY_KEY,
                 fieldMappings);
     }
 
@@ -212,8 +261,8 @@ public class TimetablingCloneService extends AbstractCloneService {
         }
 
         cloneTable(source, destination,
-                REPORTING_MODULE_TABLE, CACHE_MODULE_TABLE,
-                "ID", CACHE_MODULE_PRIMARY_KEY,
+                REPORTING_MODULE_TABLE, STAGING_MODULE_TABLE,
+                PRIMARY_KEY_TIMETABLING_TABLES, STAGING_MODULE_PRIMARY_KEY,
                 fieldMappings);
     }
 
@@ -231,8 +280,8 @@ public class TimetablingCloneService extends AbstractCloneService {
         }
 
         cloneTable(source, destination,
-                REPORTING_STUDENT_SET_TABLE, CACHE_STUDENT_SET_TABLE,
-                "ID", CACHE_STUDENT_SET_PRIMARY_KEY,
+                REPORTING_STUDENT_SET_TABLE, STAGING_STUDENT_SET_TABLE,
+                PRIMARY_KEY_TIMETABLING_TABLES, STAGING_STUDENT_SET_PRIMARY_KEY,
                 fieldMappings);
     }
 }

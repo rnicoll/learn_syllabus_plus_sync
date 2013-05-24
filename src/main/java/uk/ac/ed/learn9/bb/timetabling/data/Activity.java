@@ -23,7 +23,8 @@ public class Activity extends Object implements Serializable {
     private String description;
 
     /**
-     * Returns the ID of the activity (a 32 character identifier used by Timetabling).
+     * Gets the ID of the activity (a 32 character identifier used by Timetabling),
+     * for example "01A98191A0D874DA715A4EB13A90EC5D".
      * 
      * @return the activity ID. This is a primary key copied from the Timetabling
      * system.
@@ -35,7 +36,7 @@ public class Activity extends Object implements Serializable {
     }
 
     /**
-     * Returns the name of the activity, for example "Chemical Medicine Level 10/2".
+     * Gets the name of the activity, for example "Chemical Medicine Level 10/2".
      * 
      * @return the name of the activity.
      */
@@ -45,7 +46,7 @@ public class Activity extends Object implements Serializable {
     }
 
     /**
-     * Returns the description of the group. This is generated from the activity
+     * Gets the description of the group. This is generated from the activity
      * data name, template, type and module as part of the synchronisation process.
      * 
      * @return the description of the group.
@@ -56,7 +57,7 @@ public class Activity extends Object implements Serializable {
     }
 
     /**
-     * Returns the ID of the group in Learn that this activity maps to,
+     * Gets the ID of the group in Learn that this activity maps to,
      * where applicable.
      * 
      * @return the ID of the group in Learn that this activity maps to,
@@ -68,7 +69,7 @@ public class Activity extends Object implements Serializable {
     }
 
     /**
-     * Returns the name of the group in Learn, when it's first created. This
+     * Gets the name of the group in Learn, when it's first created. This
      * is generated as part of the synchronisation process.
      * 
      * @return the Learn group name.
@@ -79,10 +80,13 @@ public class Activity extends Object implements Serializable {
     }
 
     /**
-     * @return the module this activity belongs to.
+     * Gets the module in Timetabling that this activity belongs to.
+     * 
+     * @return the module this activity belongs to, may be null where not
+     * applicable.
      */
     @ManyToOne
-    @JoinColumn(name="tt_module_id")
+    @JoinColumn(name="tt_module_id", nullable=true)
     public Module getModule() {
         return module;
     }

@@ -11,6 +11,10 @@ import java.util.Map;
  * Abstract service for cloning tables from one database to another. Intended
  * for copying data from the timetabling database, to the local copy used by the
  * synchronisation service, but could be used for other tasks if desired.
+ * 
+ * Normally this would be called via the {@link #cloneTable(java.sql.Connection, java.sql.Connection, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.util.Map)}
+ * method; the other clone methods are intended for cases with more complex
+ * queries.
  */
 public abstract class AbstractCloneService extends Object {
 

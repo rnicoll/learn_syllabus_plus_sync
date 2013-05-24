@@ -142,6 +142,12 @@ public class EnrolmentChange extends Object implements Comparable<EnrolmentChang
         return updateCompleted;
     }
     
+    /**
+     * Returns the host key for the student set this change relates to, which
+     * is the username of the student for all synchronisable student sets.
+     * 
+     * @return a username.
+     */
     @Transient
     public String getUserName() {
         return this.getStudentSet().getHostKey();
@@ -157,32 +163,39 @@ public class EnrolmentChange extends Object implements Comparable<EnrolmentChang
     }
 
     /**
-     * @param changeId the changeId to set
+     * Sets the ID for this change.
+     * 
+     * @param changeId the ID to set.
      */
     public void setChangeId(int changeId) {
         this.changeId = changeId;
     }
 
+    /**
+     * Sets the type of this change (add/remove).
+     * 
+     * @param newChangeType the change type to set.
+     */
     public void setChangeType(final Type newChangeType) {
         this.changeType = newChangeType;
     }
     
     /**
-     * @param run the run to set
+     * @param run the run to set.
      */
     public void setRun(SynchronisationRun run) {
         this.run = run;
     }
 
     /**
-     * @param studentSet the studentSet to set
+     * @param studentSet the student set to set.
      */
     public void setStudentSet(StudentSet studentSet) {
         this.studentSet = studentSet;
     }
 
     /**
-     * @param updateCompleted the updateCompleted to set
+     * @param updateCompleted the completion time to set.
      */
     public void setUpdateCompleted(Timestamp updateCompleted) {
         this.updateCompleted = updateCompleted;
