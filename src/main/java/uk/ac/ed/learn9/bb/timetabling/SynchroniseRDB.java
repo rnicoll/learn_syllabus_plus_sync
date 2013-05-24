@@ -1,15 +1,14 @@
 package uk.ac.ed.learn9.bb.timetabling;
 
-import blackboard.data.ValidationException;
 import java.sql.SQLException;
-
-import blackboard.persist.PersistenceException;
 import java.sql.Timestamp;
+
+import blackboard.data.ValidationException;
+import blackboard.persist.PersistenceException;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 import uk.ac.ed.learn9.bb.timetabling.service.ConcurrencyService;
 import uk.ac.ed.learn9.bb.timetabling.service.ConcurrencyService.SynchronisationAlreadyInProgressException;
-
 import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService;
 
 /**

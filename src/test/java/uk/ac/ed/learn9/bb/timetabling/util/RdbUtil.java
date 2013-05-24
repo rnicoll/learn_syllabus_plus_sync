@@ -318,6 +318,15 @@ public class RdbUtil {
         return "#SPLUS" + subpart;
     }
     
+    /**
+     * Changes the academic year listed against a module in the reporting database.
+     * 
+     * @param rdb a connection to the reporting database.
+     * @param academicYearCode the new academic year code.
+     * @param testModule the module to change.
+     * @return the number of records affected.
+     * @throws SQLException if there was a problem communicating with the database.
+     */
     public static int updateModuleAyr(final Connection rdb, final AcademicYearCode academicYearCode,
             final Module testModule)
         throws SQLException {

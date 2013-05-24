@@ -15,6 +15,9 @@ import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 import uk.ac.ed.learn9.bb.timetabling.service.ConcurrencyService.SynchronisationAlreadyInProgressException;
 import uk.ac.ed.learn9.bb.timetabling.util.DbScriptUtil;
 
+/**
+ * Automated unit/integration tests for {@link ConcurrencyService}.
+ */
 @ContextConfiguration(locations={"classpath:applicationContext-test.xml"})
 public class ConcurrencyServiceTest extends AbstractJUnit4SpringContextTests {
     private static final long A_FEW_DAYS_IN_MILLIS = 3 * 24 * 60 * 60 * 1000L;
@@ -22,6 +25,11 @@ public class ConcurrencyServiceTest extends AbstractJUnit4SpringContextTests {
     public ConcurrencyServiceTest() {
     }
     
+    /**
+     * Gets an instance of ConcurrencyService.
+     * 
+     * @return an instance of ConcurrencyService.
+     */
     public ConcurrencyService getService() {
         return this.applicationContext.getBean(ConcurrencyService.class);
     }
@@ -33,10 +41,10 @@ public class ConcurrencyServiceTest extends AbstractJUnit4SpringContextTests {
      * script.
      * @throws SQLException if there was a problem applying the database creation
      * script.
-     * @see #after() 
+     * @see #tearDown() 
      */
     @Before
-    public void before() throws IOException, SQLException {
+    public void setUp() throws IOException, SQLException {
         final Connection syncConnection = this.getService().getStagingDataSource().getConnection();
         
         try {
@@ -53,10 +61,10 @@ public class ConcurrencyServiceTest extends AbstractJUnit4SpringContextTests {
      * 
      * @throws IOException if there was a problem accessing the database drop script.
      * @throws SQLException if there was a problem applying the database drop script.
-     * @see #before() 
+     * @see #setUp() 
      */
     @After
-    public void after() throws IOException, SQLException {
+    public void tearDown() throws IOException, SQLException {
         final Connection syncConnection = this.getService().getStagingDataSource().getConnection();
         
         try {

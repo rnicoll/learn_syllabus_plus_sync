@@ -79,11 +79,29 @@ public class TimetablingCloneService extends AbstractCloneService {
      * Name of the primary key field for activities in the staging database.
      */
     public static final String STAGING_ACTIVITY_PRIMARY_KEY = "tt_activity_id";
+    /**
+     * Name of the primary key field for activity's parent records in the staging database.
+     */
     public static final String STAGING_ACTIVITY_PARENTS_PRIMARY_KEY = "tt_activity_id";
+    /**
+     * Name of the primary key field for activity templates in the staging database.
+     */
     public static final String STAGING_ACTIVITY_TEMPLATE_PRIMARY_KEY = "tt_template_id";
+    /**
+     * Name of the primary key field for activity types in the staging database.
+     */
     public static final String STAGING_ACTIVITY_TYPE_PRIMARY_KEY = "tt_type_id";
+    /**
+     * Name of the primary key field for modules in the staging database.
+     */
     public static final String STAGING_MODULE_PRIMARY_KEY = "tt_module_id";
+    /**
+     * Name of the primary key field for student sets in the staging database.
+     */
     public static final String STAGING_STUDENT_SET_PRIMARY_KEY = "tt_student_set_id";
+    /**
+     * Name of the primary key field for activity variant/JTA records in the staging database.
+     */
     public static final String STAGING_VARIANT_JTA_PRIMARY_KEY = STAGING_ACTIVITY_PRIMARY_KEY;
     
     /**
@@ -91,6 +109,10 @@ public class TimetablingCloneService extends AbstractCloneService {
      */
     public static final String PRIMARY_KEY_TIMETABLING_TABLES = "ID";
     
+    /**
+     * Maps names of fields in the activity table in the reporting database, to
+     * those in the staging database.
+     */
     public static final String[][] ACTIVITY_FIELD_MAPPINGS = {
         {"NAME", "tt_activity_name"},
         {"MODUL", "tt_module_id"},
@@ -98,26 +120,50 @@ public class TimetablingCloneService extends AbstractCloneService {
         {"ACTIVITY_TYPE", "tt_type_id"},
         {"SCHEDULING_METHOD", "tt_scheduling_method"}
     };
+    /**
+     * Maps names of fields in the activity parents table in the reporting database, to
+     * those in the staging database.
+     */
     public static final String[][] ACTIVITY_PARENTS_FIELD_MAPPINGS = {
         {"PARENT_ACTS", "tt_parent_activity_id"},
         {"OBSOLETEFROM", "tt_obsolete_from"},
         {"LATESTTRANSACTION", "tt_latest_transaction"}
     };
+    /**
+     * Maps names of fields in the activity templates table in the reporting database, to
+     * those in the staging database.
+     */
     public static final String[][] ACTIVITY_TEMPLATE_FIELD_MAPPINGS = {
         {"NAME", "tt_template_name"},
         {"USER_TEXT_5", "tt_user_text_5"}
     };
+    /**
+     * Maps names of fields in the activity type in the reporting database, to
+     * those in the staging database.
+     */
     public static final String[][] ACTIVITY_TYPE_FIELD_MAPPINGS = {
         {"NAME", "tt_type_name"}
     };
+    /**
+     * Maps names of fields in the module table in the reporting database, to
+     * those in the staging database.
+     */
     public static final String[][] MODULE_FIELD_MAPPINGS = {
         {"NAME", "tt_module_name"},
         {"HOST_KEY", "tt_course_code"},
         {"USER_TEXT_2", "tt_academic_year"}
     };
+    /**
+     * Maps names of fields in the student set table in the reporting database, to
+     * those in the staging database.
+     */
     public static final String[][] STUDENT_SET_FIELD_MAPPINGS = {
         {"HOST_KEY", "tt_host_key"}
     };
+    /**
+     * Maps names of fields in the variant/JTA activity table in the reporting
+     * database, to those in the staging database.
+     */
     public static final String[][] VARIANT_JTA_FIELD_MAPPINGS = {
         {"ISJTAPARENT", "tt_is_jta_parent"},
         {"ISJTACHILD", "tt_is_jta_child"},

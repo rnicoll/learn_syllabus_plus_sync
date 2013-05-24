@@ -112,6 +112,9 @@ public abstract class AbstractCloneService extends Object {
      * destination table. Tables with compound primary keys are not supported.
      * @param fieldMappings a mapping from source field names to destination
      * fields, for non-primary key fields to be cloned.
+     * 
+     * @throws SQLException if there was a problem accessing one of the
+     * databases.
      */
     public void cloneResultSet(final String destinationTable,
             final ResultSet sourceRs, final ResultSet destinationRs,

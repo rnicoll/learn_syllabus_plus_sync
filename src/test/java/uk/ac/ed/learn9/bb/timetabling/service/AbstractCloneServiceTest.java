@@ -1,42 +1,24 @@
 package uk.ac.ed.learn9.bb.timetabling.service;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
-
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 
 import static org.junit.Assert.*;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 
 /**
- *
- * @author jnicoll2
+ * Tests for methods in {@link AbstractCloneService}.
  */
-public class AbstractCloneServiceTest {
+@ContextConfiguration(locations={"classpath:applicationContext-test.xml"})
+public class AbstractCloneServiceTest extends AbstractJUnit4SpringContextTests {
 
     public AbstractCloneServiceTest() {
     }
-
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() {
-    }
-
-    @After
-    public void tearDown() {
+    
+    private AbstractCloneService getService() {
+        return new AbstractCloneServiceImpl();
     }
 
     /**
@@ -53,7 +35,7 @@ public class AbstractCloneServiceTest {
         String sourcePkField = "";
         String destinationPkField = "";
         Map<String, String> fieldMappings = null;
-        AbstractCloneService instance = new AbstractCloneServiceImpl();
+        AbstractCloneService instance = this.getService();
         instance.cloneTable(source, destination, sourceTable, destinationTable, sourcePkField, destinationPkField, fieldMappings);
         // TODO review the generated test code and remove the default call to fail.
         fail("The test case is a prototype.");
@@ -72,7 +54,7 @@ public class AbstractCloneServiceTest {
         String sourcePkField = "";
         String destinationPkField = "";
         Map<String, String> fieldMappings = null;
-        AbstractCloneService instance = new AbstractCloneServiceImpl();
+        AbstractCloneService instance = this.getService();
         instance.cloneQuery(sourceStatement, destinationStatement, sourcePkField, destinationPkField, fieldMappings);
         // TODO review the generated test code and remove the default call to fail.
         fail("The test case is a prototype.");
@@ -89,7 +71,7 @@ public class AbstractCloneServiceTest {
         final String table = "ACTIVITY";
         final String pkField = "ACTIVITY_ID";
         final Collection<String> otherFields = Collections.emptySet();
-        final AbstractCloneService instance = new AbstractCloneServiceImpl();
+        final AbstractCloneService instance = this.getService();
         final String expResult = "SELECT ACTIVITY_ID FROM ACTIVITY ORDER BY ACTIVITY_ID";
         final String result = instance.buildQuery(table, pkField, otherFields);
         
@@ -107,7 +89,7 @@ public class AbstractCloneServiceTest {
         final String table = "ACTIVITY";
         final String pkField = "ACTIVITY_ID";
         final Collection<String> otherFields = Arrays.asList(new String[] {"FIELD_1", "FIELD_2"});
-        final AbstractCloneService instance = new AbstractCloneServiceImpl();
+        final AbstractCloneService instance = this.getService();
         final String expResult = "SELECT ACTIVITY_ID, FIELD_1, FIELD_2 FROM ACTIVITY ORDER BY ACTIVITY_ID";
         final String result = instance.buildQuery(table, pkField, otherFields);
         

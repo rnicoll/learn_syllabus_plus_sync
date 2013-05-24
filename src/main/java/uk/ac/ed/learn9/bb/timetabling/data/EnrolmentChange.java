@@ -19,6 +19,9 @@ import javax.persistence.Transient;
 @Entity
 @Table(name="enrolment_add")
 public class EnrolmentChange extends Object implements Comparable<EnrolmentChange>, Serializable {
+    /**
+     * The type of change this record relates to.
+     */
     public enum Type {
         /** Indicates that the change is to add a student to a group. */
         ADD,
@@ -106,6 +109,13 @@ public class EnrolmentChange extends Object implements Comparable<EnrolmentChang
         return this.changeType;
     }
     
+    /**
+     * Gets the name of the group that this change relates to. Note that
+     * this is the initial name, and does not reflect any renaming that
+     * has taken place in Learn.
+     * 
+     * @return the name of the group that this change relates to.
+     */
     @Transient
     public String getGroupName() {
         return this.getActivity().getLearnGroupName();

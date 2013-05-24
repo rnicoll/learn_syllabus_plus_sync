@@ -53,9 +53,17 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
      */
     public static final String LOCATION_STAGING_DB_DROP_RESOURCE = "classpath:sync_db_drop.sql";
     
+    /**
+     * Default constructor.
+     */
     public SynchronisationServiceTest() {
     }
     
+    /**
+     * Gets an instance of {@link SynchronisationService}.
+     * 
+     * @return an instance of {@link SynchronisationService}.
+     */
     public SynchronisationService getService() {
         return this.applicationContext.getBean(SynchronisationService.class);
     }

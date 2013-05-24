@@ -530,6 +530,14 @@ public class BlackboardService {
         return getGroupDbPersister();
     }
 
+    /**
+     * Gets an instance of a {@link UserDbLoader}. This method exists to allow
+     * overriding for test-cases.
+     *
+     * @return a user loader.
+     * @throws PersistenceException if there was a problem constructing the
+     * loader.
+     */
     protected UserDbLoader getUserDbLoader() throws PersistenceException {
         return UserDbLoader.Default.getInstance();
     }

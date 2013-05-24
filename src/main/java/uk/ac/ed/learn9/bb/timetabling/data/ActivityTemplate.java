@@ -55,7 +55,8 @@ public class ActivityTemplate extends Object implements Serializable {
 
     /**
      * The ID of the group set that activities based on this template, should
-     * be placed into, in Learn.
+     * be placed into, in Learn. This is currently unused, however is reserved
+     * for future expansion.
      * 
      * @return the ID of the group set this template reflects, in Learn.
      */
@@ -64,6 +65,13 @@ public class ActivityTemplate extends Object implements Serializable {
         return learnGroupSetId;
     }
 
+    /**
+     * Sets the ID in Learn for the group set that groups created for activities
+     * based on this template, should be placed into.
+     * 
+     * @param learnGroupSetId the ID in Learn for the group set this template
+     * relates to.
+     */
     public void setLearnGroupSetId(String learnGroupSetId) {
         this.learnGroupSetId = learnGroupSetId;
     }

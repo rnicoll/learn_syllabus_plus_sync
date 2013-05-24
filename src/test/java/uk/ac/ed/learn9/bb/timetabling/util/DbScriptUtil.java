@@ -14,7 +14,17 @@ import java.sql.Statement;
  * a database schema.
  */
 public class DbScriptUtil {
-
+    /**
+     * Runs a script file against a database. This attempts to fairly intelligently
+     * cut individual commands from the file by looking for semicolons at the end
+     * of a command, but does not claim to cover all possibilities and is intended
+     * only for test cases.
+     * 
+     * @param connection a connection to the database to run the script against.
+     * @param scriptFile the file to read SQL statements from.
+     * @throws IOException if there was a problem reading from the script file.
+     * @throws SQLException if there was a problem communicating with the database.
+     */
     public static void runScript(Connection connection, File scriptFile)
         throws IOException, SQLException {
         final BufferedReader reader = new BufferedReader(new FileReader(scriptFile));

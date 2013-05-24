@@ -8,12 +8,15 @@ import java.util.Arrays;
 public class SequentialRdbIdSource implements RdbIdSource {
     private int id;
     
+    /**
+     * Constructs a new ID generator starting with a seed value of 1.
+     */
     public              SequentialRdbIdSource() {
         this(1);
     }
     
     /**
-     * Starts a new ID generator with the given seed.
+     * Constructs a new ID generator with the given seed.
      * 
      * @param seed the seed value, must be above 0.
      */

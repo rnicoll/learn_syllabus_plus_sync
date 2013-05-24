@@ -224,7 +224,7 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
             if (ScheduledJobManager.this.cancelled) {
                 return;
             }
-            synchronisationService.createGroupsForActivities(run);
+            synchronisationService.createGroupsForActivities();
             if (ScheduledJobManager.this.cancelled) {
                 return;
             }

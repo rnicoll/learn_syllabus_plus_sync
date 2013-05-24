@@ -221,7 +221,7 @@ public class SynchronisationService extends Object {
      * @throws ValidationException if a newly generated group fails validation
      * by Learn prior to persistence.
      */
-    public void createGroupsForActivities(final SynchronisationRun run)
+    public void createGroupsForActivities()
             throws PersistenceException, SQLException, ValidationException {
         final Connection destination = this.getStagingDataSource().getConnection();
         try {

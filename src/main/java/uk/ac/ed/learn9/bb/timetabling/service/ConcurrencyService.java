@@ -290,6 +290,13 @@ public class ConcurrencyService {
             super(message);
         }
         
+        /**
+         * Constructor for synchronisation concurrency errors that are caught
+         * by SQL errors (for example unique constraint violation).
+         * 
+         * @param message the message to report.
+         * @param cause the SQL exception that caused this exception.
+         */
         public SynchronisationAlreadyInProgressException(final String message, final SQLException cause) {
             super(message, cause);
         }
