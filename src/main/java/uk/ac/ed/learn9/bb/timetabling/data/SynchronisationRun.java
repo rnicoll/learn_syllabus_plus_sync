@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.Date;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
@@ -15,13 +17,27 @@ import javax.persistence.TemporalType;
 @Entity
 @Table(name="synchronisation_run")
 public class SynchronisationRun extends Object implements Serializable {
+    /**
+     * Result codes for the possible outcomes of running a synchronisation
+     * process.
+     */
+    public enum Result {
+        ABANDONED,
+        FATAL,
+        SUCCESS,
+        TIMEOUT;
+    }
+    
     private int runId;
     private Date startTime;
     private Date cacheCopyCompleted;
     private Date diffCompleted;
     private Date endTime;
+    private Result result;
 
     /**
+     * Gets the ID for this process run.
+     * 
      * @return the ID for this run.
      */
     @Id
@@ -31,6 +47,8 @@ public class SynchronisationRun extends Object implements Serializable {
     }
 
     /**
+     * Gets the start time of the synchronisation.
+     * 
      * @return the start time of the synchronisation.
      */
     @Column(name="start_time")
@@ -40,8 +58,11 @@ public class SynchronisationRun extends Object implements Serializable {
     }
 
     /**
-     * @return the time at which copying the data from the reporting database
+     * Gets the time at which copying the data from the reporting database
      * was completed.
+     * 
+     * @return the time at which copying the data from the reporting database
+     * was completed, or null if not yet completed.
      */
     @Column(name="cache_copy_completed")
     @Temporal(value=TemporalType.TIMESTAMP)
@@ -50,7 +71,11 @@ public class SynchronisationRun extends Object implements Serializable {
     }
 
     /**
-     * @return the diffCompleted
+     * Gets the time at which the difference generation between the previous
+     * run, and this, was completed.
+     * 
+     * @return the time at which the difference generation between the previous
+     * run, and this, was completed, or null if not yet completed.
      */
     @Column(name="diff_completed")
     @Temporal(value=TemporalType.TIMESTAMP)
@@ -59,12 +84,24 @@ public class SynchronisationRun extends Object implements Serializable {
     }
 
     /**
-     * @return the time when the synchronisation completed.
+     * Gets the time when the synchronisation completed.
+     * 
+     * @return the time when the synchronisation completed, or null if not yet
+     * completed.
      */
     @Column(name="end_time")
     @Temporal(value=TemporalType.TIMESTAMP)
     public Date getEndTime() {
         return endTime;
+    }
+
+    /**
+     * @return the result
+     */
+    @Column(name="result_code")
+    @Enumerated(EnumType.STRING)
+    public Result getResult() {
+        return result;
     }
 
     /**
@@ -86,6 +123,13 @@ public class SynchronisationRun extends Object implements Serializable {
      */
     public void setEndTime(Date endTime) {
         this.endTime = endTime;
+    }
+
+    /**
+     * @param result the result to set
+     */
+    public void setResult(Result result) {
+        this.result = result;
     }
 
     /**

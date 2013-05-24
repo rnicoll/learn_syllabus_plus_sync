@@ -35,7 +35,7 @@ public class Activity extends Object implements Serializable {
     }
 
     /**
-     * Returns the name of the activity.
+     * Returns the name of the activity, for example "Chemical Medicine Level 10/2".
      * 
      * @return the name of the activity.
      */

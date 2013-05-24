@@ -4,6 +4,7 @@ import blackboard.data.ValidationException;
 import java.sql.SQLException;
 
 import blackboard.persist.PersistenceException;
+import java.sql.Timestamp;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 import uk.ac.ed.learn9.bb.timetabling.service.ConcurrencyService;
@@ -35,7 +36,9 @@ public class SynchroniseRDB extends Object {
         //service.mapStudentSetsToUsers(run);
         //service.applyEnrolmentChanges(run);
         
-        // XXX: Mark the run completed
+            
+        run.setEndTime(new Timestamp(System.currentTimeMillis()));
+        run.setResult(SynchronisationRun.Result.SUCCESS);
         
         System.out.println("Sync took "
                 + ((System.currentTimeMillis() - startTime) / 1000L) + " seconds.");

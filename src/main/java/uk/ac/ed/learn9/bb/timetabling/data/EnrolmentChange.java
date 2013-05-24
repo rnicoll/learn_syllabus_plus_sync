@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.sql.Timestamp;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -23,13 +25,12 @@ public class EnrolmentChange extends Object implements Comparable<EnrolmentChang
     }
     
     private int changeId;
-    private String changeType;
+    private Type changeType;
     private SynchronisationRun run;
     private Activity activity;
     private StudentSet studentSet;
     private Timestamp updateCompleted;
 
-    
     @Override
     public int compareTo(final EnrolmentChange other) {
         return this.getUpdateCompleted().compareTo(other.getUpdateCompleted());
@@ -60,7 +61,7 @@ public class EnrolmentChange extends Object implements Comparable<EnrolmentChang
     }
     
     /**
-     * Returns the ID for this change.
+     * Gets the ID for this change.
      * 
      * @return the ID of this change.
      */
@@ -71,7 +72,7 @@ public class EnrolmentChange extends Object implements Comparable<EnrolmentChang
     }
 
     /**
-     * Returns the activity that the student is being added to.
+     * Gets the activity that the student is being added to.
      * 
      * @return the activity that the student is being added to.
      */
@@ -81,13 +82,25 @@ public class EnrolmentChange extends Object implements Comparable<EnrolmentChang
         return activity;
     }
     
+    /**
+     * Gets the human readable name of the activity this change is based on,
+     * for example "Chemical Medicine Level 10/2".
+     * 
+     * @return an activity name.
+     */
     @Transient
     public String getActivityName() {
         return this.getActivity().getActivityName();
     }
 
+    /**
+     * Gets the type of change this record contains.
+     * 
+     * @return the type of change.
+     */
     @Column(name="change_type", nullable=false, length=12)
-    public String getChangeType() {
+    @Enumerated(EnumType.STRING)
+    public Type getChangeType() {
         return this.changeType;
     }
     
@@ -97,7 +110,7 @@ public class EnrolmentChange extends Object implements Comparable<EnrolmentChang
     }
 
     /**
-     * Returns the synchronisation run this change belongs to.
+     * Gets the synchronisation run this change belongs to.
      * 
      * @return the synchronisation run this change belongs to.
      */
@@ -108,7 +121,9 @@ public class EnrolmentChange extends Object implements Comparable<EnrolmentChang
     }
 
     /**
-     * @return the studentSet
+     * Gets the student set this change relates to.
+     * 
+     * @return the student set this change relates to.
      */
     @ManyToOne
     @JoinColumn(name="TT_STUDENT_SET_ID")
@@ -117,7 +132,10 @@ public class EnrolmentChange extends Object implements Comparable<EnrolmentChang
     }
 
     /**
-     * @return the time at which this change was applied to Learn.
+     * Gets the time at which this change was completed.
+     * 
+     * @return the time at which this change was completed, or null if not
+     * yet completed.
      */
     @Column(name="update_completed")
     public Timestamp getUpdateCompleted() {
@@ -130,7 +148,9 @@ public class EnrolmentChange extends Object implements Comparable<EnrolmentChang
     }
 
     /**
-     * @param activity the activity to set
+     * Sets the activity this change relates to.
+     * 
+     * @param activity the activity to set.
      */
     public void setActivity(Activity activity) {
         this.activity = activity;
@@ -143,7 +163,7 @@ public class EnrolmentChange extends Object implements Comparable<EnrolmentChang
         this.changeId = changeId;
     }
 
-    public void setChangeType(final String newChangeType) {
+    public void setChangeType(final Type newChangeType) {
         this.changeType = newChangeType;
     }
     

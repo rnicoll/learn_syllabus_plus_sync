@@ -16,18 +16,7 @@ import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
  * concurrent runs).
  */
 @Service
-public class ConcurrencyService {
-    /**
-     * Result codes for the possible outcomes of running a synchronisation
-     * process.
-     */
-    public enum Result {
-        ABANDONED,
-        FATAL,
-        SUCCESS,
-        TIMEOUT;
-    }
-    
+public class ConcurrencyService {    
     public static final long SESSION_TIMEOUT = 23 * 60 * 60 * 1000L;
     
     @Autowired
@@ -55,7 +44,7 @@ public class ConcurrencyService {
             int paramIdx = 1;
             
             statement.setTimestamp(paramIdx++, now);
-            statement.setString(paramIdx++, Result.ABANDONED.name());
+            statement.setString(paramIdx++, SynchronisationRun.Result.ABANDONED.name());
             statement.setInt(paramIdx++, runId);
             return statement.executeUpdate() > 0;
         } finally {
@@ -230,7 +219,7 @@ public class ConcurrencyService {
             int paramIdx = 1;
             
             statement.setTimestamp(paramIdx++, now);
-            statement.setString(paramIdx++, Result.TIMEOUT.name());
+            statement.setString(paramIdx++, SynchronisationRun.Result.TIMEOUT.name());
             statement.setTimestamp(paramIdx++, timeout);
             return statement.executeUpdate();
         } finally {

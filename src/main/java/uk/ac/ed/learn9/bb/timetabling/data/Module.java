@@ -102,7 +102,10 @@ public class Module extends Object implements Serializable {
     }
 
     /**
-     * @return the cacheCourseCode
+     * Gets the EUCLID course code derived from the timetabling course code.
+     * 
+     * @return the EUCLID course code derived from the timetabling course code, or
+     * null if no course code could be determined.
      */
     @Column(name="cache_course_code", nullable=true, length=12, updatable=false)
     public String getCacheCourseCode() {

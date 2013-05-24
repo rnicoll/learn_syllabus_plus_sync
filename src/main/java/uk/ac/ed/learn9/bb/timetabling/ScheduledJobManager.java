@@ -9,6 +9,7 @@ import blackboard.data.ValidationException;
 import blackboard.persist.PersistenceException;
 import blackboard.platform.log.LogService;
 import blackboard.platform.log.LogServiceFactory;
+import java.sql.Timestamp;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
@@ -207,6 +208,9 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
                 return;
             }
             synchronisationService.applyEnrolmentChanges(run);
+            
+            run.setEndTime(new Timestamp(System.currentTimeMillis()));
+            run.setResult(SynchronisationRun.Result.SUCCESS);
         }
     }
 }
