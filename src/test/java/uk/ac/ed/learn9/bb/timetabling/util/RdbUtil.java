@@ -3,13 +3,13 @@ package uk.ac.ed.learn9.bb.timetabling.util;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import uk.ac.ed.learn9.bb.timetabling.RdbIdSource;
 import uk.ac.ed.learn9.bb.timetabling.data.AcademicYearCode;
 import uk.ac.ed.learn9.bb.timetabling.data.Activity;
 import uk.ac.ed.learn9.bb.timetabling.data.ActivityTemplate;
 import uk.ac.ed.learn9.bb.timetabling.data.ActivityType;
 import uk.ac.ed.learn9.bb.timetabling.data.Module;
+import uk.ac.ed.learn9.bb.timetabling.data.TimetablingCourseCode;
 
 /**
  * Class for setting up/tearing down test data in the RDB.
@@ -218,14 +218,13 @@ public class RdbUtil {
     public static Module createTestModule(final Connection rdb, final AcademicYearCode academicYear,
             final String courseCode, final String occurrence, final String semester, final RdbIdSource idSource)
         throws SQLException {
-        final String hostKey = courseCode + "_"
-            + occurrence + "_"
-            + semester;
+        final TimetablingCourseCode timetablingCourseCode
+            = TimetablingCourseCode.buildCode(courseCode, occurrence, semester);
         final String learnAcademicYear = academicYear.toString().replace("/", "-");
         final Module module = new Module();
         
         module.setModuleId(idSource.getId());
-        module.setTimetablingCourseCode(hostKey);
+        module.setTimetablingCourseCode(timetablingCourseCode.toString());
         module.setTimetablingModuleName("Test module "
             + module.getModuleId());
         module.setCacheCourseCode(courseCode);
@@ -248,8 +247,8 @@ public class RdbUtil {
             
             statement.setString(paramIdx++, module.getModuleId());
             statement.setString(paramIdx++, module.getTimetablingModuleName());
-            statement.setString(paramIdx++, hostKey);
-            statement.setString(paramIdx++, hostKey);
+            statement.setString(paramIdx++, timetablingCourseCode.toString());
+            statement.setString(paramIdx++, timetablingCourseCode.toString());
             statement.setString(paramIdx++, DEPARTMENT_ID);
             statement.setString(paramIdx++, WEEK_PATTERN);
             statement.setString(paramIdx++, academicYear.toString());

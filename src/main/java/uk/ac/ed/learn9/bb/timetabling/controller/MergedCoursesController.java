@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
-import uk.ac.ed.learn9.bb.timetabling.data.BlackboardCourseCode;
+import uk.ac.ed.learn9.bb.timetabling.data.LearnCourseCode;
 import uk.ac.ed.learn9.bb.timetabling.service.MergedCoursesService;
 
 /**
@@ -37,8 +37,8 @@ public class MergedCoursesController {
         final ModelAndView modelAndView = new ModelAndView("mergedCourses");
         final Course course = context.getCourse();
         
-        final BlackboardCourseCode courseCode = new BlackboardCourseCode(course.getCourseId());
-        final List<BlackboardCourseCode> mergedCourseCodes = new ArrayList<BlackboardCourseCode>();
+        final LearnCourseCode courseCode = new LearnCourseCode(course.getCourseId());
+        final List<LearnCourseCode> mergedCourseCodes = new ArrayList<LearnCourseCode>();
         
         mergedCourseCodes.addAll(this.getMergedCoursesService().getMergedCourses(courseCode));
         

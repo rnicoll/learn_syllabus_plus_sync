@@ -3,7 +3,7 @@ package uk.ac.ed.learn9.bb.timetabling.service;
 import java.sql.Connection;
 import java.util.Collection;
 import org.springframework.stereotype.Service;
-import uk.ac.ed.learn9.bb.timetabling.data.BlackboardCourseCode;
+import uk.ac.ed.learn9.bb.timetabling.data.LearnCourseCode;
 
 /**
  * Service for communicating with the "merged courses" database.
@@ -20,7 +20,7 @@ public class MergedCoursesService {
      * @return a collection of courses merged into the given course. Empty (not null)
      * if there are no merged courses under the given course.
      */
-    public Collection<BlackboardCourseCode> getMergedCourses(final BlackboardCourseCode parentCourseCode) {
+    public Collection<LearnCourseCode> getMergedCourses(final LearnCourseCode parentCourseCode) {
         assert null != parentCourseCode;
         
         throw new UnsupportedOperationException("Not yet implemented");
@@ -33,7 +33,7 @@ public class MergedCoursesService {
      * @return the course code of the parent course, or null if the course
      * is not merged.
      */
-    public BlackboardCourseCode getParentCourse(final BlackboardCourseCode childCourseCode) {
+    public LearnCourseCode getParentCourse(final LearnCourseCode childCourseCode) {
         assert null != childCourseCode;
         
         throw new UnsupportedOperationException("Not yet implemented");
