@@ -15,21 +15,52 @@ import uk.ac.ed.learn9.bb.timetabling.data.Module;
  * Class for setting up/tearing down test data in the RDB.
  */
 public class RdbUtil {
+    /**
+     * How to mark a test activity as scheduled, in the RDB. Although an actual
+     * RDB contains more detail than this, for our purposes we only need to know
+     * if it's scheduled (and therefore included in the synchronisation) or not
+     * (and therefore not).
+     */
     public enum SchedulingMethod {
         NOT_SCHEDULED,
         SCHEDULED;
     }
     
+    /**
+     * How to flag an activity template in relation to synchronisation to the VLE.
+     * {@link TemplateForVle#NOT_SPECIFIED} is currently considered equivalent
+     * to {@link TemplateForVle#FOR_VLE}.
+     */
     public enum TemplateForVle {
         NOT_SPECIFIED,
         NOT_FOR_VLE,
         FOR_VLE;
     }
     
+    /**
+     * A random EUCLID course code for generating test activities.
+     */
     public static final String TEST_COURSE_CODE = "PGHC11335";
+    /**
+     * A random EUCLID semester (period) code for generating test activities.
+     */
     public static final String TEST_SEMESTER = "SEM1";
+    /**
+     * A random EUCLID occurrence code for generating test activities.
+     */
     public static final String TEST_OCCURRENCE = "SV1";
+    
+    /**
+     * A random timetabling department ID for use when generating test RDB
+     * data. As of the time of writing the test RDB does not contain departments,
+     * so this merely needs to be present, however if departments are later
+     * used in scheduling this would need to be replaced with a real value.
+     */
     public static final String DEPARTMENT_ID = "BF20A0ADF91117B06331C6ED3F9FC187";
+    
+    /**
+     * An example week pattern for use when creating test RDB data.
+     */
     public static final String WEEK_PATTERN = "11111111111111111111111111111111111111111111111111111111111111111";
     
     public static Activity createTestActivity(final Connection rdb,
@@ -162,6 +193,7 @@ public class RdbUtil {
      * data about it in.
      * 
      * @param rdb a connection to the reporting database.
+     * @param academicYear the academic year the module will belong to.
      * @param idSource an ID generator.
      * @return the new module.
      * @throws SQLException 
@@ -178,6 +210,7 @@ public class RdbUtil {
      * data about it in.
      * 
      * @param rdb a connection to the reporting database.
+     * @param academicYear the academic year the module will belong to.
      * @param idSource an ID generator.
      * @return the new module;
      * @throws SQLException 

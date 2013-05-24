@@ -20,7 +20,9 @@ import javax.persistence.Transient;
 @Table(name="enrolment_add")
 public class EnrolmentChange extends Object implements Comparable<EnrolmentChange>, Serializable {
     public enum Type {
+        /** Indicates that the change is to add a student to a group. */
         ADD,
+        /** Indicates that the change is to remove a student from a group. */
         REMOVE;
     }
     

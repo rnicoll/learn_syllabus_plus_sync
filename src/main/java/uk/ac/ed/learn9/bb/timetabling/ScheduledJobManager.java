@@ -26,9 +26,21 @@ import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService;
  * tasks when the application context is created.
  */
 public class ScheduledJobManager extends Object implements ApplicationListener<ApplicationContextEvent> {
+    /**
+     * The hour of the day (24-hour clock, counting from 0) that the synchronisation
+     * is scheduled for.
+     */    
     public static final int START_HOUR_OF_DAY = 6;
+    /**
+     * The minute offset within the hour, that the synchronisation
+     * is scheduled for.
+     */
     public static final int START_MINUTE = 0;
-    public static final long RUN_INTERVAL_MILLIS = 24 * 60 * 60 * 1000L;
+    /**
+     * The length of time to add randomly to the scheduled time, to help reduce
+     * risk of race conditions where multiple servers can run the synchronisation
+     * tasks.
+     */
     public static final int MAX_FUZZ_MILLIS = 60 * 1000;
     
     @Autowired
@@ -144,7 +156,13 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
         this.synchronisationService = service;
     }
     
+    /**
+     * Synchronisation task as a timer-compatible class.
+     */
     public class Task extends TimerTask {
+        /**
+         * Runs the synchronisation task, then schedules in the next run.
+         */
         @Override
         public void run() {
             ScheduledJobManager.this.logService.logInfo("Running Learn/Timetabling synchronisation.");

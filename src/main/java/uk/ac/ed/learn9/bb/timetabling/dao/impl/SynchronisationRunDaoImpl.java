@@ -8,6 +8,9 @@ import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ed.learn9.bb.timetabling.dao.SynchronisationRunDao;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 
+/**
+ * Implementation of {@link SynchronisationRunDao}
+ */
 @Transactional
 @Scope("singleton")
 @Component("runDao")

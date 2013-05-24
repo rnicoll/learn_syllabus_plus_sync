@@ -15,6 +15,10 @@ public class ConfigureController extends Object {
     /**
      * Displays an audit log of when students were added/removed to/from groups
      * for a single course.
+     * 
+     * @param request the request from the remote client.
+     * @param response the response to be returned to the remote client.
+     * @return the data model and view of it to be rendered.
      */
     @RequestMapping(value="/configure", method=RequestMethod.GET)
     public ModelAndView getConfigure(final HttpServletRequest request, final HttpServletResponse response) {

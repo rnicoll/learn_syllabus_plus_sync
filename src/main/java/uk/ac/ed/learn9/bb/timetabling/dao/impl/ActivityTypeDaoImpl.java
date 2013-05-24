@@ -8,6 +8,9 @@ import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ed.learn9.bb.timetabling.dao.ActivityTypeDao;
 import uk.ac.ed.learn9.bb.timetabling.data.ActivityType;
 
+/**
+ * Implementation of {@link ActivityTypeDao}
+ */
 @Transactional
 @Scope("singleton")
 @Component("templateDao")

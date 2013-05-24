@@ -9,6 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ed.learn9.bb.timetabling.dao.EnrolmentChangeDao;
 import uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange;
 
+/**
+ * Implementation of {@link EnrolmentChangeDao}
+ */
 @Transactional
 @Scope("singleton")
 @Component("enrolmentChangeDao")

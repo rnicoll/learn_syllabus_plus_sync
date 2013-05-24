@@ -211,7 +211,11 @@ public class SynchronisationService extends Object {
      * Creates groups in Learn to match activities which have student enrolments
      * to be synchronised.
      * 
+     * @throws PersistenceException if there was a problem loading or saving
+     * data in Learn.
      * @throws SQLException if there was a problem accessing one of the databases.
+     * @throws ValidationException if a newly generated group fails validation
+     * by Learn prior to persistence.
      */
     public void createGroupsForActivities(final SynchronisationRun run)
             throws PersistenceException, SQLException, ValidationException {
@@ -290,6 +294,8 @@ public class SynchronisationService extends Object {
      * details of joint taught activities (so that the child activities can be
      * mapped to the correct module and then onwards to the correct course).
      * 
+     * @throws PersistenceException if there was a problem loading or saving
+     * data in Learn.
      * @throws SQLException if there was a problem accessing one of the databases.
      */
     public void mapModulesToCourses()
@@ -419,6 +425,10 @@ public class SynchronisationService extends Object {
     /**
      * Identifies students sets with group enrolments to be copied to Learn,
      * and maps them to their IDs in Learn.
+     * 
+     * @throws PersistenceException if there was a problem loading or saving
+     * data in Learn.
+     * @throws SQLException if there was a problem accessing the database.
      */
     public void mapStudentSetsToUsers()
         throws PersistenceException, SQLException {
@@ -434,6 +444,8 @@ public class SynchronisationService extends Object {
      * Copies data from EUGEX. In this case, this is just the "WEBCT_ACTIVE"
      * field, but if there was more data to be imported later it would go
      * here.
+     * 
+     * @throws SQLException if there was a problem accessing the databases.
      */
     public void synchroniseEugexData() throws SQLException {        
         this.getEugexService().synchroniseVleActiveCourses();
