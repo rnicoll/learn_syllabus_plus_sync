@@ -1,4 +1,4 @@
-package uk.ac.ed.learn9.bb.timetabling.cli;
+package uk.ac.ed.learn9.bb.timetabling;
 
 import blackboard.data.ValidationException;
 import java.sql.SQLException;

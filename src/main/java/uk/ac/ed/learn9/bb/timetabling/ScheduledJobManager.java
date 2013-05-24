@@ -69,9 +69,11 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
     }
 
     /**
-     * Schedules the synchronisation task.
+     * Schedules the next run of the synchronisation task.
      */
     public void scheduleRun() {
+        // We apply a small fuzz value to the delay to help avoid risk of race
+        // conditions if two jobs start simultaneously.
         final long fuzz = Math.round(Math.random() * MAX_FUZZ_MILLIS);
         final long delay = calculateDelay(System.currentTimeMillis());
         
@@ -104,30 +106,38 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
     }
 
     /**
-     * @return the concurrencyService
+     * Gets the concurrency service for the scheduled tasks to use to ensure
+     * only one task is running at  time.
+     * 
+     * @return the concurrency service.
      */
     public ConcurrencyService getConcurrencyService() {
         return concurrencyService;
     }
 
     /**
-     * Retrieves the synchronisation service for this task.
+     * Gets the synchronisation service for this task.
      * 
-     * @return the synchronisation service
+     * @return the synchronisation service.
      */
     public SynchronisationService getSynchronisationService() {
         return synchronisationService;
     }
 
     /**
-     * @param concurrencyService the concurrencyService to set
+     * Sets the concurrency service for the scheduled tasks to use to ensure
+     * only one task is running at  time.
+     * 
+     * @param concurrencyService the concurrency service to set
      */
     public void setConcurrencyService(ConcurrencyService concurrencyService) {
         this.concurrencyService = concurrencyService;
     }
 
     /**
-     * @param service the service to set
+     * Sets the synchronisation service for the scheduled tasks to use.
+     * 
+     * @param service the synchronisation service to set.
      */
     public void setSynchronisationService(SynchronisationService service) {
         this.synchronisationService = service;
