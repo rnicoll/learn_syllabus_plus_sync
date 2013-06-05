@@ -221,7 +221,7 @@ public class BlackboardService {
      * by Learn prior to persistence.
      */
     public void generateGroupsForActivities(final Connection stagingDatabase)
-            throws KeyNotFoundException, PersistenceException, SQLException, ValidationException {
+            throws PersistenceException, SQLException, ValidationException {
         final GroupDbPersister groupDbPersister = this.getGroupDbPersister();
 
         final ManagedLearnGroupIDStatement updateStatement = new ManagedLearnGroupIDStatement(stagingDatabase);
