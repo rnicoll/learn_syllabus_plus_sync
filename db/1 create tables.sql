@@ -42,9 +42,12 @@ CREATE TABLE activity (
   PRIMARY KEY (tt_activity_id)
 );
 
+/* There's no referential integrity constraints here due to quality (or lack thereof)
+ * of the source data.
+ */
 CREATE TABLE activity_parents (
-    tt_activity_id VARCHAR2(32) NOT NULL CONSTRAINT parent_activity REFERENCES activity (tt_activity_id),
-    tt_parent_activity_id VARCHAR2(32) NOT NULL CONSTRAINT parent_parent REFERENCES activity (tt_activity_id),
+    tt_activity_id VARCHAR2(32) NOT NULL,
+    tt_parent_activity_id VARCHAR2(32) NOT NULL,
     tt_obsolete_from INTEGER DEFAULT NULL,
     tt_latest_transaction INTEGER DEFAULT NULL,
     PRIMARY KEY (tt_activity_id)
