@@ -35,8 +35,12 @@ public abstract class AbstractCode<T extends AbstractCode> extends Object implem
             return false;
         }
         
-        if (o instanceof CharSequence) {
-            return this.val.equals(o);
+        if (o instanceof AbstractCode) {
+            final AbstractCode other = (AbstractCode)o;
+            
+            return this.val.equals(other.val);
+        } else if (o instanceof CharSequence) {
+            return this.val.equals(o.toString());
         } else {
             return false;
         }
