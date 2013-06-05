@@ -8,7 +8,7 @@ public class TimetablingCourseCode extends AbstractCourseCode<TimetablingCourseC
     /**
      * A regular expression used to validate timetabling course codes.
      */
-    public static final String TT_COURSE_CODE_REGEXP = "[A-Z]+[0-9]+_[A-Z][A-Z0-9]+_[A-Z][A-Z0-9]+";
+    public static final String TT_COURSE_CODE_REGEXP = "[A-Z]+[0-9]+_[A-Z][A-Z0-9]+_[A-Z][A-Z0-9\\+]+";
     
     /**
      * Constructs the timetabling course code with the given value.
@@ -35,7 +35,8 @@ public class TimetablingCourseCode extends AbstractCourseCode<TimetablingCourseC
      * @return the course code as used in timetabling.
      */
     public static TimetablingCourseCode buildCode(final String courseCode,
-            final String occurrence, final String semester) {
+            final String occurrence, final String semester)
+            throws IllegalArgumentException {
         assert null != courseCode;
         assert null != occurrence;
         assert null != semester;
