@@ -18,7 +18,7 @@ import javax.persistence.Table;
 public class StudentSet extends Object implements Serializable {
     private String studentSetId;
     private String hostKey;
-    private String learnUserId;
+    private String learnPersonId;
 
     /**
      * Gets the ID for the student set (a 32 character string).
@@ -53,9 +53,9 @@ public class StudentSet extends Object implements Serializable {
      * @return the ID of the User object in Learn that this student set relates
      * to, returns null if no matching user has been found (yet).
      */
-    @Column(name="learn_user_id", nullable=true, length=80)
-    public String getLearnUserId() {
-        return learnUserId;
+    @Column(name="learn_person_id", nullable=true, length=80)
+    public String getLearnPersonId() {
+        return learnPersonId;
     }
 
     /**
@@ -68,10 +68,11 @@ public class StudentSet extends Object implements Serializable {
     }
 
     /**
-     * @param learnUserId the learnUserId to set
+     * @param learnPersonId the ID of the person this student set relates to in
+     * Learn.
      */
-    public void setLearnUserId(String learnUserId) {
-        this.learnUserId = learnUserId;
+    public void setLearnPersonId(String learnPersonId) {
+        this.learnPersonId = learnPersonId;
     }
 
     /**
