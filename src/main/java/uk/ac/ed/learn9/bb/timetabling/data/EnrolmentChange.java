@@ -17,7 +17,7 @@ import javax.persistence.Transient;
  * in Learn.
  */
 @Entity
-@Table(name="enrolment_add")
+@Table(name="enrolment_change")
 public class EnrolmentChange extends Object implements Comparable<EnrolmentChange>, Serializable {
     /**
      * The type of change this record relates to.
