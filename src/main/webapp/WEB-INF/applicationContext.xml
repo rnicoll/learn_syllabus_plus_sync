@@ -87,6 +87,7 @@
     <bean id="blackboardService" class="uk.ac.ed.learn9.bb.timetabling.service.BlackboardService" />
     <bean id="concurrencyService" class="uk.ac.ed.learn9.bb.timetabling.service.ConcurrencyService">
         <property name="runDao" ref="runDao"/>
+        <property name="stagingDataSource" ref="stagingDataSource"/>
     </bean>
     <bean id="eugexService" class="uk.ac.ed.learn9.bb.timetabling.service.EugexService">
         <property name="stagingDataSource" ref="stagingDataSource"/>
