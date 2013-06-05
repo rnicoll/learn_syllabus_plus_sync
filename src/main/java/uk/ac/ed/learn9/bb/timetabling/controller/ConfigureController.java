@@ -62,12 +62,9 @@ public class ConfigureController extends Object {
     public ModelAndView doRun(final HttpServletRequest request, final HttpServletResponse response)
         throws SQLException, PersistenceException, ValidationException {
         final SynchronisationRun run;
-        final SynchronisationService synchronisationService = this.getSynchronisationService();
         
         try {
-            final ConcurrencyService concurrencyService = this.getConcurrencyService();
-
-            run = concurrencyService.startNewRun();
+            run = this.getConcurrencyService().startNewRun();
         } catch (ConcurrencyService.SynchronisationAlreadyInProgressException ex) {
             // This is expected under normal circumstances, due to more than one
             // possible server trying to run the job.
@@ -75,15 +72,18 @@ public class ConfigureController extends Object {
             return this.getConfigure(request, response);
         }
         
-        synchronisationService.synchroniseTimetablingData();
+        final SynchronisationService service = this.getSynchronisationService();
+        
+        service.synchroniseTimetablingData();
+        service.synchroniseEugexData();
         run.setCacheCopyCompleted(new Date());
-        synchronisationService.generateDiff(run);
+        service.generateDiff(run);
         run.setDiffCompleted(new Date());
-        synchronisationService.updateGroupDescriptions();
-        synchronisationService.mapModulesToCourses();
-        synchronisationService.createGroupsForActivities();
-        synchronisationService.mapStudentSetsToUsers();
-        synchronisationService.applyEnrolmentChanges(run);
+        service.updateGroupDescriptions();
+        service.mapModulesToCourses();
+        service.createGroupsForActivities();
+        service.mapStudentSetsToUsers();
+        service.applyEnrolmentChanges(run);
 
         run.setEndTime(new Timestamp(System.currentTimeMillis()));
         run.setResult(SynchronisationRun.Result.SUCCESS);
