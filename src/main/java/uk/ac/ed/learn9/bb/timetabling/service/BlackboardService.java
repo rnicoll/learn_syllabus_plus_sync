@@ -523,11 +523,11 @@ public class BlackboardService {
      * loader.
      */
     protected GroupDbLoader getGroupDbLoader() throws PersistenceException {
-        return getGroupDbLoader();
+        return GroupDbLoader.Default.getInstance();
     }
 
     protected GroupDbPersister getGroupDbPersister() throws PersistenceException {
-        return getGroupDbPersister();
+        return GroupDbPersister.Default.getInstance();
     }
 
     /**

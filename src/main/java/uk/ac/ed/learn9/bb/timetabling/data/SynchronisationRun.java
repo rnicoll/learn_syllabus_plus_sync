@@ -16,7 +16,7 @@ import javax.persistence.TemporalType;
  */
 @Entity
 @Table(name="synchronisation_run")
-public class SynchronisationRun extends Object implements Serializable {
+public class SynchronisationRun extends Object implements Comparable<SynchronisationRun>, Serializable {
     /**
      * Result codes for the possible outcomes of running a synchronisation
      * process.
@@ -47,6 +47,34 @@ public class SynchronisationRun extends Object implements Serializable {
     private Date diffCompleted;
     private Date endTime;
     private Result result;
+    
+    @Override
+    public int compareTo(final SynchronisationRun other) {
+        int startTimeCompare = this.getStartTime().compareTo(other.getStartTime());
+        
+        if (startTimeCompare != 0) {
+            return startTimeCompare;
+        } else {
+            return this.getRunId() - other.getRunId();
+        }
+    }
+    
+    @Override
+    public boolean equals(final Object o) {
+        if (null == o
+                || !(o instanceof SynchronisationRun)) {
+            return false;
+        }
+        
+        final SynchronisationRun other = (SynchronisationRun)o;
+        
+        return this.getRunId() == other.getRunId();
+    }
+    
+    @Override
+    public int hashCode() {
+        return this.getRunId();
+    }
 
     /**
      * Gets the ID for this process run.

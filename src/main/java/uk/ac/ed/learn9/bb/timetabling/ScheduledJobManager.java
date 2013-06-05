@@ -108,8 +108,7 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
         // We apply a small fuzz value to the delay to help avoid risk of race
         // conditions if two jobs start simultaneously.
         final long fuzz = Math.round(Math.random() * MAX_FUZZ_MILLIS);
-        final long delay = 15 * 60 * 1000L; // 15 minutes
-        // final long delay = calculateDelay(System.currentTimeMillis());
+        final long delay = calculateDelay(System.currentTimeMillis());
         
         this.log.info("Scheduling synchronisation job after a delay of "
             + delay + "ms.");

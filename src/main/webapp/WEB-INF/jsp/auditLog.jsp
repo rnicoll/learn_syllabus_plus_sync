@@ -8,37 +8,44 @@
 
 <bbNG:learningSystemPage title="Timetabling Groups" authentication="Y" entitlement="course.content.VIEW">
 
- <bbNG:pageHeader instructions="Timetabling Groups Audit Log">
-   <bbNG:pageTitleBar title="Timetabling Groups"/>
-   <bbNG:breadcrumbBar>
-     <bbNG:breadcrumb title="Timetabling Groups"/>
-   </bbNG:breadcrumbBar>
-  </bbNG:pageHeader>
- 
-    
-    <table>
-        <thead>
-            <tr>
-                <th>Username</th>
-                <th>Activity</th>
-                <th>Group</th>
-                <th>Action</th>
-                <th>Completed</th>
-                <th>Outcome</th>
-            </tr>
-        </thead>
-        <tbody>
-  <c:forEach items="${changes}" var="change">
-            <tr>
-                <td>${fn:escapeXml(change.username)}</td>
-                <td>${fn:escapeXml(change.activityName)}</td>>
-                <td>${fn:escapeXml(change.groupName)}</td>
-                <td>${fn:escapeXml(change.changeType)}</td>
-                <td><!-- FIXME --></td>
-                <td><!-- FIXME --></td>
-  </c:forEach>
-            </tr>
-        </tbody>
-    </table>
+    <bbNG:pageHeader instructions="Timetabling Groups Audit Log">
+        <bbNG:pageTitleBar title="Timetabling Groups"/>
+        <bbNG:breadcrumbBar>
+            <bbNG:breadcrumb title="Timetabling Groups"/>
+        </bbNG:breadcrumbBar>
+    </bbNG:pageHeader>
+
+    <c:choose>
+        <c:when test="${fn:length(changes) gt 0}">
+            <table class="activity_list">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Activity</th>
+                        <th>Group</th>
+                        <th>Action</th>
+                        <th>Completed</th>
+                        <th>Outcome</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <c:forEach items="${changes}" var="change">
+                        <tr>
+                            <td>${fn:escapeXml(change.username)}</td>
+                            <td>${fn:escapeXml(change.activityName)}</td>>
+                            <td>${fn:escapeXml(change.groupName)}</td>
+                            <td>${fn:escapeXml(change.changeType)}</td>
+                            <td><!-- FIXME --></td>
+                            <td><!-- FIXME --></td>
+                        </c:forEach>
+                    </tr>
+                </tbody>
+            </table>
+        </c:when>
+        <c:otherwise>
+            <p>There are no changes to this course based on Timetabling data.</p>
+        </c:otherwise>
+    </c:choose>
+
 
 </bbNG:learningSystemPage>
