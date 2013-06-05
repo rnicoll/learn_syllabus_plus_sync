@@ -39,7 +39,7 @@ CREATE TABLE activity (
   learn_group_id VARCHAR2(80) DEFAULT NULL,
   learn_group_name NVARCHAR2(255) DEFAULT NULL,
   learn_group_created DATE DEFAULT NULL,
-  description CLOB,
+  description NVARCHAR2(2000) DEFAULT NULL,
   PRIMARY KEY (tt_activity_id)
 );
 
@@ -62,7 +62,7 @@ CREATE TABLE variantjtaacts (
 
 CREATE TABLE run_result (
   result_code VARCHAR2(20) NOT NULL,
-  result_label VARCHAR2(80) NOT NULL,
+  result_label NVARCHAR2(80) NOT NULL,
   PRIMARY KEY (result_code)
 );
 
@@ -204,7 +204,7 @@ CREATE VIEW sync_student_set_vw AS
     (SELECT s.tt_student_set_id, s.tt_host_key username, s.learn_person_id
         FROM student_set s
         WHERE s.tt_host_key IS NOT NULL
-            AND LEFT(s.tt_host_key, 6)!='#SPLUS'
+            AND SUBSTR(s.tt_host_key, 1, 6)!='#SPLUS'
     );
 
 CREATE VIEW added_enrolment_vw AS
