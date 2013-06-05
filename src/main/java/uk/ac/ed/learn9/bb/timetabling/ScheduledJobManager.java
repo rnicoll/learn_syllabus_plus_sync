@@ -1,22 +1,20 @@
 package uk.ac.ed.learn9.bb.timetabling;
 
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import blackboard.data.ValidationException;
-import blackboard.persist.PersistenceException;
-import blackboard.platform.log.LogService;
-import blackboard.platform.log.LogServiceFactory;
-import java.sql.Timestamp;
-
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ApplicationContextEvent;
 import org.springframework.context.event.ContextStartedEvent;
 import org.springframework.context.event.ContextStoppedEvent;
 
+import blackboard.data.ValidationException;
+import blackboard.persist.PersistenceException;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 import uk.ac.ed.learn9.bb.timetabling.service.ConcurrencyService;
 import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService;
@@ -43,6 +41,12 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
      */
     public static final int MAX_FUZZ_MILLIS = 60 * 1000;
     
+    /**
+     * The length of time to wait after cancelling the timer, to give it time
+     * to clean up its thread.
+     */
+    public static final long DELAY_WAIT_TIMER_EXIT = 100L;
+    
     @Autowired
     private ConcurrencyService concurrencyService;
     @Autowired
@@ -51,8 +55,8 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
     private final Timer timer = new Timer("Timetabling Group Sync", true);
     private boolean cancelled = false;
     private Task task = new Task();
-    private LogService logService;
-    
+    private Logger log = Logger.getLogger(ScheduledJobManager.class);
+            
     /**
      * Default constructor.
      */
@@ -69,7 +73,6 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
     @Override
     public void onApplicationEvent(final ApplicationContextEvent e) {
         if (e instanceof ContextStartedEvent) {
-            this.logService = LogServiceFactory.getInstance();
             this.scheduleRun();
         } else if (e instanceof ContextStoppedEvent) {
             this.cancel();
@@ -82,6 +85,11 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
     public void cancel() {
         this.cancelled = true;
         this.timer.cancel();
+        try {
+            Thread.sleep(DELAY_WAIT_TIMER_EXIT);
+        } catch (InterruptedException ex) {
+            log.warn("Interrupted while waiting for Timer thread to exit.");
+        }
     }
 
     /**
@@ -91,9 +99,10 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
         // We apply a small fuzz value to the delay to help avoid risk of race
         // conditions if two jobs start simultaneously.
         final long fuzz = Math.round(Math.random() * MAX_FUZZ_MILLIS);
-        final long delay = calculateDelay(System.currentTimeMillis());
+        final long delay = 15 * 60 * 1000L; // 15 minutes
+        // final long delay = calculateDelay(System.currentTimeMillis());
         
-        this.logService.logInfo("Scheduling synchronisation job after a delay of "
+        this.log.info("Scheduling synchronisation job after a delay of "
             + delay + "ms.");
         
         this.timer.schedule(this.task, delay + fuzz);
@@ -169,7 +178,7 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
          */
         @Override
         public void run() {
-            ScheduledJobManager.this.logService.logInfo("Running Learn/Timetabling synchronisation.");
+            ScheduledJobManager.this.log.info("Running Learn/Timetabling synchronisation.");
             SynchronisationRun run;
             
             try {
@@ -179,7 +188,7 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
                 // possible server trying to run the job. Ignore.
                 run = null;
             } catch(SQLException e) {
-                ScheduledJobManager.this.logService.logError("Database error while starting new synchronisation run.", e);
+                ScheduledJobManager.this.log.error("Database error while starting new synchronisation run.", e);
                 run = null;
             }
             
@@ -189,13 +198,13 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
                     doSynchronisation(run, service);
                 } catch(PersistenceException e) {
                     run.setResult(SynchronisationRun.Result.FATAL);
-                    ScheduledJobManager.this.logService.logError("Error while persisting/loading entities in Learn.", e);
+                    ScheduledJobManager.this.log.error("Error while persisting/loading entities in Learn.", e);
                 } catch(SQLException e) {
                     run.setResult(SynchronisationRun.Result.FATAL);
-                    ScheduledJobManager.this.logService.logError("Database error while synchronising groups from Timetabling.", e);
+                    ScheduledJobManager.this.log.error("Database error while synchronising groups from Timetabling.", e);
                 } catch(ValidationException e) {
                     run.setResult(SynchronisationRun.Result.FATAL);
-                    ScheduledJobManager.this.logService.logError("Error validating entities to be persisted in Learn.", e);
+                    ScheduledJobManager.this.log.error("Error validating entities to be persisted in Learn.", e);
                 }
             }
             
