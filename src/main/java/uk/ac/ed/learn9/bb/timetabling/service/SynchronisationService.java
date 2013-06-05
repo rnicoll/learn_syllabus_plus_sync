@@ -474,7 +474,7 @@ public class SynchronisationService extends Object {
         try {
             final PreparedStatement selectStatement = stagingDatabase.prepareStatement(
                 "SELECT a.tt_activity_id, a.tt_activity_name, a.learn_group_id, t.tt_type_name, a.description, a.set_size "
-                    + "FROM sync_activities_vw a "
+                    + "FROM sync_activity_vw a "
                         + "JOIN activity_type t ON t.tt_type_id=a.tt_type_id");
             try {
                 final ResultSet rs = selectStatement.executeQuery();
