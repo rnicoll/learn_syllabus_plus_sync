@@ -59,13 +59,13 @@ public class EugexService {
             );
             try {
                 final PreparedStatement destinationStatement = stagingDatabase.prepareStatement(
-                    "SELECT tt_module_id, webct_active, occurrence_course_code course_code, "
+                    "SELECT tt_module_id, webct_active, cache_course_code course_code, "
                             + "cache_occurrence_code occurrence_code, tt_academic_year academic_year, "
                             + "cache_semester_code period_code "
                         + "FROM module "
-                        + "WHERE occurrence_course_code IS NOT NULL "
+                        + "WHERE cache_course_code IS NOT NULL "
                             + "AND tt_academic_year IS NOT NULL "
-                        + "ORDER BY tt_academic_year, occurrence_course_code, cache_occurrence_code, cache_semester_code",
+                        + "ORDER BY tt_academic_year, cache_course_code, cache_occurrence_code, cache_semester_code",
                     ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE
                 );
                 try {
