@@ -30,10 +30,10 @@
         <tbody>
   <c:forEach items="${changes}" var="change">
             <tr>
-                <td>${fn:escapeXml(change.getUsername())}</td>
-                <td>${fn:escapeXml(change.getActivityName())}</td>>
-                <td>${fn:escapeXml(change.getGroupName())}</td>
-                <td>${fn:escapeXml(change.getChangeType())}</td>
+                <td>${fn:escapeXml(change.username)}</td>
+                <td>${fn:escapeXml(change.activityName)}</td>>
+                <td>${fn:escapeXml(change.groupName)}</td>
+                <td>${fn:escapeXml(change.changeType)}</td>
                 <td><!-- FIXME --></td>
                 <td><!-- FIXME --></td>
   </c:forEach>
