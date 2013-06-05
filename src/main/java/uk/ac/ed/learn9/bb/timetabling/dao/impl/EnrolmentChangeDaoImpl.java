@@ -2,6 +2,7 @@ package uk.ac.ed.learn9.bb.timetabling.dao.impl;
 
 import java.util.List;
 import blackboard.data.course.Course;
+import org.hibernate.criterion.Restrictions;
 import org.springframework.context.annotation.Scope;
 import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 import org.springframework.stereotype.Component;
@@ -24,7 +25,11 @@ public class EnrolmentChangeDaoImpl extends HibernateDaoSupport implements Enrol
 
     @Override
     public List<EnrolmentChange> getByCourse(final Course course) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return (List<EnrolmentChange>)this.getSession().createCriteria(EnrolmentChange.class)
+            .createCriteria("activity")
+            .createCriteria("module")
+            .add(Restrictions.eq("learnCourseId", course.getId().getExternalString()))
+                .list();
     }
     
 }
