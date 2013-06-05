@@ -10,7 +10,7 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ApplicationContextEvent;
-import org.springframework.context.event.ContextStartedEvent;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.ContextStoppedEvent;
 
 import blackboard.data.ValidationException;
@@ -52,7 +52,7 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
     @Autowired
     private SynchronisationService synchronisationService;
     
-    private final Timer timer = new Timer("Timetabling Group Sync", true);
+    private Timer timer = null;
     private boolean cancelled = false;
     private Task task = new Task();
     private Logger log = Logger.getLogger(ScheduledJobManager.class);
@@ -72,10 +72,15 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
      */
     @Override
     public void onApplicationEvent(final ApplicationContextEvent e) {
-        if (e instanceof ContextStartedEvent) {
-            this.scheduleRun();
+        if (e instanceof ContextRefreshedEvent) {
+            if (null == this.timer) {
+                this.timer = new Timer("Timetabling Group Sync", true);
+                this.scheduleRun();
+            }
         } else if (e instanceof ContextStoppedEvent) {
-            this.cancel();
+            if (null != this.timer) {
+                this.cancel();
+            }
         }
     }
 
@@ -90,6 +95,7 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
         } catch (InterruptedException ex) {
             log.warn("Interrupted while waiting for Timer thread to exit.");
         }
+        this.timer = null;
     }
 
     /**
