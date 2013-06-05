@@ -1,8 +1,7 @@
 package uk.ac.ed.learn9.bb.timetabling.data;
 
-
-
 import java.io.Serializable;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -18,7 +17,7 @@ import javax.persistence.Table;
 public class StudentSet extends Object implements Serializable {
     private String studentSetId;
     private String hostKey;
-    private String learnPersonId;
+    private String learnUserId;
 
     /**
      * Gets the ID for the student set (a 32 character string).
@@ -53,9 +52,9 @@ public class StudentSet extends Object implements Serializable {
      * @return the ID of the User object in Learn that this student set relates
      * to, returns null if no matching user has been found (yet).
      */
-    @Column(name="learn_person_id", nullable=true, length=80)
-    public String getLearnPersonId() {
-        return learnPersonId;
+    @Column(name="learn_user_id", nullable=true, length=80)
+    public String getLearnUserId() {
+        return learnUserId;
     }
 
     /**
@@ -68,11 +67,11 @@ public class StudentSet extends Object implements Serializable {
     }
 
     /**
-     * @param learnPersonId the ID of the person this student set relates to in
+     * @param learnUserId the ID of the person this student set relates to in
      * Learn.
      */
-    public void setLearnPersonId(String learnPersonId) {
-        this.learnPersonId = learnPersonId;
+    public void setLearnUserId(String learnUserId) {
+        this.learnUserId = learnUserId;
     }
 
     /**

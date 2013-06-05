@@ -38,7 +38,7 @@ CREATE TABLE activity (
     learn_group_id VARCHAR(80) DEFAULT NULL,
     learn_group_name VARCHAR(255) DEFAULT NULL,
     learn_group_created DATETIME DEFAULT NULL,
-    description CLOB,
+    description VARCHAR(2000) DEFAULT NULL,
     PRIMARY KEY (tt_activity_id),
     CONSTRAINT activity_module FOREIGN KEY (tt_module_id) REFERENCES module (tt_module_id),
     CONSTRAINT activity_template FOREIGN KEY (tt_template_id) REFERENCES activity_template (tt_template_id)
@@ -114,7 +114,7 @@ CREATE TABLE change_type (
 CREATE TABLE student_set (
   tt_student_set_id VARCHAR(32) NOT NULL,
   tt_host_key VARCHAR(32) NOT NULL,
-  learn_person_id VARCHAR(80) DEFAULT NULL,
+  learn_user_id VARCHAR(80) DEFAULT NULL,
   PRIMARY KEY (tt_student_set_id)
 );
 
@@ -199,7 +199,7 @@ CREATE VIEW jta_sync_activity_vw AS
     );
 
 CREATE VIEW sync_student_set_vw AS
-    (SELECT s.tt_student_set_id, s.tt_host_key username, s.learn_person_id
+    (SELECT s.tt_student_set_id, s.tt_host_key username, s.learn_user_id
         FROM student_set s
         WHERE s.tt_host_key IS NOT NULL
             AND LEFT(s.tt_host_key, 6)!='#SPLUS'

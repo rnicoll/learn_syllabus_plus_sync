@@ -107,7 +107,7 @@ CREATE TABLE change_type (
 CREATE TABLE student_set (
   tt_student_set_id VARCHAR2(32) NOT NULL,
   tt_host_key VARCHAR2(32) NOT NULL,
-  learn_person_id VARCHAR2(80) DEFAULT NULL,
+  learn_user_id VARCHAR2(80) DEFAULT NULL,
   PRIMARY KEY (tt_student_set_id)
 );
 
@@ -201,7 +201,7 @@ CREATE VIEW jta_sync_activity_vw AS
     );
 
 CREATE VIEW sync_student_set_vw AS
-    (SELECT s.tt_student_set_id, s.tt_host_key username, s.learn_person_id
+    (SELECT s.tt_student_set_id, s.tt_host_key username, s.learn_user_id
         FROM student_set s
         WHERE s.tt_host_key IS NOT NULL
             AND SUBSTR(s.tt_host_key, 1, 6)!='#SPLUS'
