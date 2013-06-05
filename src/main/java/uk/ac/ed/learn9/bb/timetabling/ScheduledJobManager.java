@@ -3,6 +3,7 @@ package uk.ac.ed.learn9.bb.timetabling;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -226,11 +227,12 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
             if (ScheduledJobManager.this.cancelled) {
                 return;
             }
-                    
+            run.setCacheCopyCompleted(new Date());
             synchronisationService.generateDiff(run);
             if (ScheduledJobManager.this.cancelled) {
                 return;
             }
+            run.setDiffCompleted(new Date());
             synchronisationService.updateGroupDescriptions();
             if (ScheduledJobManager.this.cancelled) {
                 return;
