@@ -6,6 +6,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +54,7 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
     @Autowired
     private SynchronisationService synchronisationService;
     
+    private AtomicBoolean isRunning = new AtomicBoolean(false);
     private Timer timer = null;
     private boolean cancelled = false;
     private Task task = new Task();
@@ -74,13 +76,14 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
     @Override
     public void onApplicationEvent(final ApplicationContextEvent e) {
         if (e instanceof ContextRefreshedEvent) {
-            if (null == this.timer) {
+            if (this.isRunning.compareAndSet(false, true)) {
                 this.timer = new Timer("Timetabling Group Sync", true);
                 this.scheduleRun();
             }
         } else if (e instanceof ContextStoppedEvent) {
-            if (null != this.timer) {
+            if (this.isRunning.get()) {
                 this.cancel();
+                this.isRunning.set(false);
             }
         }
     }
@@ -96,7 +99,6 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
         } catch (InterruptedException ex) {
             log.warn("Interrupted while waiting for Timer thread to exit.");
         }
-        this.timer = null;
     }
 
     /**
@@ -180,22 +182,30 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
      * Synchronisation task as a timer-compatible class.
      */
     public class Task extends TimerTask {
+        private Logger log = Logger.getLogger(ScheduledJobManager.Task.class);
+    
         /**
          * Runs the synchronisation task, then schedules in the next run.
          */
         @Override
         public void run() {
-            ScheduledJobManager.this.log.info("Running Learn/Timetabling synchronisation.");
+            log.info("Running Learn/Timetabling synchronisation.");
             SynchronisationRun run;
             
             try {
-                run = ScheduledJobManager.this.getConcurrencyService().startNewRun();
+                final ConcurrencyService concurrencyService = ScheduledJobManager.this.getConcurrencyService();
+                
+                if (null == concurrencyService) {
+                    throw new IllegalStateException("Concurrency service has not been wired in.");
+                }
+            
+                run = concurrencyService.startNewRun();
             }  catch (ConcurrencyService.SynchronisationAlreadyInProgressException ex) {
                 // This is expected under normal circumstances, due to more than one
                 // possible server trying to run the job. Ignore.
                 run = null;
             } catch(SQLException e) {
-                ScheduledJobManager.this.log.error("Database error while starting new synchronisation run.", e);
+                log.error("Database error while starting new synchronisation run.", e);
                 run = null;
             }
             
@@ -205,13 +215,13 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
                     doSynchronisation(run, service);
                 } catch(PersistenceException e) {
                     run.setResult(SynchronisationRun.Result.FATAL);
-                    ScheduledJobManager.this.log.error("Error while persisting/loading entities in Learn.", e);
+                    log.error("Error while persisting/loading entities in Learn.", e);
                 } catch(SQLException e) {
                     run.setResult(SynchronisationRun.Result.FATAL);
-                    ScheduledJobManager.this.log.error("Database error while synchronising groups from Timetabling.", e);
+                    log.error("Database error while synchronising groups from Timetabling.", e);
                 } catch(ValidationException e) {
                     run.setResult(SynchronisationRun.Result.FATAL);
-                    ScheduledJobManager.this.log.error("Error validating entities to be persisted in Learn.", e);
+                    log.error("Error validating entities to be persisted in Learn.", e);
                 }
             }
             

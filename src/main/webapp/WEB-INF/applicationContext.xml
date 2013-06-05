@@ -64,10 +64,6 @@
     
     <tx:annotation-driven transaction-manager="transactionManager" />
     
-    <!-- Event listener to start/stop the scheduled synchronisation job -->
-    <bean id="scheduledJobManager" 
-         class="uk.ac.ed.learn9.bb.timetabling.ScheduledJobManager"/>
-    
     <!-- Service beans -->
     <bean id="activityDao" class="uk.ac.ed.learn9.bb.timetabling.dao.impl.ActivityDaoImpl">
         <property name="sessionFactory" ref="sessionFactory"/>
@@ -108,6 +104,12 @@
         <property name="eugexService" ref="eugexService"/>
         <property name="rdbDataSource" ref="rdbDataSource"/>
         <property name="stagingDataSource" ref="stagingDataSource"/>
+    </bean>
+    
+    <!-- Event listener to start/stop the scheduled synchronisation job -->
+    <bean id="scheduledJobManager" class="uk.ac.ed.learn9.bb.timetabling.ScheduledJobManager">
+        <property name="concurrencyService" ref="concurrencyService"/>
+        <property name="synchronisationService" ref="synchronisationService"/>
     </bean>
 
 </beans>
