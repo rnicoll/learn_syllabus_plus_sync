@@ -229,11 +229,15 @@ public class BlackboardService {
             PreparedStatement queryStatement = stagingDatabase.prepareStatement(
                     "(SELECT tt_activity_id, tt_activity_name, learn_group_id, learn_group_name, "
                     + "learn_course_id, description "
-                    + "FROM non_jta_sync_activity_vw WHERE learn_group_id IS NULL)"
+                    + "FROM non_jta_sync_activity_vw "
+                        + "WHERE learn_course_id IS NOT NULL AND learn_group_id IS NOT NULL"
+                    + ")"
                     + " UNION "
                     + "(SELECT tt_activity_id, tt_activity_name, learn_group_id, learn_group_name, "
                     + "learn_course_id, description "
-                    + "FROM jta_sync_activity_vw WHERE learn_group_id IS NULL)");
+                    + "FROM jta_sync_activity_vw "
+                        + "WHERE learn_course_id IS NOT NULL AND learn_group_id IS NULL"
+                    + ")");
             try {
                 final ResultSet rs = queryStatement.executeQuery();
                 try {

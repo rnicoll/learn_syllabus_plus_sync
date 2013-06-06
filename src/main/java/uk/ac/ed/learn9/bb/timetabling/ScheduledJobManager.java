@@ -50,18 +50,6 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
     public static final long DELAY_WAIT_TIMER_EXIT = 100L;
     
     public static long INTERVAL_IN_MILLIS = 24 * 60 * 60 * 1000L;
-
-    public static Calendar getNextSynchronisationStartTime(final long nowMillis) {
-        final Calendar calendar = Calendar.getInstance();
-        // Strip seconds & milliseconds
-        final long thisMinuteMillis = nowMillis - (nowMillis % (60 * 1000L));
-        calendar.setTimeInMillis(thisMinuteMillis);
-        // Set the time of day
-        calendar.set(Calendar.MINUTE, START_MINUTE);
-        calendar.set(Calendar.HOUR_OF_DAY, START_HOUR_OF_DAY);
-        calendar.add(Calendar.DATE, 1);
-        return calendar;
-    }
     
     @Autowired
     private ConcurrencyService concurrencyService;
@@ -115,6 +103,19 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
         
         return true;
     }
+
+    public static Calendar getNextSynchronisationStartTime(final long nowMillis) {
+        final Calendar calendar = Calendar.getInstance();
+        // Strip seconds & milliseconds
+        final long thisMinuteMillis = nowMillis - (nowMillis % (60 * 1000L));
+        calendar.setTimeInMillis(thisMinuteMillis);
+        // Set the time of day
+        calendar.set(Calendar.MINUTE, START_MINUTE);
+        calendar.set(Calendar.HOUR_OF_DAY, START_HOUR_OF_DAY);
+        calendar.add(Calendar.DATE, 1);
+        return calendar;
+    }
+    
 
     /**
      * Starts the timer running on the synchronisation task. This is handled
