@@ -6,14 +6,14 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ApplicationContextEvent;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.context.event.ContextStoppedEvent;
 
 import blackboard.data.ValidationException;
 import blackboard.persist.PersistenceException;
@@ -49,15 +49,26 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
      */
     public static final long DELAY_WAIT_TIMER_EXIT = 100L;
     
+    public static long INTERVAL_IN_MILLIS = 24 * 60 * 60 * 1000L;
+
+    public static Calendar getNextSynchronisationStartTime(final long nowMillis) {
+        final Calendar calendar = Calendar.getInstance();
+        // Strip seconds & milliseconds
+        final long thisMinuteMillis = nowMillis - (nowMillis % (60 * 1000L));
+        calendar.setTimeInMillis(thisMinuteMillis);
+        // Set the time of day
+        calendar.set(Calendar.MINUTE, START_MINUTE);
+        calendar.set(Calendar.HOUR_OF_DAY, START_HOUR_OF_DAY);
+        calendar.add(Calendar.DATE, 1);
+        return calendar;
+    }
+    
     @Autowired
     private ConcurrencyService concurrencyService;
     @Autowired
     private SynchronisationService synchronisationService;
     
-    private AtomicBoolean isRunning = new AtomicBoolean(false);
-    private Timer timer = null;
-    private boolean cancelled = false;
-    private Task task = new Task();
+    private AtomicReference<Timer> timerRef = new AtomicReference<Timer>();
     private Logger log = Logger.getLogger(ScheduledJobManager.class);
             
     /**
@@ -76,44 +87,58 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
     @Override
     public void onApplicationEvent(final ApplicationContextEvent e) {
         if (e instanceof ContextRefreshedEvent) {
-            if (this.isRunning.compareAndSet(false, true)) {
-                this.timer = new Timer("Timetabling Group Sync", true);
-                this.scheduleRun();
-            }
-        } else if (e instanceof ContextStoppedEvent) {
-            if (this.isRunning.get()) {
-                this.cancel();
-                this.isRunning.set(false);
-            }
+            this.startTimer();
+        } else if (e instanceof ContextClosedEvent) {
+            this.cancel();
         }
     }
 
     /**
-     * Cancels any scheduled synchronisation.
+     * Cancels any scheduled synchronisation. This is handled
+     * atomically, so only one timer can be running at a time.
+     * 
+     * @return true if a timer was running and has now been cancelled,
+     * false otherwise.
      */
-    public void cancel() {
-        this.cancelled = true;
-        this.timer.cancel();
+    public boolean cancel() {
+        final Timer existingTimer = this.timerRef.getAndSet(null);
+        if (null == existingTimer) {
+            return false;
+        }
+        
+        existingTimer.cancel();
         try {
             Thread.sleep(DELAY_WAIT_TIMER_EXIT);
         } catch (InterruptedException ex) {
             log.warn("Interrupted while waiting for Timer thread to exit.");
         }
+        
+        return true;
     }
 
     /**
-     * Schedules the next run of the synchronisation task.
+     * Starts the timer running on the synchronisation task. This is handled
+     * atomically, so only one timer can be running at a time.
      */
-    public void scheduleRun() {
-        // We apply a small fuzz value to the delay to help avoid risk of race
-        // conditions if two jobs start simultaneously.
-        final long fuzz = Math.round(Math.random() * MAX_FUZZ_MILLIS);
-        final long delay = calculateDelay(System.currentTimeMillis());
+    private void startTimer() {
+        final Timer timer = new Timer("Timetabling Group Sync", true);
         
-        this.log.info("Scheduling synchronisation job after a delay of "
-            + delay + "ms.");
-        
-        this.timer.schedule(this.task, delay + fuzz);
+        if (this.timerRef.compareAndSet(null, timer)) {
+            // We apply a small fuzz value to the delay to help avoid risk of race
+            // conditions if two jobs start simultaneously.
+            final int fuzz = (int)Math.round(Math.random() * MAX_FUZZ_MILLIS);
+            final Calendar startTime = getNextSynchronisationStartTime(System.currentTimeMillis());
+            
+            // Add a fuzz delay to the start time to avoid possible issues with
+            // multiple threads being scheduled at the same time.
+            startTime.add(Calendar.MILLISECOND, fuzz);
+
+            timer.scheduleAtFixedRate(new Task(), startTime.getTime(), INTERVAL_IN_MILLIS);
+        } else {
+            // Timer is already running, so we don't need the timer we just
+            // created.
+            timer.cancel();
+        }
     }
 
     /**
@@ -123,18 +148,8 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
      * @param nowMillis the current time in milliseconds.
      * @return the delay in milliseconds.
      */
-    public long calculateDelay(final long nowMillis) {
-        final Calendar calendar = Calendar.getInstance();
- 
-        // Strip seconds & milliseconds
-        final long thisMinuteMillis = nowMillis - (nowMillis % (60 * 1000L));
-        
-        calendar.setTimeInMillis(thisMinuteMillis);
-        
-        // Set the time of day
-        calendar.set(Calendar.MINUTE, START_MINUTE);
-        calendar.set(Calendar.HOUR_OF_DAY, START_HOUR_OF_DAY);
-        calendar.add(Calendar.DATE, 1);
+    public static long calculateDelay(final long nowMillis) {
+        Calendar calendar = getNextSynchronisationStartTime(nowMillis);
         
         return calendar.getTimeInMillis() - nowMillis;
     }
@@ -181,7 +196,10 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
      * Synchronisation task as a timer-compatible class.
      */
     public class Task extends TimerTask {
-        private Logger log = Logger.getLogger(ScheduledJobManager.Task.class);
+        private final Logger log = Logger.getLogger(ScheduledJobManager.Task.class);
+        
+        public Task() {
+        }
     
         /**
          * Runs the synchronisation task, then schedules in the next run.
@@ -223,10 +241,6 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
                     log.error("Error validating entities to be persisted in Learn.", e);
                 }
             }
-            
-            if (!ScheduledJobManager.this.cancelled) {
-                ScheduledJobManager.this.scheduleRun();
-            }
         }
 
         private void doSynchronisation(final SynchronisationRun run,
@@ -234,31 +248,16 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
             throws PersistenceException, SQLException, ValidationException {
             synchronisationService.synchroniseTimetablingData();
             synchronisationService.synchroniseEugexData();
-            if (ScheduledJobManager.this.cancelled) {
-                return;
-            }
             run.setCacheCopyCompleted(new Date());
+            
             synchronisationService.generateDiff(run);
-            if (ScheduledJobManager.this.cancelled) {
-                return;
-            }
             run.setDiffCompleted(new Date());
+            
             synchronisationService.updateGroupDescriptions();
-            if (ScheduledJobManager.this.cancelled) {
-                return;
-            }
             synchronisationService.mapModulesToCourses();
-            if (ScheduledJobManager.this.cancelled) {
-                return;
-            }
+            
             synchronisationService.createGroupsForActivities();
-            if (ScheduledJobManager.this.cancelled) {
-                return;
-            }
             synchronisationService.mapStudentSetsToUsers();
-            if (ScheduledJobManager.this.cancelled) {
-                return;
-            }
             synchronisationService.applyEnrolmentChanges(run);
             
             run.setEndTime(new Timestamp(System.currentTimeMillis()));
