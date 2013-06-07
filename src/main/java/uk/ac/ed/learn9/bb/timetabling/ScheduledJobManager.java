@@ -17,6 +17,7 @@ import org.springframework.context.event.ContextRefreshedEvent;
 
 import blackboard.data.ValidationException;
 import blackboard.persist.PersistenceException;
+import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationResult;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 import uk.ac.ed.learn9.bb.timetabling.service.ConcurrencyService;
 import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService;
@@ -232,13 +233,13 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
                 try {
                     doSynchronisation(run, service);
                 } catch(PersistenceException e) {
-                    run.setResult(SynchronisationRun.Result.FATAL);
+                    run.setResult(SynchronisationResult.FATAL);
                     log.error("Error while persisting/loading entities in Learn.", e);
                 } catch(SQLException e) {
-                    run.setResult(SynchronisationRun.Result.FATAL);
+                    run.setResult(SynchronisationResult.FATAL);
                     log.error("Database error while synchronising groups from Timetabling.", e);
                 } catch(ValidationException e) {
-                    run.setResult(SynchronisationRun.Result.FATAL);
+                    run.setResult(SynchronisationResult.FATAL);
                     log.error("Error validating entities to be persisted in Learn.", e);
                 }
             }
@@ -262,7 +263,7 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
             synchronisationService.applyEnrolmentChanges(run);
             
             run.setEndTime(new Timestamp(System.currentTimeMillis()));
-            run.setResult(SynchronisationRun.Result.SUCCESS);
+            run.setResult(SynchronisationResult.SUCCESS);
         }
     }
 }

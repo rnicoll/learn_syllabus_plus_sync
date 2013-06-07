@@ -5,12 +5,14 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+
 import static org.junit.Assert.*;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.Before;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
+
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 import uk.ac.ed.learn9.bb.timetabling.service.ConcurrencyService.SynchronisationAlreadyInProgressException;
 import uk.ac.ed.learn9.bb.timetabling.util.DbScriptUtil;
@@ -86,13 +88,27 @@ public class ConcurrencyServiceTest extends AbstractJUnit4SpringContextTests {
     }
 
     /**
-     * Test of startNewRun method, of class ConcurrencyService.
+     * Test start new run with a session already in progress, to force a
+     * collision.
      */
     @Test(expected=SynchronisationAlreadyInProgressException.class)
     public void testStartNewRunCollision() throws Exception {
         System.out.println("startNewRun");
         final ConcurrencyService instance = this.getService();
         final SynchronisationRun resultA = instance.startNewRun();
+        final SynchronisationRun resultB = instance.startNewRun();
+    }
+
+    /**
+     * Test start new run where there's an abandoned session, to ensure
+     * it's ignored when checking for a session already in progress.
+     */
+    @Test
+    public void testStartNoAbandonedRunCollision() throws Exception {
+        System.out.println("startNewRun");
+        final ConcurrencyService instance = this.getService();
+        final SynchronisationRun resultA = instance.startNewRun();
+        instance.abandonSession(resultA);
         final SynchronisationRun resultB = instance.startNewRun();
     }
 

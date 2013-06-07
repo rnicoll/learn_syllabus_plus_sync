@@ -20,6 +20,7 @@ import blackboard.data.ValidationException;
 import blackboard.persist.PersistenceException;
 import uk.ac.ed.learn9.bb.timetabling.ScheduledJobManager;
 import uk.ac.ed.learn9.bb.timetabling.dao.SynchronisationRunDao;
+import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationResult;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 import uk.ac.ed.learn9.bb.timetabling.service.ConcurrencyService;
 import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService;
@@ -86,7 +87,7 @@ public class ConfigureController extends Object {
         service.applyEnrolmentChanges(run);
 
         run.setEndTime(new Timestamp(System.currentTimeMillis()));
-        run.setResult(SynchronisationRun.Result.SUCCESS);
+        run.setResult(SynchronisationResult.SUCCESS);
                 
         return this.getConfigure(request, response);
     }

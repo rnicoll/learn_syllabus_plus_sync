@@ -9,6 +9,7 @@ import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import uk.ac.ed.learn9.bb.timetabling.dao.SynchronisationRunDao;
+import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationResult;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 
 /**
@@ -39,6 +40,27 @@ public class ConcurrencyService {
      * @throws SQLException if there was a problem communicating with the staging
      * database.
      */
+    public boolean abandonSession(final SynchronisationRun run)
+            throws SQLException {
+        final Connection stagingDatabase = this.getStagingDataSource().getConnection();
+        try {
+            return this.abandonSession(stagingDatabase, run.getRunId(), new Timestamp(System.currentTimeMillis()));
+        } finally {
+            stagingDatabase.close();
+        }
+    }
+    
+    /**
+     * Marks a session as abandoned.
+     * 
+     * @param stagingDatabase a connection to the staging database.
+     * @param now the current time.
+     * @param runId the ID of the session to mark abandoned.
+     * @return whether the change was written out successfully. Failure typically
+     * indicates the session has already finished.
+     * @throws SQLException if there was a problem communicating with the staging
+     * database.
+     */
     public boolean abandonSession(final Connection stagingDatabase, final int runId, final Timestamp now)
             throws SQLException {        
         final PreparedStatement statement = stagingDatabase.prepareStatement(
@@ -50,7 +72,7 @@ public class ConcurrencyService {
             int paramIdx = 1;
             
             statement.setTimestamp(paramIdx++, now);
-            statement.setString(paramIdx++, SynchronisationRun.Result.ABANDONED.name());
+            statement.setString(paramIdx++, SynchronisationResult.ABANDONED.name());
             statement.setInt(paramIdx++, runId);
             return statement.executeUpdate() > 0;
         } finally {
@@ -76,10 +98,14 @@ public class ConcurrencyService {
         throws SQLException, SynchronisationAlreadyInProgressException {
         PreparedStatement statement = stagingDatabase.prepareStatement(
             "INSERT INTO synchronisation_run_prev (run_id, previous_run_id) "
-                + "(SELECT ?, MAX(run_id) FROM synchronisation_run WHERE run_id!=?)");
+                + "(SELECT ?, MAX(run_id) "
+                    + "FROM synchronisation_run "
+                    + "WHERE run_id!=? AND (result_code IS NULL OR result_code!=?))");
         try {
-            statement.setInt(1, runId);
-            statement.setInt(2, runId);
+            int paramIdx = 1;
+            statement.setInt(paramIdx++, runId);
+            statement.setInt(paramIdx++, runId);
+            statement.setString(paramIdx++, SynchronisationResult.ABANDONED.name());
             // XXX: Handle constraint violation
             statement.executeUpdate();
         } finally {
@@ -234,7 +260,7 @@ public class ConcurrencyService {
             int paramIdx = 1;
             
             statement.setTimestamp(paramIdx++, now);
-            statement.setString(paramIdx++, SynchronisationRun.Result.TIMEOUT.name());
+            statement.setString(paramIdx++, SynchronisationResult.TIMEOUT.name());
             statement.setTimestamp(paramIdx++, timeout);
             return statement.executeUpdate();
         } finally {

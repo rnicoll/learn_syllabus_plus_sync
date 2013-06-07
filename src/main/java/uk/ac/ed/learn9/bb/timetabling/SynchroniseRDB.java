@@ -6,6 +6,8 @@ import java.sql.Timestamp;
 import blackboard.data.ValidationException;
 import blackboard.persist.PersistenceException;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationResult;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 import uk.ac.ed.learn9.bb.timetabling.service.ConcurrencyService;
 import uk.ac.ed.learn9.bb.timetabling.service.ConcurrencyService.SynchronisationAlreadyInProgressException;
@@ -37,7 +39,7 @@ public class SynchroniseRDB extends Object {
         
             
         run.setEndTime(new Timestamp(System.currentTimeMillis()));
-        run.setResult(SynchronisationRun.Result.SUCCESS);
+        run.setResult(SynchronisationResult.SUCCESS);
         
         System.out.println("Sync took "
                 + ((System.currentTimeMillis() - startTime) / 1000L) + " seconds.");
