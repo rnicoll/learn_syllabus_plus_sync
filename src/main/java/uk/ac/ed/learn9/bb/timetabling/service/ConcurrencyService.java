@@ -100,7 +100,9 @@ public class ConcurrencyService {
             "INSERT INTO synchronisation_run_prev (run_id, previous_run_id) "
                 + "(SELECT ?, MAX(run_id) "
                     + "FROM synchronisation_run "
-                    + "WHERE run_id!=? AND (result_code IS NULL OR result_code!=?))");
+                    + "WHERE run_id!=? "
+                        + "AND (result_code IS NULL OR result_code!=?)"
+                + ")");
         try {
             int paramIdx = 1;
             statement.setInt(paramIdx++, runId);
@@ -190,21 +192,19 @@ public class ConcurrencyService {
         try {
             runId = this.getNextId(stagingDatabase);
             
+            insertRunRecord(stagingDatabase, runId, now);
+            
             stagingDatabase.setAutoCommit(false);
             try {
-                insertRunRecord(stagingDatabase, runId, now);
-                try {
-                    assignPreviousRun(stagingDatabase, runId);
-                } catch(SynchronisationAlreadyInProgressException already) {
-                    this.abandonSession(stagingDatabase, runId, now);
-                    stagingDatabase.commit();
-                    throw already;
-                }
-                stagingDatabase.commit();
+                assignPreviousRun(stagingDatabase, runId);
+            } catch(SynchronisationAlreadyInProgressException already) {
+                // Roll back the assignment of a previous run.
+                stagingDatabase.rollback();
+                this.abandonSession(stagingDatabase, runId, now);
+                throw already;
             } finally {
                 // Rollback any uncomitted changes in case of a serious
                 // error.
-                stagingDatabase.rollback();
                 stagingDatabase.setAutoCommit(true);
             }
         } finally {
