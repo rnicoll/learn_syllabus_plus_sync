@@ -6,10 +6,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.sql.DataSource;
 
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import blackboard.data.ValidationException;
 import blackboard.data.course.Group;
 import blackboard.persist.Id;
@@ -92,7 +94,6 @@ public class SynchronisationService extends Object {
 
             try {                
                 this.copyStudentSetActivities(run, source, destination);
-                // FIXME: Update records of which courses are synced EUCLID->LEARN
                 this.doGenerateDiff(run, destination);
             } finally {
                 destination.close();
