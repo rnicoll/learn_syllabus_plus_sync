@@ -50,7 +50,7 @@ CREATE TABLE activity_parents (
     tt_parent_activity_id VARCHAR2(32) NOT NULL,
     tt_obsolete_from INTEGER DEFAULT NULL,
     tt_latest_transaction INTEGER DEFAULT NULL,
-    constraint "ACTIVITY_PARENT_PK" PRIMARY KEY (tt_activity_id)
+    constraint "ACTIVITY_PARENT_PK" PRIMARY KEY (tt_activity_id, tt_parent_activity_id)
 ) tablespace "SATVLE_DATA";
 
 CREATE TABLE variantjtaacts (
