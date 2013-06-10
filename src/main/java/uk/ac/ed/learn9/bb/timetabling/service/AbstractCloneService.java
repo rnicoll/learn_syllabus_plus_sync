@@ -5,7 +5,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.SortedSet;
 
 /**
  * Abstract service for cloning tables from one database to another. Intended
@@ -28,30 +31,30 @@ public abstract class AbstractCloneService extends Object {
      * @param destinationTable the name of the table to write records to.
      * @param sourcePkField the name of the primary key field on the source
      * table. Tables with compound primary keys are not supported.
-     * @param destinationPkField the name of the primary key field on the
-     * destination table. Tables with compound primary keys are not supported.
      * @param fieldMappings a mapping from source field names to destination
-     * fields, for non-primary key fields to be cloned.
+     * fields.
      * 
      * @throws SQLException if there was a problem accessing one of the
      * databases.
      */
     public void cloneTable(final Connection source, final Connection destination,
             final String sourceTable, final String destinationTable,
-            final String sourcePkField, final String destinationPkField,
-            final Map<String, String> fieldMappings)
+            final String sourcePkField, final Map<String, String> fieldMappings)
             throws SQLException {
+        final String destinationPkField = fieldMappings.get(sourcePkField);
+        final List<String> destinationPkFields = Collections.singletonList(destinationPkField);
+        final List<String> sourcePkFields = Collections.singletonList(sourcePkField);
+        
         destination.setAutoCommit(false);
         try {
             final PreparedStatement destinationStatement = destination.prepareStatement(
-                    buildQuery(destinationTable, destinationPkField, fieldMappings.values()));
+                    buildQuery(destinationTable, destinationPkFields, fieldMappings.values()));
             try {
                 final PreparedStatement sourceStatement = source.prepareStatement(
-                        buildQuery(sourceTable, sourcePkField, fieldMappings.keySet()));
+                        buildQuery(sourceTable, sourcePkFields, fieldMappings.keySet()));
                 try {
                     cloneQuery(destinationTable, sourceStatement, destinationStatement,
-                            sourcePkField, destinationPkField,
-                            fieldMappings);
+                            sourcePkField, fieldMappings);
                     destination.commit();
                 } finally {
                     sourceStatement.close();
@@ -73,25 +76,22 @@ public abstract class AbstractCloneService extends Object {
      * @param destinationStatement the prepared statement to write data into.
      * @param sourcePkField the name of the primary key field on the source
      * table. Tables with compound primary keys are not supported.
-     * @param destinationPkField the name of the primary key field on the
-     * destination table. Tables with compound primary keys are not supported.
      * @param fieldMappings a mapping from source field names to destination
-     * fields, for non-primary key fields to be cloned.
+     * fields.
      * 
      * @throws SQLException if there was a problem accessing one of the
      * databases.
      */
     public void cloneQuery(final String destinationTable,
             final PreparedStatement sourceStatement, final PreparedStatement destinationStatement,
-            final String sourcePkField, final String destinationPkField,
-            final Map<String, String> fieldMappings)
+            final String sourcePkField, final Map<String, String> fieldMappings)
             throws SQLException {
         final ResultSet destinationRs = destinationStatement.executeQuery();
         try {
             final ResultSet sourceRs = sourceStatement.executeQuery();
             try {
                 cloneResultSet(destinationTable, sourceRs, destinationRs,
-                    sourcePkField, destinationPkField, fieldMappings);
+                    sourcePkField, fieldMappings);
             } finally {
                 sourceRs.close();
             }
@@ -108,22 +108,21 @@ public abstract class AbstractCloneService extends Object {
      * @param destinationRs the result set to write data into.
      * @param sourcePkField the name of the primary key field on the source
      * table. Tables with compound primary keys are not supported.
-     * @param destinationPkField the name of the primary key field on the
-     * destination table. Tables with compound primary keys are not supported.
      * @param fieldMappings a mapping from source field names to destination
-     * fields, for non-primary key fields to be cloned.
+     * fields.
      * 
      * @throws SQLException if there was a problem accessing one of the
      * databases.
      */
     public void cloneResultSet(final String destinationTable,
             final ResultSet sourceRs, final ResultSet destinationRs,
-            final String sourcePkField, final String destinationPkField,
+            final String sourcePkField,
             final Map<String, String> fieldMappings)
             throws SQLException {
+        final String destinationPkField = fieldMappings.get(sourcePkField);
         final CloningStatements cloningStatements = new CloningStatements(
                 destinationRs.getStatement().getConnection(),
-                destinationTable, sourcePkField, destinationPkField,
+                destinationTable, sourcePkField,
                 fieldMappings, destinationRs);
 
         // First, update existing records
@@ -190,21 +189,35 @@ public abstract class AbstractCloneService extends Object {
      * Builds a select statement against a single table.
      * 
      * @param table the name of the table to access.
-     * @param pkField the name of the primary key field in the table. Multiple/no
-     * primary key fields are not supported.
-     * @param otherFields a collection of the names of other fields to be accessed.
+     * @param pkFields the name of the primary key fields in the table.
+     * @param fields a collection of the names of all fields to be accessed.
      * @return a select statement to select the named fields from the table.
      */
-    public String buildQuery(final String table, final String pkField, final Collection<String> otherFields) {
-        final StringBuilder query = new StringBuilder("SELECT ")
-                .append(pkField);
+    public String buildQuery(final String table, final List<String> pkFields,
+            final Collection<String> fields) {
+        boolean firstField = true;
+        final StringBuilder query = new StringBuilder("SELECT ");
 
-        for (String fieldName : otherFields) {
-            query.append(", ").append(fieldName);
+        for (String fieldName : fields) {
+            if (firstField) {
+                firstField = false;
+            } else {
+                query.append(", ");
+            }
+            query.append(fieldName);
         }
 
         query.append(" FROM ").append(table)
-                .append(" ORDER BY ").append(pkField);
+                .append(" ORDER BY ");
+        firstField = true;
+        for (String pkField: pkFields) {
+            if (firstField) {
+                firstField = false;
+            } else {
+                query.append(", ");
+            }
+            query.append(pkField);
+        }
 
         return query.toString();
     }

@@ -1,9 +1,7 @@
 package uk.ac.ed.learn9.bb.timetabling;
 
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicReference;

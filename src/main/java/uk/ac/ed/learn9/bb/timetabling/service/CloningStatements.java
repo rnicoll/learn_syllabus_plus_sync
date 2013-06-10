@@ -6,8 +6,9 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -20,22 +21,26 @@ class CloningStatements extends Object {
     private final PreparedStatement insertStatement;
     private final PreparedStatement updateStatement;
     private final String sourcePrimaryKeyField;
-    private final String destinationPrimaryKeyField;
     private final SortedMap<String, String> fieldMappings = new TreeMap<String, String>();
+    private final List<String> orderedFields = new ArrayList<String>();
     private final Map<String, Integer> fieldTypes = new HashMap<String, Integer>();
 
     public CloningStatements(final Connection database, final String setTable,
-            final String setSourcePrimaryKeyField, final String setDestinationPrimaryKeyField,
+            final String setSourcePrimaryKeyField,
             final Map<String, String> setFieldMappings, final ResultSet destinationRs)
                 throws SQLException {
-        this.sourcePrimaryKeyField = setSourcePrimaryKeyField;
-        this.destinationPrimaryKeyField = setDestinationPrimaryKeyField;
         this.fieldMappings.putAll(setFieldMappings);
         
+        for (Map.Entry fieldMapping: this.fieldMappings.entrySet()) {
+            this.orderedFields.add((String)fieldMapping.getValue());
+        }
+        
+        this.sourcePrimaryKeyField = setSourcePrimaryKeyField;
+        
         this.insertStatement = database.prepareStatement(buildInsertStatement(setTable,
-                setDestinationPrimaryKeyField, this.fieldMappings.values()));
+            this.orderedFields));
         this.updateStatement = database.prepareStatement(buildUpdateStatement(setTable,
-                setDestinationPrimaryKeyField, this.fieldMappings.values()));
+            this.sourcePrimaryKeyField, this.fieldMappings));
         final ResultSetMetaData metadata = destinationRs.getMetaData();
         
         // Store column names as upper case so we're not at risk of case
@@ -48,48 +53,55 @@ class CloningStatements extends Object {
     }
     
     private static String buildInsertStatement(final String table,
-            final String destinationPrimaryKeyField,
-            final Collection<String> orderedFields)
+            final List<String> orderedFields)
             throws SQLException {
         
-        final StringBuilder query = new StringBuilder("INSERT INTO ")
-                .append(table).append(" (")
-                .append(destinationPrimaryKeyField);
-        
-        for (String otherField : orderedFields) {
-            query.append(", ").append(otherField);
-        }
-        query.append(") VALUES (?");
-        for (String unused : orderedFields) {
-            query.append(", ?");
-        }
-        query.append(")");
-        
-        return query.toString();
-    }
-    
-    private static String buildUpdateStatement(final String table,
-            final String destinationPrimaryKeyField,
-            final Collection<String> orderedFields)
-            throws SQLException {
-        
-        if (orderedFields.isEmpty()) {
-            throw new IllegalArgumentException("Ordered field set must not be empty, as it would mean there are no fields to update.");
-        }
-        
-        final StringBuilder query = new StringBuilder("UPDATE ")
-                .append(table).append(" SET ");
         boolean firstField = true;
+        final StringBuilder query = new StringBuilder("INSERT INTO ")
+                .append(table).append(" (");
+        final StringBuilder queryParameters = new StringBuilder();
         
         for (String otherField : orderedFields) {
             if (firstField) {
                 firstField = false;
             } else {
                 query.append(", ");
+                queryParameters.append(", ");
             }
-            query.append(otherField).append("=?");
+            query.append(otherField);
+            queryParameters.append("?");
         }
-        query.append(" WHERE ").append(destinationPrimaryKeyField).append("=?");
+        query.append(") VALUES (").append(queryParameters).append(")");
+        
+        return query.toString();
+    }
+    
+    private static String buildUpdateStatement(final String table,
+            final String sourcePrimaryKeyField,
+            final SortedMap<String, String> fieldMappings)
+            throws SQLException {
+        
+        if (fieldMappings.isEmpty()) {
+            throw new IllegalArgumentException("Ordered fields set must not be empty, as it would mean there are no fields to update.");
+        }
+        
+        final StringBuilder query = new StringBuilder("UPDATE ")
+                .append(table).append(" SET ");
+        boolean firstField = true;
+        
+        for (Map.Entry<String, String> entry: fieldMappings.entrySet()) {
+            if (entry.getKey().equals(sourcePrimaryKeyField)) {
+                continue;
+            }
+            
+            if (firstField) {
+                firstField = false;
+            } else {
+                query.append(", ");
+            }
+            query.append(entry.getValue()).append("=?");
+        }
+        query.append(" WHERE ").append(fieldMappings.get(sourcePrimaryKeyField)).append("=?");
         
         return query.toString();
     }
@@ -136,8 +148,7 @@ class CloningStatements extends Object {
         final String sourcePk = sourceRow.getString(this.sourcePrimaryKeyField);
         int colIdx = 1;
         
-        this.insertStatement.setString(colIdx++, sourcePk);
-        for (Map.Entry<String, String> entry: this.fieldMappings.entrySet()) {
+        for (Map.Entry<String, String> entry: this.fieldMappings.entrySet()) {            
             final Integer colType = this.fieldTypes.get(entry.getValue().toUpperCase());
             
             if (null == colType) {
@@ -157,6 +168,9 @@ class CloningStatements extends Object {
         final String sourcePk = sourceRow.getString(this.sourcePrimaryKeyField);
         int colIdx = 1;
         for (Map.Entry<String, String> entry: this.fieldMappings.entrySet()) {
+            if (entry.getKey().equals(this.sourcePrimaryKeyField)) {
+                continue;
+            }
             final Integer colType = this.fieldTypes.get(entry.getValue().toUpperCase());
             
             if (null == colType) {
@@ -167,6 +181,7 @@ class CloningStatements extends Object {
                     entry, colType);
         }
         this.updateStatement.setString(colIdx, sourcePk);
+        
         return this.updateStatement.executeUpdate();
     }
     

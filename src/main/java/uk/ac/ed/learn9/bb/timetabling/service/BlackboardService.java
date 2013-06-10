@@ -8,6 +8,7 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
 import blackboard.base.FormattedText;
 import blackboard.data.ValidationException;
 import blackboard.data.course.Course;
@@ -38,6 +39,8 @@ import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
  */
 @Service
 public class BlackboardService {
+    private static final Logger logger = Logger.getLogger(BlackboardService.class);
+    
     /**
      * Identifier of role students have within a group, for creating new
      * group memberships.
@@ -300,13 +303,15 @@ public class BlackboardService {
             try {
                 final ResultSet rs = queryStatement.executeQuery();
                 while (rs.next()) {
-                    final String courseCode = rs.getString("effective_course_code");
+                    final String learnCourseCode = rs.getString("effective_course_code");
 
-                    if (!courseDbLoader.doesCourseIdExist(courseCode)) {
+                    if (!courseDbLoader.doesCourseIdExist(learnCourseCode)) {
+                        logger.debug("Course \""
+                            + learnCourseCode + "\" does not exist in Learn.");
                         continue;
                     }
 
-                    Course course = courseDbLoader.loadByCourseId(courseCode);
+                    Course course = courseDbLoader.loadByCourseId(learnCourseCode);
                     Id courseId;
 
                     // If the course has a parent-child relationship with another
@@ -321,8 +326,13 @@ public class BlackboardService {
                         courseId = course.getId();
                     }
 
-                    updateStatement.setString(1, courseId.getExternalString());
-                    updateStatement.setString(2, rs.getString("tt_module_id"));
+                    logger.debug("Writing out Learn course ID \""
+                        + courseId.getExternalString() + "\" for module \""
+                        + rs.getString("tt_module_id") + "\".");
+                    
+                    int paramIdx = 1;
+                    updateStatement.setString(paramIdx++, courseId.getExternalString());
+                    updateStatement.setString(paramIdx++, rs.getString("tt_module_id"));
                     updateStatement.executeUpdate();
                 }
             } finally {

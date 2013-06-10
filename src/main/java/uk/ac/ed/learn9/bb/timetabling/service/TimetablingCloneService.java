@@ -76,35 +76,6 @@ public class TimetablingCloneService extends AbstractCloneService {
     public static final String STAGING_VARIANT_JTA_TABLE = "variantjtaacts";
     
     /**
-     * Name of the primary key field for activities in the staging database.
-     */
-    public static final String STAGING_ACTIVITY_PRIMARY_KEY = "tt_activity_id";
-    /**
-     * Name of the primary key field for activity's parent records in the staging database.
-     */
-    public static final String STAGING_ACTIVITY_PARENTS_PRIMARY_KEY = "tt_activity_id";
-    /**
-     * Name of the primary key field for activity templates in the staging database.
-     */
-    public static final String STAGING_ACTIVITY_TEMPLATE_PRIMARY_KEY = "tt_template_id";
-    /**
-     * Name of the primary key field for activity types in the staging database.
-     */
-    public static final String STAGING_ACTIVITY_TYPE_PRIMARY_KEY = "tt_type_id";
-    /**
-     * Name of the primary key field for modules in the staging database.
-     */
-    public static final String STAGING_MODULE_PRIMARY_KEY = "tt_module_id";
-    /**
-     * Name of the primary key field for student sets in the staging database.
-     */
-    public static final String STAGING_STUDENT_SET_PRIMARY_KEY = "tt_student_set_id";
-    /**
-     * Name of the primary key field for activity variant/JTA records in the staging database.
-     */
-    public static final String STAGING_VARIANT_JTA_PRIMARY_KEY = STAGING_ACTIVITY_PRIMARY_KEY;
-    
-    /**
      * Name of the primary key field for all Timetabling tables.
      */
     public static final String PRIMARY_KEY_TIMETABLING_TABLES = "ID";
@@ -114,6 +85,7 @@ public class TimetablingCloneService extends AbstractCloneService {
      * those in the staging database.
      */
     public static final String[][] ACTIVITY_FIELD_MAPPINGS = {
+        {"ID", "tt_activity_id"},
         {"NAME", "tt_activity_name"},
         {"MODUL", "tt_module_id"},
         {"ACTIVITY_TMPL", "tt_template_id"},
@@ -125,6 +97,7 @@ public class TimetablingCloneService extends AbstractCloneService {
      * those in the staging database.
      */
     public static final String[][] ACTIVITY_PARENTS_FIELD_MAPPINGS = {
+        {"ID", "tt_activity_id"},
         {"PARENT_ACTS", "tt_parent_activity_id"},
         {"OBSOLETEFROM", "tt_obsolete_from"},
         {"LATESTTRANSACTION", "tt_latest_transaction"}
@@ -134,6 +107,7 @@ public class TimetablingCloneService extends AbstractCloneService {
      * those in the staging database.
      */
     public static final String[][] ACTIVITY_TEMPLATE_FIELD_MAPPINGS = {
+        {"ID", "tt_template_id"},
         {"NAME", "tt_template_name"},
         {"USER_TEXT_5", "tt_user_text_5"}
     };
@@ -142,6 +116,7 @@ public class TimetablingCloneService extends AbstractCloneService {
      * those in the staging database.
      */
     public static final String[][] ACTIVITY_TYPE_FIELD_MAPPINGS = {
+        {"ID", "tt_type_id"},
         {"NAME", "tt_type_name"}
     };
     /**
@@ -149,6 +124,7 @@ public class TimetablingCloneService extends AbstractCloneService {
      * those in the staging database.
      */
     public static final String[][] MODULE_FIELD_MAPPINGS = {
+        {"ID", "tt_module_id"},
         {"NAME", "tt_module_name"},
         {"HOST_KEY", "tt_course_code"},
         {"USER_TEXT_2", "tt_academic_year"}
@@ -158,6 +134,7 @@ public class TimetablingCloneService extends AbstractCloneService {
      * those in the staging database.
      */
     public static final String[][] STUDENT_SET_FIELD_MAPPINGS = {
+        {"ID", "tt_student_set_id"},
         {"HOST_KEY", "tt_host_key"}
     };
     /**
@@ -165,6 +142,7 @@ public class TimetablingCloneService extends AbstractCloneService {
      * database, to those in the staging database.
      */
     public static final String[][] VARIANT_JTA_FIELD_MAPPINGS = {
+        {"ID", "tt_activity_id"},
         {"ISJTAPARENT", "tt_is_jta_parent"},
         {"ISJTACHILD", "tt_is_jta_child"},
         {"ISVARIANTPARENT", "tt_is_variant_parent"},
@@ -193,7 +171,7 @@ public class TimetablingCloneService extends AbstractCloneService {
 
         cloneTable(source, destination,
                 REPORTING_ACTIVITY_TABLE, STAGING_ACTIVITY_TABLE,
-                PRIMARY_KEY_TIMETABLING_TABLES, STAGING_ACTIVITY_PRIMARY_KEY,
+                PRIMARY_KEY_TIMETABLING_TABLES,
                 fieldMappings);
     }
 
@@ -219,7 +197,7 @@ public class TimetablingCloneService extends AbstractCloneService {
 
         cloneTable(source, destination,
                 REPORTING_ACTIVITY_PARENTS_TABLE, STAGING_ACTIVITY_PARENTS_TABLE,
-                PRIMARY_KEY_TIMETABLING_TABLES, STAGING_ACTIVITY_PARENTS_PRIMARY_KEY,
+                PRIMARY_KEY_TIMETABLING_TABLES,
                 fieldMappings);
     }
 
@@ -243,7 +221,7 @@ public class TimetablingCloneService extends AbstractCloneService {
 
         cloneTable(source, destination,
                 REPORTING_ACTIVITY_TEMPLATE_TABLE, STAGING_ACTIVITY_TEMPLATE_TABLE,
-                PRIMARY_KEY_TIMETABLING_TABLES, STAGING_ACTIVITY_TEMPLATE_PRIMARY_KEY,
+                PRIMARY_KEY_TIMETABLING_TABLES,
                 fieldMappings);
     }
 
@@ -266,7 +244,7 @@ public class TimetablingCloneService extends AbstractCloneService {
 
         cloneTable(source, destination,
                 REPORTING_ACTIVITY_TYPE_TABLE, STAGING_ACTIVITY_TYPE_TABLE,
-                PRIMARY_KEY_TIMETABLING_TABLES, STAGING_ACTIVITY_TYPE_PRIMARY_KEY,
+                PRIMARY_KEY_TIMETABLING_TABLES,
                 fieldMappings);
     }
 
@@ -290,7 +268,7 @@ public class TimetablingCloneService extends AbstractCloneService {
 
         cloneTable(source, destination,
                 REPORTING_VARIANT_JTA_TABLE, STAGING_VARIANT_JTA_TABLE,
-                PRIMARY_KEY_TIMETABLING_TABLES, STAGING_VARIANT_JTA_PRIMARY_KEY,
+                PRIMARY_KEY_TIMETABLING_TABLES,
                 fieldMappings);
     }
 
@@ -313,7 +291,7 @@ public class TimetablingCloneService extends AbstractCloneService {
 
         cloneTable(source, destination,
                 REPORTING_MODULE_TABLE, STAGING_MODULE_TABLE,
-                PRIMARY_KEY_TIMETABLING_TABLES, STAGING_MODULE_PRIMARY_KEY,
+                PRIMARY_KEY_TIMETABLING_TABLES,
                 fieldMappings);
     }
 
@@ -337,7 +315,7 @@ public class TimetablingCloneService extends AbstractCloneService {
 
         cloneTable(source, destination,
                 REPORTING_STUDENT_SET_TABLE, STAGING_STUDENT_SET_TABLE,
-                PRIMARY_KEY_TIMETABLING_TABLES, STAGING_STUDENT_SET_PRIMARY_KEY,
+                PRIMARY_KEY_TIMETABLING_TABLES,
                 fieldMappings);
     }
 }

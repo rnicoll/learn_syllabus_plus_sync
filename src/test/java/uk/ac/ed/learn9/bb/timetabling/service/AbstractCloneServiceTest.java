@@ -3,6 +3,7 @@ package uk.ac.ed.learn9.bb.timetabling.service;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.*;
 import org.springframework.test.context.ContextConfiguration;
@@ -69,11 +70,11 @@ public class AbstractCloneServiceTest extends AbstractJUnit4SpringContextTests {
         System.out.println("buildQuery");
         
         final String table = "ACTIVITY";
-        final String pkField = "ACTIVITY_ID";
-        final Collection<String> otherFields = Collections.emptySet();
+        final List<String> pkFields = Collections.singletonList("ACTIVITY_ID");
+        final Collection<String> allFields = pkFields;
         final AbstractCloneService instance = this.getService();
         final String expResult = "SELECT ACTIVITY_ID FROM ACTIVITY ORDER BY ACTIVITY_ID";
-        final String result = instance.buildQuery(table, pkField, otherFields);
+        final String result = instance.buildQuery(table, pkFields, allFields);
         
         assertEquals(expResult, result);
     }
@@ -87,11 +88,11 @@ public class AbstractCloneServiceTest extends AbstractJUnit4SpringContextTests {
         System.out.println("buildQuery");
         
         final String table = "ACTIVITY";
-        final String pkField = "ACTIVITY_ID";
-        final Collection<String> otherFields = Arrays.asList(new String[] {"FIELD_1", "FIELD_2"});
+        final List<String> pkFields = Collections.singletonList("ACTIVITY_ID");
+        final Collection<String> allFields = Arrays.asList(new String[] {"ACTIVITY_ID", "FIELD_1", "FIELD_2"});
         final AbstractCloneService instance = this.getService();
         final String expResult = "SELECT ACTIVITY_ID, FIELD_1, FIELD_2 FROM ACTIVITY ORDER BY ACTIVITY_ID";
-        final String result = instance.buildQuery(table, pkField, otherFields);
+        final String result = instance.buildQuery(table, pkFields, allFields);
         
         assertEquals(expResult, result);
     }
