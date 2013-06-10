@@ -5,7 +5,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+
 import javax.sql.DataSource;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import uk.ac.ed.learn9.bb.timetabling.dao.SynchronisationRunDao;
@@ -34,7 +36,7 @@ public class ConcurrencyService {
      * 
      * @param stagingDatabase a connection to the staging database.
      * @param now the current time.
-     * @param runId the ID of the session to mark abandoned.
+     * @param run the session to mark abandoned.
      * @return whether the change was written out successfully. Failure typically
      * indicates the session has already finished.
      * @throws SQLException if there was a problem communicating with the staging
@@ -44,7 +46,7 @@ public class ConcurrencyService {
             throws SQLException {
         final Connection stagingDatabase = this.getStagingDataSource().getConnection();
         try {
-            return this.abandonSession(stagingDatabase, run.getRunId(), new Timestamp(System.currentTimeMillis()));
+            return this.abandonSession(stagingDatabase, run, new Timestamp(System.currentTimeMillis()));
         } finally {
             stagingDatabase.close();
         }
@@ -55,14 +57,14 @@ public class ConcurrencyService {
      * 
      * @param stagingDatabase a connection to the staging database.
      * @param now the current time.
-     * @param runId the ID of the session to mark abandoned.
+     * @param run the session to mark abandoned.
      * @return whether the change was written out successfully. Failure typically
      * indicates the session has already finished.
      * @throws SQLException if there was a problem communicating with the staging
      * database.
      */
-    public boolean abandonSession(final Connection stagingDatabase, final int runId, final Timestamp now)
-            throws SQLException {        
+    public boolean abandonSession(final Connection stagingDatabase, final SynchronisationRun run, final Timestamp now)
+            throws SQLException {
         final PreparedStatement statement = stagingDatabase.prepareStatement(
             "UPDATE synchronisation_run "
                 + "SET end_time=?, result_code=? "
@@ -73,7 +75,7 @@ public class ConcurrencyService {
             
             statement.setTimestamp(paramIdx++, now);
             statement.setString(paramIdx++, SynchronisationResult.ABANDONED.name());
-            statement.setInt(paramIdx++, runId);
+            statement.setInt(paramIdx++, run.getRunId());
             return statement.executeUpdate() > 0;
         } finally {
             statement.close();
@@ -175,6 +177,169 @@ public class ConcurrencyService {
     }
 
     /**
+     * Marks a session's cache copying stage as completed.
+     * 
+     * @param run the session to mark as having had its copying stage completed.
+     * @return whether the change was written out successfully. Failure typically
+     * indicates the session has already finished.
+     * @throws SQLException if there was a problem communicating with the staging
+     * database.
+     */
+    public boolean markCacheCopyCompleted(final SynchronisationRun run)
+        throws SQLException {
+        final Connection stagingDatabase = this.getStagingDataSource().getConnection();
+        try {
+            return this. markCacheCopyCompleted(stagingDatabase, run, new Timestamp(System.currentTimeMillis()));
+        } finally {
+            stagingDatabase.close();
+        }
+    }
+    
+    /**
+     * Marks a session's cache copying stage as completed.
+     * 
+     * @param stagingDatabase a connection to the staging database.
+     * @param now the current time.
+     * @param run the session to mark as having had its copying stage
+     * completed.
+     * @return whether the change was written out successfully. Failure typically
+     * indicates the session has already finished.
+     * @throws SQLException if there was a problem communicating with the staging
+     * database.
+     */
+    public boolean markCacheCopyCompleted(final Connection stagingDatabase, final SynchronisationRun run,
+            final Timestamp now)
+            throws SQLException {        
+        final PreparedStatement statement = stagingDatabase.prepareStatement(
+            "UPDATE synchronisation_run "
+                + "SET cache_copy_completed=? "
+                + "WHERE run_id=? AND end_time IS NULL"
+            );
+        try {
+            int paramIdx = 1;
+            
+            statement.setTimestamp(paramIdx++, now);
+            statement.setInt(paramIdx++, run.getRunId());
+            if (statement.executeUpdate() > 0) {
+                this.getRunDao().refresh(run);
+                return true;
+            }
+        } finally {
+            statement.close();
+        }
+        
+        return false;
+    }
+
+    /**
+     * Marks a session's difference generation stage as completed.
+     * 
+     * @param run the session to mark as having had its copying stage completed.
+     * @return whether the change was written out successfully. Failure typically
+     * indicates the session has already finished.
+     * @throws SQLException if there was a problem communicating with the staging
+     * database.
+     */
+    public boolean markDiffCompleted(final SynchronisationRun run)
+        throws SQLException {
+        final Connection stagingDatabase = this.getStagingDataSource().getConnection();
+        try {
+            return this. markCacheCopyCompleted(stagingDatabase, run, new Timestamp(System.currentTimeMillis()));
+        } finally {
+            stagingDatabase.close();
+        }
+    }
+    
+    /**
+     * Marks a session's difference generation stage as completed.
+     * 
+     * @param stagingDatabase a connection to the staging database.
+     * @param now the current time.
+     * @param run the session to mark as having had its difference generation
+     * stage completed.
+     * @return whether the change was written out successfully. Failure typically
+     * indicates the session has already finished.
+     * @throws SQLException if there was a problem communicating with the staging
+     * database.
+     */
+    public boolean markDiffCompleted(final Connection stagingDatabase, final SynchronisationRun run,
+            final Timestamp now)
+            throws SQLException {        
+        final PreparedStatement statement = stagingDatabase.prepareStatement(
+            "UPDATE synchronisation_run "
+                + "SET diff_completed=? "
+                + "WHERE run_id=? AND end_time IS NULL"
+            );
+        try {
+            int paramIdx = 1;
+            
+            statement.setTimestamp(paramIdx++, now);
+            statement.setInt(paramIdx++, run.getRunId());
+            if (statement.executeUpdate() > 0) {
+                this.getRunDao().refresh(run);
+                return true;
+            }
+        } finally {
+            statement.close();
+        }
+        return false;
+    }
+
+    /**
+     * Marks a session's cache copying stage as completed.
+     * 
+     * @param run the session to mark as having succeeded.
+     * @return whether the change was written out successfully. Failure typically
+     * indicates the session has already finished.
+     * @throws SQLException if there was a problem communicating with the staging
+     * database.
+     */
+    public boolean markSucceeded(final SynchronisationRun run)
+        throws SQLException {
+        final Connection stagingDatabase = this.getStagingDataSource().getConnection();
+        try {
+            return this. markCacheCopyCompleted(stagingDatabase, run, new Timestamp(System.currentTimeMillis()));
+        } finally {
+            stagingDatabase.close();
+        }
+    }
+    
+    /**
+     * Marks a session's cache copying stage as completed.
+     * 
+     * @param stagingDatabase a connection to the staging database.
+     * @param now the current time.
+     * @param run the session to mark as having succeeded.
+     * @return whether the change was written out successfully. Failure typically
+     * indicates the session has already finished.
+     * @throws SQLException if there was a problem communicating with the staging
+     * database.
+     */
+    public boolean markSucceeded(final Connection stagingDatabase, final SynchronisationRun run, final Timestamp now)
+            throws SQLException {
+        final PreparedStatement statement = stagingDatabase.prepareStatement(
+            "UPDATE synchronisation_run "
+                + "SET end_time=?, result_code=? "
+                + "WHERE run_id=? AND end_time IS NULL"
+            );
+        try {
+            int paramIdx = 1;
+            
+            statement.setTimestamp(paramIdx++, now);
+            statement.setString(paramIdx++, SynchronisationResult.SUCCESS.name());
+            statement.setInt(paramIdx++, run.getRunId());
+            if (statement.executeUpdate() > 0) {
+                this.getRunDao().refresh(run);
+                return true;
+            }
+        } finally {
+            statement.close();
+        }
+        
+        return false;
+    }
+
+    /**
      * Starts a new run of the synchronisation process and returns the ID for
      * the run.
      *
@@ -187,12 +352,14 @@ public class ConcurrencyService {
             throws SynchronisationAlreadyInProgressException, SQLException {
         final int runId;
         final Timestamp now = new Timestamp(System.currentTimeMillis());
+        final SynchronisationRun run;
         final Connection stagingDatabase = this.getStagingDataSource().getConnection();
         
         try {
             runId = this.getNextId(stagingDatabase);
             
             insertRunRecord(stagingDatabase, runId, now);
+            run = this.getRunDao().getRun(runId);
             
             stagingDatabase.setAutoCommit(false);
             try {
@@ -200,7 +367,7 @@ public class ConcurrencyService {
             } catch(SynchronisationAlreadyInProgressException already) {
                 // Roll back the assignment of a previous run.
                 stagingDatabase.rollback();
-                this.abandonSession(stagingDatabase, runId, now);
+                this.abandonSession(stagingDatabase, run, now);
                 throw already;
             } finally {
                 // Rollback any uncomitted changes in case of a serious
@@ -211,7 +378,7 @@ public class ConcurrencyService {
             stagingDatabase.close();
         }
         
-        return this.getRunDao().getRun(runId);
+        return run;
     }
     
     /**

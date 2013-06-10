@@ -209,7 +209,6 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
         @Override
         public void run() {
             log.info("Running Learn/Timetabling synchronisation.");
-            SynchronisationRun run;
             
             try {
                 final ConcurrencyService concurrencyService = ScheduledJobManager.this.getConcurrencyService();
@@ -218,20 +217,11 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
                     throw new IllegalStateException("Concurrency service has not been wired in.");
                 }
             
-                run = concurrencyService.startNewRun();
-            }  catch (ConcurrencyService.SynchronisationAlreadyInProgressException ex) {
-                // This is expected under normal circumstances, due to more than one
-                // possible server trying to run the job. Ignore.
-                run = null;
-            } catch(SQLException e) {
-                log.error("Database error while starting new synchronisation run.", e);
-                run = null;
-            }
-            
-            if (null != run) {
-                final SynchronisationService service = ScheduledJobManager.this.getSynchronisationService();
+                final SynchronisationRun run = concurrencyService.startNewRun();
+                final SynchronisationService synchronisationService = ScheduledJobManager.this.getSynchronisationService();
+                
                 try {
-                    doSynchronisation(run, service);
+                    doSynchronisation(run, concurrencyService, synchronisationService);
                 } catch(PersistenceException e) {
                     run.setResult(SynchronisationResult.FATAL);
                     log.error("Error while persisting/loading entities in Learn.", e);
@@ -242,18 +232,24 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
                     run.setResult(SynchronisationResult.FATAL);
                     log.error("Error validating entities to be persisted in Learn.", e);
                 }
+            }  catch (ConcurrencyService.SynchronisationAlreadyInProgressException ex) {
+                // This is expected under normal circumstances, due to more than one
+                // possible server trying to run the job. Ignore.
+            } catch(SQLException e) {
+                log.error("Database error while starting new synchronisation run.", e);
             }
         }
 
         private void doSynchronisation(final SynchronisationRun run,
+                final ConcurrencyService concurrencyService,
                 final SynchronisationService synchronisationService)
             throws PersistenceException, SQLException, ValidationException {
             synchronisationService.synchroniseTimetablingData();
             synchronisationService.synchroniseEugexData();
-            run.setCacheCopyCompleted(new Date());
+            concurrencyService.markCacheCopyCompleted(run);
             
             synchronisationService.generateDiff(run);
-            run.setDiffCompleted(new Date());
+            concurrencyService.markDiffCompleted(run);
             
             synchronisationService.updateGroupDescriptions();
             synchronisationService.mapModulesToCourses();
@@ -262,8 +258,7 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
             synchronisationService.mapStudentSetsToUsers();
             synchronisationService.applyEnrolmentChanges(run);
             
-            run.setEndTime(new Timestamp(System.currentTimeMillis()));
-            run.setResult(SynchronisationResult.SUCCESS);
+            concurrencyService.markSucceeded(run);
         }
     }
 }
