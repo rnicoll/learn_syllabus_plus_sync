@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * Abstract service for cloning tables from one database to another. Intended
@@ -119,18 +120,41 @@ public abstract class AbstractCloneService extends Object {
             final String sourcePkField,
             final Map<String, String> fieldMappings)
             throws SQLException {
-        final String destinationPkField = fieldMappings.get(sourcePkField);
+        final SortedSet<String> sourcePkFields = new TreeSet<String>();
+        sourcePkFields.add(sourcePkField);
+        this.cloneResultSet(destinationTable, sourceRs, destinationRs, sourcePkFields, fieldMappings);
+    }
+
+    /**
+     * Clones the data in from one result set into another.
+     *
+     * @param destinationTable the name of the table to write records to.
+     * @param sourceRs the result set to read data from.
+     * @param destinationRs the result set to write data into.
+     * @param sourcePkField the name of the primary key field on the source
+     * table. Tables with compound primary keys are not supported.
+     * @param fieldMappings a mapping from source field names to destination
+     * fields.
+     * 
+     * @throws SQLException if there was a problem accessing one of the
+     * databases.
+     */
+    public void cloneResultSet(final String destinationTable,
+            final ResultSet sourceRs, final ResultSet destinationRs,
+            final SortedSet<String> sourcePkFields,
+            final Map<String, String> fieldMappings)
+            throws SQLException {        
         final CloningStatements cloningStatements = new CloningStatements(
                 destinationRs.getStatement().getConnection(),
-                destinationTable, sourcePkField,
+                destinationTable, sourcePkFields,
                 fieldMappings, destinationRs);
 
         // First, update existing records
         if (destinationRs.next()) {
-            String destinationPk = destinationRs.getString(destinationPkField);
+            PrimaryKey destinationPk = this.buildDestinationPk(destinationRs, sourcePkFields, fieldMappings);
             
             while (sourceRs.next()) {
-                final String sourcePk = sourceRs.getString(sourcePkField);
+                final PrimaryKey sourcePk = this.buildSourcePk(sourceRs, sourcePkFields);
 
                 // Continue onwards until we find a match
                 if (destinationPk.compareTo(sourcePk) < 0) {
@@ -138,7 +162,7 @@ public abstract class AbstractCloneService extends Object {
                     // to them.
                     
                     while (destinationRs.next()) {
-                        destinationPk = destinationRs.getString(destinationPkField);
+                        destinationPk = this.buildDestinationPk(destinationRs, sourcePkFields, fieldMappings);
                         if (destinationPk.compareTo(sourcePk) >= 0) {
                             break;
                         }
@@ -220,5 +244,79 @@ public abstract class AbstractCloneService extends Object {
         }
 
         return query.toString();
+    }
+    
+    private PrimaryKey buildDestinationPk(final ResultSet rs, final SortedSet<String> sourceFields,
+            final Map<String, String> fieldMappings) throws SQLException {
+        final String[] components = new String[sourceFields.size()];
+
+        int componentIdx = 0;
+        for (String sourceField: sourceFields) {
+            components[componentIdx++] = rs.getString(fieldMappings.get(sourceField));
+        }
+
+        return new PrimaryKey(components);
+    }
+    
+    private PrimaryKey buildSourcePk(final ResultSet rs, final SortedSet<String> sourceFields)
+            throws SQLException {
+        final String[] components = new String[sourceFields.size()];
+
+        int componentIdx = 0;
+        for (String sourceField: sourceFields) {
+            components[componentIdx++] = rs.getString(sourceField);
+        }
+
+        return new PrimaryKey(components);
+    }
+        
+    public class PrimaryKey extends Object implements Comparable<PrimaryKey> {
+        private final String[] components;
+        
+        public          PrimaryKey(final String[] setComponents) {
+            this.components = setComponents;
+        }
+        
+        @Override
+        public int compareTo(final PrimaryKey other) {
+            for (int componentIdx = 0; componentIdx < this.components.length; componentIdx++) {
+                int res = this.components[componentIdx].compareTo(other.components[componentIdx]);
+                
+                if (res != 0) {
+                    return res;
+                }
+            }
+            
+            return 0;
+        }
+        
+        @Override
+        public boolean equals(final Object o) {
+            if (!(o instanceof PrimaryKey)) {
+                return false;
+            }
+            
+            final PrimaryKey other = (PrimaryKey)o;
+            for (int componentIdx = 0; componentIdx < this.components.length; componentIdx++) {
+                int res = this.components[componentIdx].compareTo(other.components[componentIdx]);
+                
+                if (res != 0) {
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+        
+        @Override
+        public int hashCode() {
+            int hash = 1;
+            
+            for (int componentIdx = 0; componentIdx < this.components.length; componentIdx++) {
+                hash = hash * 31 + this.components[componentIdx].hashCode();
+            }
+            
+            return hash;
+        }
     }
 }
