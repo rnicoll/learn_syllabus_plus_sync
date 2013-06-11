@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import static org.junit.Assert.*;
 import org.springframework.test.context.ContextConfiguration;
@@ -70,7 +72,9 @@ public class AbstractCloneServiceTest extends AbstractJUnit4SpringContextTests {
         System.out.println("buildQuery");
         
         final String table = "ACTIVITY";
-        final List<String> pkFields = Collections.singletonList("ACTIVITY_ID");
+        final SortedSet<String> pkFields = new TreeSet<String>(){{
+            add("ACTIVITY_ID");
+        }};
         final Collection<String> allFields = pkFields;
         final AbstractCloneService instance = this.getService();
         final String expResult = "SELECT ACTIVITY_ID FROM ACTIVITY ORDER BY ACTIVITY_ID";
@@ -85,13 +89,36 @@ public class AbstractCloneServiceTest extends AbstractJUnit4SpringContextTests {
      */
     @org.junit.Test
     public void testBuildQueryWithParameters() {
-        System.out.println("buildQuery");
+        System.out.println("buildQueryWithParameters");
         
         final String table = "ACTIVITY";
-        final List<String> pkFields = Collections.singletonList("ACTIVITY_ID");
+        final SortedSet<String> pkFields = new TreeSet<String>(){{
+            add("ACTIVITY_ID");
+        }};
         final Collection<String> allFields = Arrays.asList(new String[] {"ACTIVITY_ID", "FIELD_1", "FIELD_2"});
         final AbstractCloneService instance = this.getService();
         final String expResult = "SELECT ACTIVITY_ID, FIELD_1, FIELD_2 FROM ACTIVITY ORDER BY ACTIVITY_ID";
+        final String result = instance.buildQuery(table, pkFields, allFields);
+        
+        assertEquals(expResult, result);
+    }
+
+    /**
+     * Tests building a query against a table, where there are parameters
+     * beyond the primary key.
+     */
+    @org.junit.Test
+    public void testBuildQueryWithCompoundPrimaryKey() {
+        System.out.println("buildQueryWithCompoundPrimaryKey");
+        
+        final String table = "ACTIVITY";
+        final SortedSet<String> pkFields = new TreeSet<String>(){{
+            add("ACTIVITY_ID");
+            add("TEMPLATE_ID");
+        }};
+        final Collection<String> allFields = Arrays.asList(new String[] {"ACTIVITY_ID", "TEMPLATE_ID", "FIELD_1", "FIELD_2"});
+        final AbstractCloneService instance = this.getService();
+        final String expResult = "SELECT ACTIVITY_ID, TEMPLATE_ID, FIELD_1, FIELD_2 FROM ACTIVITY ORDER BY ACTIVITY_ID, TEMPLATE_ID";
         final String result = instance.buildQuery(table, pkFields, allFields);
         
         assertEquals(expResult, result);
