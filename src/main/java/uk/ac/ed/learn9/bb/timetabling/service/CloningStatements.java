@@ -62,14 +62,14 @@ class CloningStatements extends Object {
                 .append(table).append(" (");
         final StringBuilder queryParameters = new StringBuilder();
         
-        for (String otherField : orderedFields) {
+        for (String fieldName : orderedFields) {
             if (firstField) {
                 firstField = false;
             } else {
                 query.append(", ");
                 queryParameters.append(", ");
             }
-            query.append(otherField);
+            query.append(fieldName);
             queryParameters.append("?");
         }
         query.append(") VALUES (").append(queryParameters).append(")");
@@ -81,6 +81,8 @@ class CloningStatements extends Object {
             final SortedSet<String> sourcePrimaryKeyFields,
             final SortedMap<String, String> fieldMappings)
             throws SQLException {
+        assert !sourcePrimaryKeyFields.isEmpty();
+        assert fieldMappings.size() > sourcePrimaryKeyFields.size();
         
         if (fieldMappings.isEmpty()) {
             throw new IllegalArgumentException("Ordered fields set must not be empty, as it would mean there are no fields to update.");

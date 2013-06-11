@@ -4,10 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -22,6 +19,31 @@ import java.util.TreeSet;
  * queries.
  */
 public abstract class AbstractCloneService extends Object {
+    /**
+     * Enum to describe which parts of a synchronisation should be done.
+     */
+    public enum Mode {
+        INSERT_UPDATE(true, true),
+        INSERT_ONLY(true,false),
+        UPDATE_ONLY(false,true),
+        DRY_RUN(false,false);
+        
+        private boolean doInsert;
+        private boolean doUpdate;
+        
+                Mode(final boolean setInsert, final boolean setUpdate) {
+            this.doInsert = setInsert;
+            this.doUpdate = setUpdate;
+        }
+                
+        public boolean getInsert() {
+            return this.doInsert;
+        }
+                
+        public boolean getUpdate() {
+            return this.doUpdate;
+        }
+    }
 
     /**
      * Clones the data in a table (or view) from one database to another.
@@ -146,7 +168,7 @@ public abstract class AbstractCloneService extends Object {
             final ResultSet sourceRs = sourceStatement.executeQuery();
             try {
                 cloneResultSet(destinationTable, sourceRs, destinationRs,
-                    sourcePkField, fieldMappings);
+                    sourcePkField, fieldMappings, Mode.INSERT_UPDATE);
             } finally {
                 sourceRs.close();
             }
@@ -178,7 +200,7 @@ public abstract class AbstractCloneService extends Object {
             final ResultSet sourceRs = sourceStatement.executeQuery();
             try {
                 cloneResultSet(destinationTable, sourceRs, destinationRs,
-                    sourcePkFields, fieldMappings);
+                    sourcePkFields, fieldMappings, Mode.INSERT_UPDATE);
             } finally {
                 sourceRs.close();
             }
@@ -204,12 +226,13 @@ public abstract class AbstractCloneService extends Object {
     public void cloneResultSet(final String destinationTable,
             final ResultSet sourceRs, final ResultSet destinationRs,
             final String sourcePkField,
-            final Map<String, String> fieldMappings)
+            final Map<String, String> fieldMappings, final Mode mode)
             throws SQLException {
         final SortedSet<String> sourcePkFields = new TreeSet<String>(){{
             add(sourcePkField);
         }};
-        this.cloneResultSet(destinationTable, sourceRs, destinationRs, sourcePkFields, fieldMappings);
+        this.cloneResultSet(destinationTable, sourceRs, destinationRs, sourcePkFields, fieldMappings,
+            mode);
     }
 
     /**
@@ -226,10 +249,9 @@ public abstract class AbstractCloneService extends Object {
      * @throws SQLException if there was a problem accessing one of the
      * databases.
      */
-    public void cloneResultSet(final String destinationTable,
-            final ResultSet sourceRs, final ResultSet destinationRs,
-            final SortedSet<String> sourcePkFields,
-            final Map<String, String> fieldMappings)
+    public void cloneResultSet(final String destinationTable, final ResultSet sourceRs, final ResultSet destinationRs,
+            final SortedSet<String> sourcePkFields, final Map<String, String> fieldMappings,
+            final Mode mode)
             throws SQLException {        
         final CloningStatements cloningStatements = new CloningStatements(
                 destinationRs.getStatement().getConnection(),
@@ -256,7 +278,9 @@ public abstract class AbstractCloneService extends Object {
                     }
                     if (destinationRs.isAfterLast()) {
                         // No match, insert and then jump to just inserting new records
-                        cloningStatements.insert(sourceRs);
+                        if (mode.getInsert()) {
+                            cloningStatements.insert(sourceRs);
+                        }
                         break;
                     }
                 }
@@ -291,8 +315,10 @@ public abstract class AbstractCloneService extends Object {
         }
 
         // Insert any remaining rows
-        while (sourceRs.next()) {
-            cloningStatements.insert(sourceRs);
+        if (mode.getInsert()) {
+            while (sourceRs.next()) {
+                cloningStatements.insert(sourceRs);
+            }
         }
     }
 
@@ -338,6 +364,19 @@ public abstract class AbstractCloneService extends Object {
         return query.toString();
     }
     
+    /**
+     * Builds the primary key from a row taken from the table that data is being
+     * written into.
+     * 
+     * @param rs the result set containing the row of data to build a primary key from.
+     * @param sourceFields the primary key fields in the source table.
+     * @param fieldMappings a mapping from fields in the source table, to those
+     * in the destination table. Used to convert the source fields list into
+     * destination fields.
+     * @return the extracted primary key.
+     * @throws SQLException if there was a problem reading data from the result
+     * set.
+     */
     private PrimaryKey buildDestinationPk(final ResultSet rs, final SortedSet<String> sourceFields,
             final Map<String, String> fieldMappings) throws SQLException {
         final String[] components = new String[sourceFields.size()];
@@ -350,6 +389,16 @@ public abstract class AbstractCloneService extends Object {
         return new PrimaryKey(components);
     }
     
+    /**
+     * Builds the primary key from a row taken from the table that data is being
+     * read from.
+     * 
+     * @param rs the result set containing the row of data to build a primary key from.
+     * @param sourceFields the primary key fields in the source table.
+     * @return the extracted primary key.
+     * @throws SQLException if there was a problem reading data from the result
+     * set.
+     */
     private PrimaryKey buildSourcePk(final ResultSet rs, final SortedSet<String> sourceFields)
             throws SQLException {
         final String[] components = new String[sourceFields.size()];
@@ -361,7 +410,11 @@ public abstract class AbstractCloneService extends Object {
 
         return new PrimaryKey(components);
     }
-        
+    
+    /**
+     * Generic class for storing a primary key extracted from a database
+     * table row.
+     */
     public class PrimaryKey extends Object implements Comparable<PrimaryKey> {
         private final String[] components;
         
