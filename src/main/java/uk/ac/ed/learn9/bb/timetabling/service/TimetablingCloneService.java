@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.springframework.stereotype.Service;
 
@@ -190,6 +192,10 @@ public class TimetablingCloneService extends AbstractCloneService {
     public void cloneActivityParents(final Connection source, final Connection destination)
             throws SQLException {
         final Map<String, String> fieldMappings = new HashMap<String, String>();
+        final SortedSet<String> primaryKeys = new TreeSet<String>(){{
+            add(PRIMARY_KEY_TIMETABLING_TABLES);
+            add("PARENT_ACTS");
+        }};
 
         for (String[] mapping : ACTIVITY_PARENTS_FIELD_MAPPINGS) {
             fieldMappings.put(mapping[0], mapping[1]);
@@ -197,8 +203,7 @@ public class TimetablingCloneService extends AbstractCloneService {
 
         cloneTable(source, destination,
                 REPORTING_ACTIVITY_PARENTS_TABLE, STAGING_ACTIVITY_PARENTS_TABLE,
-                PRIMARY_KEY_TIMETABLING_TABLES,
-                fieldMappings);
+                primaryKeys, fieldMappings);
     }
 
     /**
