@@ -233,7 +233,7 @@ public class BlackboardService {
                     "(SELECT tt_activity_id, tt_activity_name, learn_group_id, learn_group_name, "
                     + "learn_course_id, description "
                     + "FROM non_jta_sync_activity_vw "
-                        + "WHERE learn_course_id IS NOT NULL AND learn_group_id IS NOT NULL"
+                        + "WHERE learn_course_id IS NOT NULL AND learn_group_id IS NULL"
                     + ")"
                     + " UNION "
                     + "(SELECT tt_activity_id, tt_activity_name, learn_group_id, learn_group_name, "
@@ -306,8 +306,6 @@ public class BlackboardService {
                     final String learnCourseCode = rs.getString("effective_course_code");
 
                     if (!courseDbLoader.doesCourseIdExist(learnCourseCode)) {
-                        logger.debug("Course \""
-                            + learnCourseCode + "\" does not exist in Learn.");
                         continue;
                     }
 
@@ -325,10 +323,6 @@ public class BlackboardService {
                         // No parent course, ignore
                         courseId = course.getId();
                     }
-
-                    logger.debug("Writing out Learn course ID \""
-                        + courseId.getExternalString() + "\" for module \""
-                        + rs.getString("tt_module_id") + "\".");
                     
                     int paramIdx = 1;
                     updateStatement.setString(paramIdx++, courseId.getExternalString());
