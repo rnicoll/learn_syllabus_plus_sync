@@ -77,17 +77,16 @@ public class ConfigureController extends Object {
         
         service.synchroniseTimetablingData();
         service.synchroniseEugexData();
-        run.setCacheCopyCompleted(new Date());
+        concurrencyService.markCacheCopyCompleted(run);
         service.generateDiff(run);
-        run.setDiffCompleted(new Date());
+        concurrencyService.markDiffCompleted(run);
         service.updateGroupDescriptions();
         service.mapModulesToCourses();
         service.createGroupsForActivities();
         service.mapStudentSetsToUsers();
         service.applyEnrolmentChanges(run);
-
-        run.setEndTime(new Timestamp(System.currentTimeMillis()));
-        run.setResult(SynchronisationResult.SUCCESS);
+        
+        concurrencyService.markSucceeded(run);
                 
         return this.getConfigure(request, response);
     }
