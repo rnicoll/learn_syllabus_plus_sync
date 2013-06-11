@@ -60,8 +60,9 @@
             <permission type="persist" name="userlifecycleeventpropertyimpl"
                         actions="create" />
 
-            <permission type="persist" name="group" actions="create,modify" />
-            <permission type="persist" name="groupmembership" actions="create,modify" />
+            <permission type="persist" name="group" actions="create,modify,delete" />
+            <permission type="persist" name="availablegrouptool" actions="create,modify,delete" />
+            <permission type="persist" name="groupmembership" actions="create,modify,delete" />
             
             <permission type="java.util.PropertyPermission" name="*"
                         actions="read,write" />
