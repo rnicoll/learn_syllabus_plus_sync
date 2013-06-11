@@ -169,7 +169,7 @@ public class BlackboardService {
                     studentCourseMemberships = getStudentCourseMemberships(courseMembershipDbLoader, courseId);
                 }
 
-                temp = rs.getString("learn_student_id");
+                temp = rs.getString("learn_user_id");
                 if (null == temp) {
                     outcome.markStudentMissing(changeId);
                     continue;
