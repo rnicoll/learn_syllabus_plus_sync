@@ -38,7 +38,23 @@ public class EnrolmentChange extends Object implements Comparable<EnrolmentChang
 
     @Override
     public int compareTo(final EnrolmentChange other) {
-        return this.getUpdateCompleted().compareTo(other.getUpdateCompleted());
+        if (null == this.getUpdateCompleted()) {
+            if (null == other.getUpdateCompleted()) {
+                return this.changeId - other.changeId;
+            } else {
+                return -1;
+            }
+        } else if (null == other.getUpdateCompleted()) {
+            return 1;
+        } else {
+            int timeComparison = this.getUpdateCompleted().compareTo(other.getUpdateCompleted());
+            
+            if (0 == timeComparison) {
+                return this.changeId - other.changeId;
+            } else {
+                return timeComparison;
+            }
+        }
     }
     
     @Override
