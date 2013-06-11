@@ -313,6 +313,7 @@ public class SynchronisationService extends Object {
 
             try {
                 // this.getMergedCoursesService().resolveMergedCourses(destination);
+                this.getBlackboardService().mapModulesToCourses(destination);
             } finally {
                 source.close();
             }
