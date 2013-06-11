@@ -244,7 +244,7 @@ public class ConcurrencyService {
         throws SQLException {
         final Connection stagingDatabase = this.getStagingDataSource().getConnection();
         try {
-            return this. markCacheCopyCompleted(stagingDatabase, run, new Timestamp(System.currentTimeMillis()));
+            return this. markDiffCompleted(stagingDatabase, run, new Timestamp(System.currentTimeMillis()));
         } finally {
             stagingDatabase.close();
         }
