@@ -23,23 +23,21 @@ class CloningStatements extends Object {
     private final PreparedStatement updateStatement;
     private final SortedSet<String> sourcePrimaryKeyFields;
     private final SortedMap<String, String> fieldMappings = new TreeMap<String, String>();
-    private final List<String> orderedFields = new ArrayList<String>();
     private final Map<String, Integer> fieldTypes = new HashMap<String, Integer>();
 
     public CloningStatements(final Connection database, final String setTable,
             final SortedSet<String> setSourcePrimaryKeyFields,
             final Map<String, String> setFieldMappings, final ResultSet destinationRs)
                 throws SQLException {
+        final List<String> orderedFields = new ArrayList<String>();
+    
         this.fieldMappings.putAll(setFieldMappings);
-        
-        for (Map.Entry fieldMapping: this.fieldMappings.entrySet()) {
-            this.orderedFields.add((String)fieldMapping.getValue());
-        }
+        orderedFields.addAll(this.fieldMappings.values());
         
         this.sourcePrimaryKeyFields = setSourcePrimaryKeyFields;
         
         this.insertStatement = database.prepareStatement(buildInsertStatement(setTable,
-            this.orderedFields));
+            orderedFields));
         this.updateStatement = database.prepareStatement(buildUpdateStatement(setTable,
             this.sourcePrimaryKeyFields, this.fieldMappings));
         final ResultSetMetaData metadata = destinationRs.getMetaData();
@@ -53,10 +51,15 @@ class CloningStatements extends Object {
         }
     }
     
+    /**
+     * Builds the INSERT statement to write into the destination database.
+     * 
+     * @param table the table to write into.
+     * @param orderedFields an ordered list of fields on the destination table.
+     * @return an SQL statement.
+     */
     private static String buildInsertStatement(final String table,
-            final List<String> orderedFields)
-            throws SQLException {
-        
+            final List<String> orderedFields) {
         boolean firstField = true;
         final StringBuilder query = new StringBuilder("INSERT INTO ")
                 .append(table).append(" (");
@@ -79,8 +82,7 @@ class CloningStatements extends Object {
     
     private static String buildUpdateStatement(final String table,
             final SortedSet<String> sourcePrimaryKeyFields,
-            final SortedMap<String, String> fieldMappings)
-            throws SQLException {
+            final SortedMap<String, String> fieldMappings) {
         assert !sourcePrimaryKeyFields.isEmpty();
         assert fieldMappings.size() > sourcePrimaryKeyFields.size();
         
@@ -130,7 +132,8 @@ class CloningStatements extends Object {
      * @throws SQLException 
      */
     private static void copyIntoStatement(final PreparedStatement statement, final ResultSet sourceRow,
-        final int colIdx, final Map.Entry<String, String> entry, final int colType) throws SQLException {
+        final int colIdx, final Map.Entry<String, String> entry, final int colType,
+        final boolean allowNull) throws SQLException {        
         switch (colType) {
             case Types.INTEGER:
                 statement.setInt(colIdx, sourceRow.getInt(entry.getKey()));
@@ -154,8 +157,26 @@ class CloningStatements extends Object {
                 throw new UnsupportedOperationException("Unsure how to copy column \""
                     + entry.getKey() + "\" of type #" + colType);
         }
+        
+        // Set it to null if the value retrieved was null.
+        if (sourceRow.wasNull()) {
+            if (!allowNull) {
+                throw new SQLException("Column \""
+                    + entry.getKey() + "\" must not be null, but found value was null.");
+            }
+            
+            statement.setNull(colIdx, colType);
+        }
     }
 
+    /**
+     * Insert a row into the destination database based on data in the current
+     * row of the source result set.
+     * 
+     * @param sourceRow the row to read data from.
+     * @return the number of rows insert (should always be 1).
+     * @throws SQLException if anything went wrong with the insertion.
+     */
     public int insert(final ResultSet sourceRow) throws SQLException {
         int colIdx = 1;
         
@@ -169,7 +190,7 @@ class CloningStatements extends Object {
             }
             
             copyIntoStatement(this.insertStatement, sourceRow, colIdx++,
-                    entry, colType);
+                    entry, colType, !this.sourcePrimaryKeyFields.contains(entry.getKey()));
         }
         
         return this.insertStatement.executeUpdate();
@@ -188,7 +209,7 @@ class CloningStatements extends Object {
                     + entry.getValue());
             }
             copyIntoStatement(this.updateStatement, sourceRow, colIdx++,
-                    entry, colType);
+                    entry, colType, !this.sourcePrimaryKeyFields.contains(entry.getKey()));
         }
         for (String sourcePrimaryKeyField: this.sourcePrimaryKeyFields) {
             final String sourcePk = sourceRow.getString(sourcePrimaryKeyField);

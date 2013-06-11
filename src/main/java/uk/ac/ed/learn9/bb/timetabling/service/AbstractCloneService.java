@@ -305,11 +305,16 @@ public abstract class AbstractCloneService extends Object {
                                 || null == destinationVal
                                 || !sourceVal.equals(destinationVal)) {
                             // There are differences, sync
-                            cloningStatements.update(sourceRs);
+                            
+                            if (mode.getUpdate()) {
+                                cloningStatements.update(sourceRs);
+                            }
                         }
                     }
                 } else if (destinationPk.compareTo(sourcePk) > 0) {
-                    cloningStatements.insert(sourceRs);
+                    if (mode.getInsert()) {
+                        cloningStatements.insert(sourceRs);
+                    }
                 }
             }
         }
