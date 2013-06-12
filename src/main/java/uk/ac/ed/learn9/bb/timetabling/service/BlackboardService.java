@@ -42,12 +42,6 @@ import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 @Service
 public class BlackboardService {
     private static final Logger logger = Logger.getLogger(BlackboardService.class);
-    
-    /**
-     * Identifier of role students have within a group, for creating new
-     * group memberships.
-     */
-    public static final String GROUP_ROLE_IDENTIFIER_STUDENT = "student";
 
     /**
      * Applies pending changes to Learn. Normally this would be called by
@@ -170,7 +164,7 @@ public class BlackboardService {
 
                 final Id courseId = Id.generateId(Course.DATA_TYPE, courseIdStr);
                 final Id groupId = Id.generateId(Group.DATA_TYPE, groupIdStr);
-                final Id studentId = Id.generateId(User.DATA_TYPE, userIdStr);
+                final Id userId = Id.generateId(User.DATA_TYPE, userIdStr);
 
                 if (null == currentCourseId
                         || !currentCourseId.equals(courseId)) {
@@ -185,9 +179,17 @@ public class BlackboardService {
                     continue;
                 }
                 
+                // Load the group membership if possible.
+                GroupMembership groupMembership;
+                try {
+                    groupMembership = groupMembershipDbLoader.loadByGroupAndUserId(groupId, userId);
+                } catch(KeyNotFoundException e) {
+                    groupMembership = null;
+                }
                 switch (changeType) {
                     case ADD:
-                        final CourseMembership courseMembership = studentCourseMemberships.get(studentId);
+                        // final CourseMembership courseMembership = studentCourseMemberships.get(studentId);
+                        final CourseMembership courseMembership = courseMembershipDbLoader.loadByCourseAndUserId(courseId, userId);
 
                         if (null == courseMembership) {
                             // Student is not on this course - probably a delay
@@ -195,18 +197,19 @@ public class BlackboardService {
                             outcome.markNotOnCourse(changeId);
                             continue;
                         }
-
-                        groupMembershipDbPersister.persist(buildGroupMembership(courseMembership, groupId));
-
-                        outcome.markSuccess(changeId);
+                        
+                        if (null == groupMembership) {
+                            groupMembershipDbPersister.persist(buildGroupMembership(courseMembership, groupId));
+                            outcome.markSuccess(changeId);
+                        } else {
+                            outcome.markAlreadyInGroup(changeId);
+                        }
                         break;
                     case REMOVE:
-                        try {
-                            final GroupMembership groupMembership = groupMembershipDbLoader.loadByGroupAndUserId(groupId, studentId);
-
+                        if (null != groupMembership) {
                             groupMembershipDbPersister.deleteById(groupMembership.getId());
                             outcome.markSuccess(changeId);
-                        } catch (KeyNotFoundException e) {
+                        } else {
                             outcome.markAlreadyRemoved(changeId);
                         }
                         break;
@@ -449,7 +452,7 @@ public class BlackboardService {
 
         groupMembership.setCourseMembershipId(courseMembership.getId());
         groupMembership.setGroupId(groupId);
-        groupMembership.setGroupRoleIdentifier(GROUP_ROLE_IDENTIFIER_STUDENT);
+        // groupMembership.setGroupRoleIdentifier(CourseMembership.Role.STUDENT.getIdentifier());
 
         return groupMembership;
     }
