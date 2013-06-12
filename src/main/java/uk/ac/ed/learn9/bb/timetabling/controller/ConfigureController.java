@@ -75,18 +75,26 @@ public class ConfigureController extends Object {
         
         final SynchronisationService service = this.getSynchronisationService();
         
-        service.synchroniseTimetablingData();
-        service.synchroniseEugexData();
-        concurrencyService.markCacheCopyCompleted(run);
-        service.generateDiff(run);
-        concurrencyService.markDiffCompleted(run);
-        service.updateGroupDescriptions();
-        service.mapModulesToCourses();
-        service.createGroupsForActivities();
-        service.mapStudentSetsToUsers();
-        service.applyEnrolmentChanges(run);
-        
-        concurrencyService.markSucceeded(run);
+        try {
+            service.synchroniseTimetablingData();
+            service.synchroniseEugexData();
+            concurrencyService.markCacheCopyCompleted(run);
+            service.generateDiff(run);
+            concurrencyService.markDiffCompleted(run);
+            service.updateGroupDescriptions();
+            service.mapModulesToCourses();
+            service.createGroupsForActivities();
+            service.mapStudentSetsToUsers();
+            service.applyEnrolmentChanges(run);
+
+            concurrencyService.markSucceeded(run);
+        } catch(Exception e) {
+            try {
+                concurrencyService.markErrored(run, e);
+            } catch(SQLException logError) {
+                // Give up
+            }
+        }
                 
         return this.getConfigure(request, response);
     }

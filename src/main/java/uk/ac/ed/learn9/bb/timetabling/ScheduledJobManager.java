@@ -221,13 +221,13 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
                 try {
                     doSynchronisation(run, concurrencyService, synchronisationService);
                 } catch(PersistenceException e) {
-                    run.setResult(SynchronisationResult.FATAL);
+                    concurrencyService.markErrored(run, e);
                     log.error("Error while persisting/loading entities in Learn.", e);
                 } catch(SQLException e) {
-                    run.setResult(SynchronisationResult.FATAL);
+                    concurrencyService.markErrored(run, e);
                     log.error("Database error while synchronising groups from Timetabling.", e);
                 } catch(ValidationException e) {
-                    run.setResult(SynchronisationResult.FATAL);
+                    concurrencyService.markErrored(run, e);
                     log.error("Error validating entities to be persisted in Learn.", e);
                 }
             }  catch (ConcurrencyService.SynchronisationAlreadyInProgressException ex) {
