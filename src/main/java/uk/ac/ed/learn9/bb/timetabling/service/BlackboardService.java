@@ -6,9 +6,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.springframework.stereotype.Service;
+
 import blackboard.base.FormattedText;
 import blackboard.data.ValidationException;
 import blackboard.data.course.Course;
@@ -28,8 +32,6 @@ import blackboard.persist.course.GroupDbPersister;
 import blackboard.persist.course.GroupMembershipDbLoader;
 import blackboard.persist.course.GroupMembershipDbPersister;
 import blackboard.persist.user.UserDbLoader;
-
-import org.springframework.stereotype.Service;
 
 import uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
@@ -134,48 +136,55 @@ public class BlackboardService {
     private void applyEnrolmentChanges(final PreparedStatement queryStatement, final ChangeOutcomeUpdateStatement outcome)
             throws PersistenceException, SQLException, ValidationException {
         final CourseMembershipDbLoader courseMembershipDbLoader = this.getCourseMembershipDbLoader();
+        final GroupDbLoader groupDbLoader = this.getGroupDbLoader();
         final GroupMembershipDbLoader groupMembershipDbLoader = this.getGroupMembershipDbLoader();
         final GroupMembershipDbPersister groupMembershipDbPersister = this.getGroupMembershipDbPersister();
 
         Id currentCourseId = null;
         Map<Id, CourseMembership> studentCourseMemberships = null;
+        Set<Id> validGroupIds = null;
 
         final ResultSet rs = queryStatement.executeQuery();
         try {
             while (rs.next()) {
                 final EnrolmentChange.Type changeType = EnrolmentChange.Type.valueOf(rs.getString("change_type"));
                 final int changeId = rs.getInt("change_id");
-                String temp = rs.getString("learn_course_id");
+                final String courseIdStr = rs.getString("learn_course_id");
+                final String groupIdStr = rs.getString("learn_group_id");
+                final String userIdStr = rs.getString("learn_user_id");
 
-                if (null == temp) {
+                if (null == courseIdStr) {
                     outcome.markCourseMissing(changeId);
                     continue;
                 }
 
-                final Id courseId = Id.generateId(Course.DATA_TYPE, temp);
-
-                temp = rs.getString("learn_group_id");
-                if (null == temp) {
+                if (null == groupIdStr) {
                     outcome.markGroupMissing(changeId);
                     continue;
                 }
 
-                final Id groupId = Id.generateId(Group.DATA_TYPE, temp);
+                if (null == userIdStr) {
+                    outcome.markStudentMissing(changeId);
+                    continue;
+                }
+
+                final Id courseId = Id.generateId(Course.DATA_TYPE, courseIdStr);
+                final Id groupId = Id.generateId(Group.DATA_TYPE, groupIdStr);
+                final Id studentId = Id.generateId(User.DATA_TYPE, userIdStr);
 
                 if (null == currentCourseId
                         || !currentCourseId.equals(courseId)) {
                     // Load student memberships on the current course
                     currentCourseId = courseId;
                     studentCourseMemberships = getStudentCourseMemberships(courseMembershipDbLoader, courseId);
+                    validGroupIds = getCourseGroupIds(groupDbLoader, courseId);
                 }
 
-                temp = rs.getString("learn_user_id");
-                if (null == temp) {
-                    outcome.markStudentMissing(changeId);
+                if (!validGroupIds.contains(groupId)) {
+                    outcome.markGroupMissing(changeId);
                     continue;
                 }
-
-                final Id studentId = Id.generateId(User.DATA_TYPE, temp);
+                
                 switch (changeType) {
                     case ADD:
                         final CourseMembership courseMembership = studentCourseMemberships.get(studentId);
@@ -273,6 +282,25 @@ public class BlackboardService {
         } finally {
             updateStatement.close();
         }
+    }
+    
+    /**
+     * Get the set of valid group IDs within a course.
+     * 
+     * @param groupDbLoader the group loader to use.
+     * @param courseId the ID of the course to retrieve groups for.
+     * @return a set of group IDs
+     * @throws PersistenceException if there was a problem loading group details.
+     */
+    public Set<Id> getCourseGroupIds(final GroupDbLoader groupDbLoader, final Id courseId)
+        throws KeyNotFoundException, PersistenceException {
+        final Set<Id> groupIds = new HashSet<Id>();
+        
+        for (Group group: groupDbLoader.loadByCourseId(courseId)) {
+            groupIds.add(group.getId());
+        }
+        
+        return groupIds;
     }
 
     /**
