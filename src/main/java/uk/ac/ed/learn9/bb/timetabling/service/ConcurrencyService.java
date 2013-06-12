@@ -286,6 +286,65 @@ public class ConcurrencyService {
     }
 
     /**
+     * Marks a session as ending in an error state.
+     * 
+     * @param run the session to mark as having succeeded.
+     * @param cause the cause of the error.
+     * @return whether the change was written out successfully. Failure typically
+     * indicates the session has already finished.
+     * @throws SQLException if there was a problem communicating with the staging
+     * database.
+     */
+    public boolean markErrored(final SynchronisationRun run, final Throwable cause)
+        throws SQLException {
+        final Connection stagingDatabase = this.getStagingDataSource().getConnection();
+        try {
+            return this.markErrored(stagingDatabase, run, cause, new Timestamp(System.currentTimeMillis()));
+        } finally {
+            stagingDatabase.close();
+        }
+    }
+    
+    /**
+     * Marks a session's cache copying stage as completed.
+     * 
+     * @param stagingDatabase a connection to the staging database.
+     * @param run the session to mark as having succeeded.
+     * @param cause the cause of the error.
+     * @param now the current time.
+     * @return whether the change was written out successfully. Failure typically
+     * indicates the session has already finished.
+     * @throws SQLException if there was a problem communicating with the staging
+     * database.
+     */
+    public boolean markErrored(final Connection stagingDatabase, final SynchronisationRun run,
+            final Throwable cause, final Timestamp now)
+            throws SQLException {
+        // XXX: Should log the error in the database.
+        
+        final PreparedStatement statement = stagingDatabase.prepareStatement(
+            "UPDATE synchronisation_run "
+                + "SET end_time=?, result_code=? "
+                + "WHERE run_id=? AND end_time IS NULL"
+            );
+        try {
+            int paramIdx = 1;
+            
+            statement.setTimestamp(paramIdx++, now);
+            statement.setString(paramIdx++, SynchronisationResult.FATAL.name());
+            statement.setInt(paramIdx++, run.getRunId());
+            if (statement.executeUpdate() > 0) {
+                this.getRunDao().refresh(run);
+                return true;
+            }
+        } finally {
+            statement.close();
+        }
+        
+        return false;
+    }
+
+    /**
      * Marks a session's cache copying stage as completed.
      * 
      * @param run the session to mark as having succeeded.
@@ -298,7 +357,7 @@ public class ConcurrencyService {
         throws SQLException {
         final Connection stagingDatabase = this.getStagingDataSource().getConnection();
         try {
-            return this. markCacheCopyCompleted(stagingDatabase, run, new Timestamp(System.currentTimeMillis()));
+            return this. markSucceeded(stagingDatabase, run, new Timestamp(System.currentTimeMillis()));
         } finally {
             stagingDatabase.close();
         }
