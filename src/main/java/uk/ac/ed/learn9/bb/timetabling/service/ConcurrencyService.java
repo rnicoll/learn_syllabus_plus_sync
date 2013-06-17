@@ -235,11 +235,13 @@ public class ConcurrencyService {
      */
     public int clearEnrolmentCache(final Connection stagingDatabase, final Timestamp before)
             throws SQLException {
-        final PreparedStatement statement = stagingDatabase.prepareStatement("DELETE FROM synchronisation_run "
-            + "WHERE end_time<? AND result_code=? AND run_id IN "
-                + "(SELECT p.prev_run_id FROM synchronisation_run_prev p "
-                    + "JOIN synchronisation_run r ON r.run_id=p.run_id "
-                    + "WHERE r.diff_completed IS NOT NULL)");
+        final PreparedStatement statement = stagingDatabase.prepareStatement("DELETE FROM cache_enrolment "
+            + "WHERE run_id IN "
+                + "(SELECT r.run_id "
+                    + "FROM synchronisation_run r"
+                        + "JOIN synchronisation_run_prev p ON r.run_id=p.previous_run_id "
+                        + "JOIN synchronisation_run pr ON p.run_id=pr.run_id "
+                    + "WHERE r.end_time<? AND pr.result_code=?)");
         try {
             int paramIdx = 1;
             statement.setTimestamp(paramIdx++, before);
