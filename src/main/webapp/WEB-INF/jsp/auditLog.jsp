@@ -4,6 +4,7 @@
 <%@ taglib uri="/bbData"  prefix="bbData"%>
 <%@ taglib uri="/bbUI" prefix="bbUI" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 
 <bbNG:learningSystemPage title="Timetabling Groups" authentication="Y" entitlement="course.content.VIEW">
@@ -17,11 +18,11 @@
 
     <c:choose>
         <c:when test="${fn:length(changes) gt 0}">
-            <table class="activity_list">
+            <table style="border-collapse: collapse; border: thin solid black; width: 80%;">
                 <thead>
-                    <tr>
-                        <th>Username</th>
+                    <tr style="border: thin solid black;">
                         <th>Activity</th>
+                        <th>Username</th>
                         <th>Group</th>
                         <th>Action</th>
                         <th>Completed</th>
@@ -30,13 +31,13 @@
                 </thead>
                 <tbody>
                     <c:forEach items="${changes}" var="change">
-                        <tr>
+                        <tr style="border: thin solid black;">
+                            <td>${fn:escapeXml(change.activityName)}</td>
                             <td>${fn:escapeXml(change.username)}</td>
-                            <td>${fn:escapeXml(change.activityName)}</td>>
                             <td>${fn:escapeXml(change.groupName)}</td>
                             <td>${fn:escapeXml(change.changeType)}</td>
-                            <td><!-- FIXME --></td>
-                            <td><!-- FIXME --></td>
+                            <td><c:if test="${not empty change.updateCompleted}"><fmt:formatDate value="${change.updateCompleted}" type="BOTH" dateStyle="MEDIUM" timeStyle="SHORT" /></c:if></td>
+                            <td>${change.resultLabel}</td>
                         </c:forEach>
                     </tr>
                 </tbody>

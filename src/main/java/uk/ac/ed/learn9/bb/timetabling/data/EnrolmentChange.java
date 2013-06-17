@@ -2,6 +2,7 @@ package uk.ac.ed.learn9.bb.timetabling.data;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -34,6 +35,7 @@ public class EnrolmentChange extends Object implements Comparable<EnrolmentChang
     private SynchronisationRun run;
     private Activity activity;
     private StudentSet studentSet;
+    private ChangeResult result;
     private Timestamp updateCompleted;
 
     @Override
@@ -138,6 +140,28 @@ public class EnrolmentChange extends Object implements Comparable<EnrolmentChang
     }
 
     /**
+     * @return the result
+     */
+    @ManyToOne
+    @JoinColumn(name="RESULT_CODE")
+    public ChangeResult getResult() {
+        return result;
+    }
+    
+    /**
+     * Returns a human readable string describing the outcome of this change.
+     * 
+     * @return 
+     */
+    @Transient
+    public String getResultLabel() {
+        if (null == this.getResult()) {
+            return null;
+        }
+        return this.getResult().getLabel();
+    }
+
+    /**
      * Gets the synchronisation run this change belongs to.
      * 
      * @return the synchronisation run this change belongs to.
@@ -177,7 +201,7 @@ public class EnrolmentChange extends Object implements Comparable<EnrolmentChang
      * @return a username.
      */
     @Transient
-    public String getUserName() {
+    public String getUsername() {
         return this.getStudentSet().getHostKey();
     }
 
@@ -213,6 +237,13 @@ public class EnrolmentChange extends Object implements Comparable<EnrolmentChang
      */
     public void setRun(SynchronisationRun run) {
         this.run = run;
+    }
+
+    /**
+     * @param result the result to set
+     */
+    public void setResult(ChangeResult result) {
+        this.result = result;
     }
 
     /**
