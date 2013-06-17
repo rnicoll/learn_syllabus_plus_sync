@@ -25,9 +25,20 @@ public class EnrolmentChange extends Object implements Comparable<EnrolmentChang
      */
     public enum Type {
         /** Indicates that the change is to add a student to a group. */
-        ADD,
+        ADD("Add"),
         /** Indicates that the change is to remove a student from a group. */
-        REMOVE;
+        REMOVE("Remove");
+        
+        private final String label;
+        
+        Type(final String setLabel) {
+            this.label = setLabel;
+        }
+        
+        @Override
+        public String toString() {
+            return this.label;
+        }
     }
     
     private int changeId;
@@ -114,6 +125,16 @@ public class EnrolmentChange extends Object implements Comparable<EnrolmentChang
     @Transient
     public String getActivityName() {
         return this.getActivity().getActivityName();
+    }
+
+    /**
+     * Gets a human readable type for this change.
+     * 
+     * @return the type of change, such as "Add" or "Remove".
+     */
+    @Transient
+    public String getChangeLabel() {
+        return this.changeType.toString();
     }
 
     /**

@@ -1,17 +1,24 @@
 package uk.ac.ed.learn9.bb.timetabling.controller;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import blackboard.data.course.Course;
-import blackboard.platform.context.Context;
-import blackboard.platform.context.ContextManagerFactory;
+
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
+
+import blackboard.data.course.Course;
+import blackboard.platform.context.Context;
+import blackboard.platform.context.ContextManagerFactory;
+import blackboard.platform.plugin.PlugInUtil;
 import uk.ac.ed.learn9.bb.timetabling.dao.EnrolmentChangeDao;
 import uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange;
 
@@ -20,7 +27,7 @@ import uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange;
  * over time.
  */
 @Controller
-public class AuditLogController {
+public class AuditLogController extends AbstractController {
     @Autowired
     private EnrolmentChangeDao enrolmentChangeDao;
     
@@ -33,7 +40,8 @@ public class AuditLogController {
      * @return the data model and view of it to be rendered.
      */
     @RequestMapping("/index")
-    public ModelAndView getAuditLog(final HttpServletRequest request, final HttpServletResponse response) {
+    public ModelAndView getAuditLog(final HttpServletRequest request, final HttpServletResponse response)
+            throws UnsupportedEncodingException {
         final Context context = ContextManagerFactory.getInstance().getContext();
         final ModelAndView modelAndView = new ModelAndView("auditLog");
         final Course course = context.getCourse();
@@ -44,6 +52,9 @@ public class AuditLogController {
         changes.addAll(this.getEnrolmentChangeDao().getByCourse(course));
         Collections.sort(changes);
         
+        modelAndView.addObject("mergedCourses", PlugInUtil.getUri(PLUGIN_VENDOR_ID,
+                PLUGIN_ID, "mergedCourses?course_id="
+                + URLEncoder.encode(course.getId().getExternalString(), US_ASCII)));
         modelAndView.addObject("changes", changes);
         
         return modelAndView;

@@ -1,5 +1,7 @@
 package uk.ac.ed.learn9.bb.timetabling.controller;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
@@ -11,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
+
+import blackboard.platform.plugin.PlugInUtil;
 import uk.ac.ed.learn9.bb.timetabling.data.LearnCourseCode;
 import uk.ac.ed.learn9.bb.timetabling.service.MergedCoursesService;
 
@@ -19,7 +23,7 @@ import uk.ac.ed.learn9.bb.timetabling.service.MergedCoursesService;
  * a course in Learn (such as child courses, merged courses, etc.)
  */
 @Controller
-public class MergedCoursesController {
+public class MergedCoursesController extends AbstractController {
     @Autowired
     private MergedCoursesService mergedCoursesService;
     
@@ -32,7 +36,8 @@ public class MergedCoursesController {
      * @return the data model and view of it to be rendered.
      */
     @RequestMapping("/mergedCourses")
-    public ModelAndView getMergedCourses(final HttpServletRequest request, final HttpServletResponse response) {
+    public ModelAndView getMergedCourses(final HttpServletRequest request, final HttpServletResponse response)
+            throws UnsupportedEncodingException {
         final Context context = ContextManagerFactory.getInstance().getContext();
         final ModelAndView modelAndView = new ModelAndView("mergedCourses");
         final Course course = context.getCourse();
@@ -44,6 +49,9 @@ public class MergedCoursesController {
         
         // XXX: Resolve JTA activities here.
         
+        modelAndView.addObject("auditLog", PlugInUtil.getUri(PLUGIN_VENDOR_ID,
+                PLUGIN_ID, "index?course_id="
+                + URLEncoder.encode(course.getId().getExternalString(), US_ASCII)));
         modelAndView.addObject("mergedCourseCodes", mergedCourseCodes);
         
         return modelAndView;

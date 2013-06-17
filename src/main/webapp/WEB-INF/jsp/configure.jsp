@@ -16,36 +16,23 @@
         </bbNG:breadcrumbBar>
     </bbNG:pageHeader>
 
-    <form action="" method="post">
-        <p><input type="submit" name="command" value="Run Synchronisation" /></p>
-    </form>
-
-    <c:choose>
-        <c:when test="${fn:length(runs) gt 0}">
-            <table style="border-collapse: collapse; border: thin solid black; width: 75%;">
-                <thead>
-                    <tr style="border: thin solid black;">
-                        <th>ID</th>
-                        <th>Start</th>
-                        <th>End</th>
-                        <th>Result</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <c:forEach items="${runs}" var="run">
-                        <tr style="border: thin solid black;">
-                            <td>${fn:escapeXml(run.runId)}</td>
-                            <td><fmt:formatDate value="${run.startTime}" type="BOTH" dateStyle="MEDIUM" timeStyle="SHORT" /></td>
-                            <td><c:if test="${not empty run.endTime}"><fmt:formatDate value="${run.endTime}" type="BOTH" dateStyle="MEDIUM" timeStyle="SHORT" /></c:if></td>
-                            <td><c:if test="${not empty run.result}">${run.result}</c:if></td>
-                        </c:forEach>
-                    </tr>
-                </tbody>
-            </table>
-        </c:when>
-        <c:otherwise>
-            <p>There are no synchronisation runs to display.</p>
-        </c:otherwise>
-    </c:choose>
+    <bbNG:actionControlBar>
+        <bbNG:actionButton id="run_sync" title="Run Synchronisation" primary="true" url="${runSynchronisation}" />
+    </bbNG:actionControlBar>
+    
+    <bbNG:inventoryList emptyMsg="There are no synchronisation runs to display."
+                        className="uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun"
+                        collection="${runs}"
+        objectVar="run"
+        >
+        <bbNG:listElement name="runId" isRowHeader="true" label="ID">${run.runId}</bbNG:listElement>
+        <bbNG:listElement name="startTime" label="Start Time">
+            <fmt:formatDate value="${run.startTime}" type="BOTH" dateStyle="MEDIUM" timeStyle="SHORT" />
+        </bbNG:listElement>
+        <bbNG:listElement name="endTime" label="End Time">
+            <c:if test="${not empty run.endTime}"><fmt:formatDate value="${run.endTime}" type="BOTH" dateStyle="MEDIUM" timeStyle="SHORT" /></c:if>
+        </bbNG:listElement>
+        <bbNG:listElement name="result" label="Result">${fn:escapeXml(run.result)}</bbNG:listElement>
+    </bbNG:inventoryList>
 
 </bbNG:learningSystemPage>

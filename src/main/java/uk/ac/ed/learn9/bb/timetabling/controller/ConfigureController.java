@@ -17,6 +17,8 @@ import org.springframework.web.servlet.ModelAndView;
 
 import blackboard.data.ValidationException;
 import blackboard.persist.PersistenceException;
+import blackboard.platform.plugin.PlugInUtil;
+
 import uk.ac.ed.learn9.bb.timetabling.dao.SynchronisationRunDao;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 import uk.ac.ed.learn9.bb.timetabling.service.ConcurrencyService;
@@ -26,7 +28,7 @@ import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService;
  * Unused controller that could be used for a settings page if needed later.
  */
 @Controller
-public class ConfigureController extends Object {
+public class ConfigureController extends AbstractController {
     @Autowired
     private ConcurrencyService concurrencyService;
     @Autowired
@@ -53,12 +55,14 @@ public class ConfigureController extends Object {
         runs.addAll(this.getSynchronisationRunDao().getAll());
         Collections.sort(runs);
         
+        modelAndView.addObject("runSynchronisation", PlugInUtil.getUri(PLUGIN_VENDOR_ID,
+                PLUGIN_ID, "run"));
         modelAndView.addObject("runs", runs);
         
         return modelAndView;
     }
 
-    @RequestMapping(value="/configure", method=RequestMethod.POST)
+    @RequestMapping(value="/run")
     public ModelAndView doRun(final HttpServletRequest request, final HttpServletResponse response)
         throws SQLException, PersistenceException, ValidationException {
         final SynchronisationRun run;

@@ -14,6 +14,8 @@
    </bbNG:breadcrumbBar>
   </bbNG:pageHeader>
     
+    <bbNG:button label="Audit Log" url="${auditLog}"></bbNG:button>
+    
     <p>The following is a list of merged and child courses of this course:</p>
 
 </bbNG:learningSystemPage>

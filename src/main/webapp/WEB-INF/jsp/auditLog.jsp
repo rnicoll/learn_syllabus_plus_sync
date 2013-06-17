@@ -15,43 +15,39 @@
             <bbNG:breadcrumb title="Timetabling Groups"/>
         </bbNG:breadcrumbBar>
     </bbNG:pageHeader>
+    
+    <bbNG:button label="Merged Courses" url="${mergedCourses}"></bbNG:button>
 
     <p>The following is a list of changes to student/group enrolments on this
         course, driven by Timetabling. Please note that this list may include
         changes that have not yet been performed, for example if a student is
         not yet present on the course.</p>
     
-    <c:choose>
-        <c:when test="${fn:length(changes) gt 0}">
-            <table style="border-collapse: collapse; border: thin solid black; width: 80%;">
-                <thead>
-                    <tr style="border: thin solid black;">
-                        <th>Activity</th>
-                        <th>Username</th>
-                        <th>Group</th>
-                        <th>Action</th>
-                        <th>Completed</th>
-                        <th>Outcome</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <c:forEach items="${changes}" var="change">
-                        <tr style="border: thin solid black;">
-                            <td>${fn:escapeXml(change.activityName)}</td>
-                            <td>${fn:escapeXml(change.username)}</td>
-                            <td>${fn:escapeXml(change.groupName)}</td>
-                            <td>${fn:escapeXml(change.changeType)}</td>
-                            <td><c:if test="${not empty change.updateCompleted}"><fmt:formatDate value="${change.updateCompleted}" type="BOTH" dateStyle="MEDIUM" timeStyle="SHORT" /></c:if></td>
-                            <td>${change.resultLabel}</td>
-                        </c:forEach>
-                    </tr>
-                </tbody>
-            </table>
-        </c:when>
-        <c:otherwise>
-            <p>There are no changes to this course based on Timetabling data.</p>
-        </c:otherwise>
-    </c:choose>
-
+    <bbNG:inventoryList emptyMsg="There are no changes to this course based on Timetabling data."
+                        className="uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange"
+                        collection="${changes}"
+                        description="This following is a list of changes to student/group enrolments on this
+        course"
+        objectVar="change"
+        >
+        <bbNG:listElement name="activityName" label="Activity">
+            ${fn:escapeXml(change.activityName)}
+        </bbNG:listElement>
+        <bbNG:listElement name="username" isRowHeader="true" label="Username">
+            ${fn:escapeXml(change.username)}
+        </bbNG:listElement>
+        <bbNG:listElement name="groupName" label="Group">
+            ${fn:escapeXml(change.groupName)}
+        </bbNG:listElement>
+        <bbNG:listElement name="changeType" label="Change Type">
+            ${fn:escapeXml(change.changeLabel)}
+        </bbNG:listElement>
+        <bbNG:listElement name="result" label="Outcome">
+            ${fn:escapeXml(change.resultLabel)}
+        </bbNG:listElement>
+        <bbNG:listElement name="updateCompleted" label="Update Completed">
+            <c:if test="${not empty change.updateCompleted}"><fmt:formatDate value="${change.updateCompleted}" type="BOTH" dateStyle="MEDIUM" timeStyle="SHORT" /></c:if>
+        </bbNG:listElement>
+    </bbNG:inventoryList>
 
 </bbNG:learningSystemPage>
