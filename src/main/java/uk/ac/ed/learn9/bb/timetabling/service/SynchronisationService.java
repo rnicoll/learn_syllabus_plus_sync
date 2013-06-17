@@ -40,8 +40,11 @@ public class SynchronisationService extends Object {
     private DataSource rdbDataSource;
     @Autowired
     private DataSource eugexDataSource;
+    
     @Autowired
     private BlackboardService blackboardService;
+    @Autowired
+    private ConcurrencyService concurrencyService;
     @Autowired
     private EugexService eugexService;
     @Autowired
@@ -231,6 +234,34 @@ public class SynchronisationService extends Object {
         } finally {
             destination.close();
         }
+    }
+    
+    /**
+     * Executes a synchronisation run.
+     * 
+     * @param run
+     * @throws PersistenceException if there was a problem loading or saving
+     * data in Learn.
+     * @throws SQLException if there was a problem accessing one of the databases.
+     * @throws ValidationException if there was a problem validating data to be
+     * written into Learn.
+     */
+    public void runSynchronisation(final SynchronisationRun run)
+            throws SQLException, PersistenceException, ValidationException {
+        this.synchroniseTimetablingData();
+        this.synchroniseEugexData();
+        this.getConcurrencyService().markCacheCopyCompleted(run);
+        this.generateDiff(run);
+        this.getConcurrencyService().markDiffCompleted(run);
+        this.updateGroupDescriptions();
+        this.mapModulesToCourses();
+        this.createGroupsForActivities();
+        this.mapStudentSetsToUsers();
+        this.applyEnrolmentChanges(run);
+
+        this.getConcurrencyService().markSucceeded(run);
+        this.getConcurrencyService().clearAbandonedRuns();
+        this.getConcurrencyService().clearEnrolmentCache();
     }
     
     /**
@@ -521,6 +552,13 @@ public class SynchronisationService extends Object {
     }
 
     /**
+     * @return the concurrencyService
+     */
+    public ConcurrencyService getConcurrencyService() {
+        return concurrencyService;
+    }
+
+    /**
      * Gets the data source for the EUGEX database.
      * 
      * @return the data source for the EUGEX database.
@@ -568,6 +606,13 @@ public class SynchronisationService extends Object {
      */
     public void setCloneService(TimetablingCloneService cloneService) {
         this.cloneService = cloneService;
+    }
+
+    /**
+     * @param concurrencyService the concurrencyService to set
+     */
+    public void setConcurrencyService(ConcurrencyService concurrencyService) {
+        this.concurrencyService = concurrencyService;
     }
 
     /**

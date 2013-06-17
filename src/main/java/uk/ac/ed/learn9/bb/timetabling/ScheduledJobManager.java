@@ -219,7 +219,7 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
                 final SynchronisationService synchronisationService = ScheduledJobManager.this.getSynchronisationService();
                 
                 try {
-                    doSynchronisation(run, concurrencyService, synchronisationService);
+                    synchronisationService.runSynchronisation(run);
                 } catch(PersistenceException e) {
                     concurrencyService.markErrored(run, e);
                     log.error("Error while persisting/loading entities in Learn.", e);
@@ -236,27 +236,6 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
             } catch(SQLException e) {
                 log.error("Database error while starting new synchronisation run.", e);
             }
-        }
-
-        private void doSynchronisation(final SynchronisationRun run,
-                final ConcurrencyService concurrencyService,
-                final SynchronisationService synchronisationService)
-            throws PersistenceException, SQLException, ValidationException {
-            synchronisationService.synchroniseTimetablingData();
-            synchronisationService.synchroniseEugexData();
-            concurrencyService.markCacheCopyCompleted(run);
-            
-            synchronisationService.generateDiff(run);
-            concurrencyService.markDiffCompleted(run);
-            
-            synchronisationService.updateGroupDescriptions();
-            synchronisationService.mapModulesToCourses();
-            
-            synchronisationService.createGroupsForActivities();
-            synchronisationService.mapStudentSetsToUsers();
-            synchronisationService.applyEnrolmentChanges(run);
-            
-            concurrencyService.markSucceeded(run);
         }
     }
 }

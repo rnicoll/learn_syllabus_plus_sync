@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.Calendar;
 
 import javax.sql.DataSource;
 
@@ -25,6 +26,15 @@ public class ConcurrencyService {
      * mark it as timed out.
      */
     public static final long SYNCHRONISATION_TIMEOUT_MILLIS = 23 * 60 * 60 * 1000L;
+    /**
+     * Number of days to keep cached details of enrolments on activities,
+     * after a difference has been generated.
+     */
+    public static final int DAYS_KEEP_ENROLMENT_CACHE = 3;
+    /**
+     * Number of days to keep details of abandoned runs.
+     */
+    public static final int DAYS_KEEP_ABANDONED_RUNS = 1;
     
     @Autowired
     private DataSource stagingDataSource;
@@ -139,6 +149,102 @@ public class ConcurrencyService {
                 // has finished.
                 return null;
             }
+        } finally {
+            statement.close();
+        }
+    }
+    
+    /**
+     * Clears out records for old abandoned runs, to stop them from cluttering
+     * the database unnecessarily. In this case "old" is defined as occurring
+     * over a day ago.
+     * 
+     * @return the number of records deleted.
+     * @throws SQLException if there was a problem communicating with the database.
+     */
+    public int clearAbandonedRuns()
+            throws SQLException {
+        final Connection stagingDatabase = this.getStagingDataSource().getConnection();
+
+        try {
+            final Calendar calendar = Calendar.getInstance();
+
+            calendar.add(Calendar.DATE, -DAYS_KEEP_ABANDONED_RUNS);
+
+            return clearAbandonedRuns(stagingDatabase, new Timestamp(calendar.getTimeInMillis()));
+        } finally {
+            stagingDatabase.close();
+        }
+    }
+    
+    /**
+     * Clears out records for old abandoned runs, to stop them from cluttering
+     * the database unnecessarily.
+     * 
+     * @param stagingDatabase a connection to the staging database.
+     * @param before the earliest run end time to select.
+     * @return the number of records deleted.
+     * @throws SQLException if there was a problem communicating with the database.
+     */
+    public int clearAbandonedRuns(final Connection stagingDatabase, final Timestamp before)
+            throws SQLException {
+        final PreparedStatement statement = stagingDatabase.prepareStatement("DELETE FROM synchronisation_run "
+            + "WHERE end_time<? AND result_code=?");
+        try {
+            int paramIdx = 1;
+            statement.setTimestamp(paramIdx++, before);
+            statement.setString(paramIdx++, SynchronisationResult.ABANDONED.name());
+            return statement.executeUpdate();
+        } finally {
+            statement.close();
+        }
+    }
+    
+    /**
+     * Clears out records for old abandoned runs, to stop them from cluttering
+     * the database unnecessarily. In this case "old" is defined as occurring
+     * over a day ago.
+     * 
+     * @param stagingDatabase a connection to the staging database.
+     * @return the number of records deleted.
+     * @throws SQLException if there was a problem communicating with the database.
+     */
+    public int clearEnrolmentCache()
+            throws SQLException {
+        final Connection stagingDatabase = this.getStagingDataSource().getConnection();
+
+        try {
+            final Calendar calendar = Calendar.getInstance();
+
+            calendar.add(Calendar.DATE, -DAYS_KEEP_ENROLMENT_CACHE);
+
+            return clearEnrolmentCache(stagingDatabase, new Timestamp(calendar.getTimeInMillis()));
+        } finally {
+            stagingDatabase.close();
+        }
+    }
+    
+    /**
+     * Clears out records for old abandoned runs, to stop them from cluttering
+     * the database unnecessarily.
+     * 
+     * @param stagingDatabase a connection to the staging database.
+     * @param before the earliest run end time to select.
+     * @return the number of records deleted.
+     * @throws SQLException if there was a problem communicating with the database.
+     */
+    public int clearEnrolmentCache(final Connection stagingDatabase, final Timestamp before)
+            throws SQLException {
+        final PreparedStatement statement = stagingDatabase.prepareStatement("DELETE FROM synchronisation_run "
+            + "WHERE end_time<? AND result_code=? AND run_id IN "
+                + "(SELECT p.prev_run_id FROM synchronisation_run_prev p "
+                    + "JOIN synchronisation_run r ON r.run_id=p.run_id "
+                    + "WHERE r.diff_completed IS NOT NULL)");
+        try {
+            int paramIdx = 1;
+            statement.setTimestamp(paramIdx++, before);
+            statement.setString(paramIdx++, SynchronisationResult.SUCCESS.name());
+            return statement.executeUpdate();
         } finally {
             statement.close();
         }

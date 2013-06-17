@@ -16,6 +16,11 @@
         </bbNG:breadcrumbBar>
     </bbNG:pageHeader>
 
+    <p>The following is a list of changes to student/group enrolments on this
+        course, driven by Timetabling. Please note that this list may include
+        changes that have not yet been performed, for example if a student is
+        not yet present on the course.</p>
+    
     <c:choose>
         <c:when test="${fn:length(changes) gt 0}">
             <table style="border-collapse: collapse; border: thin solid black; width: 80%;">

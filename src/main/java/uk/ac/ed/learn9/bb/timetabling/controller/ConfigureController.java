@@ -1,10 +1,8 @@
 package uk.ac.ed.learn9.bb.timetabling.controller;
 
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -18,9 +16,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import blackboard.data.ValidationException;
 import blackboard.persist.PersistenceException;
-import uk.ac.ed.learn9.bb.timetabling.ScheduledJobManager;
 import uk.ac.ed.learn9.bb.timetabling.dao.SynchronisationRunDao;
-import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationResult;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 import uk.ac.ed.learn9.bb.timetabling.service.ConcurrencyService;
 import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService;
@@ -76,18 +72,7 @@ public class ConfigureController extends Object {
         final SynchronisationService service = this.getSynchronisationService();
         
         try {
-            service.synchroniseTimetablingData();
-            service.synchroniseEugexData();
-            concurrencyService.markCacheCopyCompleted(run);
-            service.generateDiff(run);
-            concurrencyService.markDiffCompleted(run);
-            service.updateGroupDescriptions();
-            service.mapModulesToCourses();
-            service.createGroupsForActivities();
-            service.mapStudentSetsToUsers();
-            service.applyEnrolmentChanges(run);
-
-            concurrencyService.markSucceeded(run);
+            service.runSynchronisation(run);
         } catch(Exception e) {
             try {
                 concurrencyService.markErrored(run, e);
