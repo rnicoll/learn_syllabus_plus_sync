@@ -108,11 +108,11 @@ public class MergedCoursesService extends AbstractCloneService {
     private void synchroniseMergedCourses(final Connection stagingDatabase, final Connection bblFeedsDatabase)
             throws SQLException {
         final SortedMap<String, String> fieldMappings = new TreeMap<String, String>(){{
-            put("source_course_code", "learn_course_code");
-            put("target_course_code", "merge_course_code");
+            put("source_course_code", "learn_source_course_code");
+            put("target_course_code", "learn_target_course_code");
         }};
         final SortedSet<String> primaryKeyFields = new TreeSet<String>(){{
-            add("source_course_code");
+            addAll(fieldMappings.keySet());
         }};
         
         stagingDatabase.setAutoCommit(false);
@@ -128,18 +128,17 @@ public class MergedCoursesService extends AbstractCloneService {
             );
             try {
                 final PreparedStatement destinationStatement = stagingDatabase.prepareStatement(
-                    "SELECT learn_course_code, merge_course_code "
-                        + "FROM module "
-                        + "WHERE learn_course_code IS NOT NULL "
-                        + "ORDER BY learn_course_code"
+                    "SELECT learn_source_course_code, learn_target_course_code "
+                        + "FROM learn_merged_course "
+                        + "ORDER BY learn_source_course_code, learn_target_course_code"
                 );
                 try {
                     final ResultSet sourceRs = sourceStatement.executeQuery();
                     try {
                         final ResultSet destinationRs = destinationStatement.executeQuery();
                         try {
-                            this.cloneResultSet("module", sourceRs, destinationRs,
-                                primaryKeyFields, fieldMappings, Mode.UPDATE_ONLY);
+                            this.cloneResultSet("learn_merged_course", sourceRs, destinationRs,
+                                primaryKeyFields, fieldMappings, Mode.INSERT_UPDATE);
                         } finally {
                             destinationRs.close();
                         }

@@ -20,7 +20,6 @@ public class Module extends Object implements Serializable {
     private String cacheSemesterCode;
     private String cacheOccurrenceCode;
     private String cacheCourseCode;
-    private String mergeCourseCode;
     private String learnAcademicYear;
     private String learnCourseId;
     private String learnCourseCode;
@@ -112,18 +111,6 @@ public class Module extends Object implements Serializable {
     @Column(name="cache_course_code", nullable=true, length=12, updatable=false)
     public String getCacheCourseCode() {
         return cacheCourseCode;
-    }
-
-    /**
-     * Gets the Learn course code of the course that this module is merged
-     * into.
-     * 
-     * @return the Learn course code of the course that this module is merged
-     * into, or null if no merging is to be done (the normal case).
-     */
-    @Column(name="merge_course_code", nullable=true, length=40)
-    public String getMergeCourseCode() {
-        return mergeCourseCode;
     }
 
     /**
@@ -220,13 +207,6 @@ public class Module extends Object implements Serializable {
      */
     public void setModuleId(String moduleId) {
         this.timetablingModueId = moduleId;
-    }
-
-    /**
-     * @param mergeCourseCode the mergeCourseCode to set
-     */
-    public void setMergeCourseCode(String mergeCourseCode) {
-        this.mergeCourseCode = mergeCourseCode;
     }
 
     /**

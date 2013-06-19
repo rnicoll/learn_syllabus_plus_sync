@@ -20,12 +20,17 @@ CREATE TABLE module (
     cache_semester_code VARCHAR(6) DEFAULT NULL,
     cache_occurrence_code VARCHAR(6) DEFAULT NULL,
     cache_course_code VARCHAR(12) DEFAULT NULL,
-    merge_course_code VARCHAR(40) DEFAULT NULL,
     learn_academic_year VARCHAR(6) DEFAULT NULL,
     learn_course_code VARCHAR(40) DEFAULT NULL,
     learn_course_id VARCHAR(80) DEFAULT NULL,
     webct_active CHAR(1) DEFAULT NULL,
     PRIMARY KEY (tt_module_id)
+);
+
+CREATE TABLE learn_merged_course (
+  learn_source_course_code VARCHAR(40) NOT NULL,
+  learn_target_course_code VARCHAR(40) NOT NULL,
+  PRIMARY KEY (learn_source_course_code, learn_target_course_code)
 );
 
 CREATE TABLE activity (
@@ -155,9 +160,10 @@ CREATE VIEW variant_parent_activity_vw AS
 
 CREATE VIEW sync_module_vw AS
     (SELECT m.tt_module_id, m.tt_course_code, m.tt_module_name, m.tt_academic_year,
-        m.merge_course_code, m.learn_course_code, m.learn_course_id,
-        COALESCE(m.merge_course_code, m.learn_course_code) effective_course_code
+        merged.learn_target_course_code merge_course_code, m.learn_course_code, m.learn_course_id,
+        COALESCE(merged.learn_target_course_code, m.learn_course_code) effective_course_code
         FROM module m
+            LEFT JOIN learn_merged_course merged ON merged.learn_source_course_code=m.learn_course_code
         WHERE m.webct_active = 'Y'
     );
 

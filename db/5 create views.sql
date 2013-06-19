@@ -20,9 +20,10 @@ CREATE VIEW variant_parent_activity_vw AS
 
 CREATE VIEW sync_module_vw AS
     (SELECT m.tt_module_id, m.tt_course_code, m.tt_module_name, m.tt_academic_year,
-        m.merge_course_code, m.learn_course_code, m.learn_course_id,
-        COALESCE(m.merge_course_code, m.learn_course_code) effective_course_code
+        merged.learn_target_course_code merge_course_code, m.learn_course_code, m.learn_course_id,
+        COALESCE(merged.learn_target_course_code, m.learn_course_code) effective_course_code
         FROM module m
+            LEFT JOIN learn_merged_course merged ON merged.learn_source_course_code=m.learn_course_code
         WHERE m.webct_active = 'Y'
     );
 
@@ -45,7 +46,6 @@ CREATE VIEW sync_activity_vw AS
         WHERE a.tt_scheduling_method!='0'
             AND a.tt_activity_id NOT IN (SELECT tt_activity_id FROM variant_child_activity_vw)
     );
-
 
 CREATE VIEW non_jta_sync_activity_vw AS
     (SELECT a.tt_activity_id, a.tt_activity_name, a.learn_group_id,

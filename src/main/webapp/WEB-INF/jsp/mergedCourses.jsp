@@ -16,6 +16,17 @@
     
     <bbNG:button label="Audit Log" url="${auditLog}"></bbNG:button>
     
-    <p>The following is a list of merged and child courses of this course:</p>
+    <p>The following is a list of merged courses that feed into this course:</p>
+    
+    <bbNG:inventoryList emptyMsg="There are no merged child courses of this course."
+                        className="uk.ac.ed.learn9.bb.timetabling.data.LearnCourseCode"
+                        collection="${mergedCourseCodes}"
+                        description="This following is a list of merged child courses of this course."
+        objectVar="courseCode"
+        >
+        <bbNG:listElement name="courseCode" label="Course Code">
+            ${fn:escapeXml(courseCode)}
+        </bbNG:listElement>
+    </bbNG:inventoryList>
 
 </bbNG:learningSystemPage>
