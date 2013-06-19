@@ -20,6 +20,13 @@
           p:username="${jdbc.username}"
           p:password="${jdbc.password}" />
 
+    <bean id="bblFeedsDataSource"
+          class="org.springframework.jdbc.datasource.DriverManagerDataSource"
+          p:driverClassName="${jdbc_bblfeeds.driverClassName}"
+          p:url="${jdbc_bblfeeds.url}"
+          p:username="${jdbc_bblfeeds.username}"
+          p:password="${jdbc_bblfeeds.password}" />
+
     <bean id="eugexDataSource"
           class="org.springframework.jdbc.datasource.DriverManagerDataSource"
           p:driverClassName="${jdbc_eugex.driverClassName}"

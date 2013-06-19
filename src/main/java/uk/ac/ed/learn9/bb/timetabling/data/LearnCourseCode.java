@@ -8,7 +8,7 @@ public class LearnCourseCode extends AbstractCourseCode<LearnCourseCode> {
     /**
      * A regular expression used to validate timetabling course codes.
      */
-    public static final String LEARN_COURSE_CODE_REGEXP = "[A-Z]+[0-9]+-[0-9][A-Z0-9]+";
+    public static final String LEARN_COURSE_CODE_REGEXP = "[A-Z]+[0-9]{5,}-[0-9][A-Z0-9]+";
     
     /**
      * Constructs the Learn course code with the given value.
@@ -45,5 +45,32 @@ public class LearnCourseCode extends AbstractCourseCode<LearnCourseCode> {
         final String learnAyrCode = ayrCode.toString().replace('/', '-');
                     
         return new LearnCourseCode(courseCode + learnAyrCode + occurrence + semester);
+    }
+
+    /**
+     * Extract the EUCLID course code from a Learn course code.
+     * 
+     * @return the EUCLID course code, for example "EDUA08064".
+     */
+    public String getEuclidCourseId() {
+        // We know there's exactly one "-" character, because it's a requirement
+        // of the regular expression used in the constructor
+        final String[] parts = this.toString().split("-");
+        final String codeAndAyr = parts[0];
+        
+        // Strip the last four digits (calendar year) from the first half
+        return codeAndAyr.substring(0, codeAndAyr.length() - 4);
+    }
+
+    /**
+     * Returns the instance identifier for the course in Learn, used to
+     * differentiate it from other instances of the same EUCLID course.
+     *
+     * @return the instance identifier for the course in Learn, for example
+     * "2012-3SS1SEM1".
+     */
+    public String getInstance() {
+        final String euclidCourseId = this.getEuclidCourseId();
+        return this.toString().substring(euclidCourseId.length());
     }
 }

@@ -2,6 +2,7 @@ package uk.ac.ed.learn9.bb.timetabling.controller;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
@@ -28,8 +29,7 @@ public class MergedCoursesController extends AbstractController {
     private MergedCoursesService mergedCoursesService;
     
     /**
-     * Displays an audit log of when students were added/removed to/from groups
-     * for a single course.
+     * Displays details of merged courses that are brought into this course.
      * 
      * @param request the request from the remote client.
      * @param response the response to be returned to the remote client.
@@ -37,7 +37,7 @@ public class MergedCoursesController extends AbstractController {
      */
     @RequestMapping("/mergedCourses")
     public ModelAndView getMergedCourses(final HttpServletRequest request, final HttpServletResponse response)
-            throws UnsupportedEncodingException {
+            throws UnsupportedEncodingException, SQLException {
         final Context context = ContextManagerFactory.getInstance().getContext();
         final ModelAndView modelAndView = new ModelAndView("mergedCourses");
         final Course course = context.getCourse();

@@ -11,8 +11,8 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
-import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import blackboard.data.ValidationException;
 import blackboard.data.course.Group;
@@ -399,17 +399,12 @@ public class SynchronisationService extends Object {
      */
     public void mapModulesToCourses()
             throws PersistenceException, SQLException {
+        this.getMergedCoursesService().synchroniseMergedCourses();
+            
         final Connection destination = this.getStagingDataSource().getConnection();
 
         try {
-            final Connection source = this.getRdbDataSource().getConnection();
-
-            try {
-                // this.getMergedCoursesService().resolveMergedCourses(destination);
-                this.getBlackboardService().mapModulesToCourses(destination);
-            } finally {
-                source.close();
-            }
+            this.getBlackboardService().mapModulesToCourses(destination);
         } finally {
             destination.close();
         }
