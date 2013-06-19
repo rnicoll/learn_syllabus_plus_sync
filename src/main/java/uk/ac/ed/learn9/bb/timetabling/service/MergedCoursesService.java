@@ -108,11 +108,11 @@ public class MergedCoursesService extends AbstractCloneService {
     private void synchroniseMergedCourses(final Connection stagingDatabase, final Connection bblFeedsDatabase)
             throws SQLException {
         final SortedMap<String, String> fieldMappings = new TreeMap<String, String>(){{
-            put("SOURCECOURSEID", "learn_course_code");
-            put("TARGETCOURSEID", "merge_course_code");
+            put("source_course_code", "learn_course_code");
+            put("target_course_code", "merge_course_code");
         }};
         final SortedSet<String> primaryKeyFields = new TreeSet<String>(){{
-            add("learn_course_code");
+            add("source_course_code");
         }};
         
         stagingDatabase.setAutoCommit(false);
@@ -124,7 +124,7 @@ public class MergedCoursesService extends AbstractCloneService {
                     + "WHERE ISERROR='0' "
                         + "AND COURSESOURCEID='EUCLID' "
                         + "AND TARGETSOURCEID='SYSTEM' "
-                    + "ORDER BY SOURCECOURSEID"
+                    + "ORDER BY SOURCECOURSEID || SOURCEINSTANCE"
             );
             try {
                 final PreparedStatement destinationStatement = stagingDatabase.prepareStatement(
