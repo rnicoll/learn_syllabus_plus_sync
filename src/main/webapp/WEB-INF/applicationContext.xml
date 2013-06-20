@@ -50,9 +50,12 @@
                 <value>uk.ac.ed.learn9.bb.timetabling.data.ActivityTemplate</value>
                 <value>uk.ac.ed.learn9.bb.timetabling.data.ActivityType</value>
                 <value>uk.ac.ed.learn9.bb.timetabling.data.Activity</value>
+                <value>uk.ac.ed.learn9.bb.timetabling.data.ActivityGroup</value>
                 <value>uk.ac.ed.learn9.bb.timetabling.data.ChangeResult</value>
                 <value>uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange</value>
+                <value>uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChangePart</value>
                 <value>uk.ac.ed.learn9.bb.timetabling.data.Module</value>
+                <value>uk.ac.ed.learn9.bb.timetabling.data.ModuleCourse</value>
                 <value>uk.ac.ed.learn9.bb.timetabling.data.StudentSet</value>
                 <value>uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun</value>
             </list>

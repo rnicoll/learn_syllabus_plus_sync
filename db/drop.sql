@@ -33,6 +33,8 @@ DROP TABLE change_result;
 DROP TABLE change_type;
 DROP TABLE run_result;
 
+DROP SEQUENCE activity_group_seq;
 DROP SEQUENCE enrolment_change_part_seq;
 DROP SEQUENCE enrolment_change_seq;
+DROP SEQUENCE module_course_seq;
 DROP SEQUENCE synchronisation_run_seq;

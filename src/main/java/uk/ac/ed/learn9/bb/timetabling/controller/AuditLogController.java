@@ -9,7 +9,6 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,8 +18,8 @@ import blackboard.data.course.Course;
 import blackboard.platform.context.Context;
 import blackboard.platform.context.ContextManagerFactory;
 import blackboard.platform.plugin.PlugInUtil;
-import uk.ac.ed.learn9.bb.timetabling.dao.EnrolmentChangeDao;
-import uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange;
+import uk.ac.ed.learn9.bb.timetabling.dao.EnrolmentChangePartDao;
+import uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChangePart;
 
 /**
  * Controller for rendering audit logs of changes made to a course in Learn,
@@ -29,7 +28,7 @@ import uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange;
 @Controller
 public class AuditLogController extends AbstractController {
     @Autowired
-    private EnrolmentChangeDao enrolmentChangeDao;
+    private EnrolmentChangePartDao enrolmentChangePartDao;
     
     /**
      * Displays an audit log of when students were added/removed to/from groups
@@ -45,11 +44,11 @@ public class AuditLogController extends AbstractController {
         final Context context = ContextManagerFactory.getInstance().getContext();
         final ModelAndView modelAndView = new ModelAndView("auditLog");
         final Course course = context.getCourse();
-        final List<EnrolmentChange> changes = new ArrayList<EnrolmentChange>();
+        final List<EnrolmentChangePart> changes = new ArrayList<EnrolmentChangePart>();
         
         // Log group creation?
         
-        changes.addAll(this.getEnrolmentChangeDao().getByCourse(course));
+        changes.addAll(this.getEnrolmentChangePartDao().getByCourse(course));
         Collections.sort(changes);
         
         modelAndView.addObject("mergedCourses", PlugInUtil.getUri(PLUGIN_VENDOR_ID,
@@ -61,16 +60,20 @@ public class AuditLogController extends AbstractController {
     }
 
     /**
-     * @return the enrolmentChangeDao
+     * Get the enrolment change part DAO.
+     * 
+     * @return the enrolment change part DAO.
      */
-    public EnrolmentChangeDao getEnrolmentChangeDao() {
-        return enrolmentChangeDao;
+    public EnrolmentChangePartDao getEnrolmentChangePartDao() {
+        return enrolmentChangePartDao;
     }
 
     /**
-     * @param enrolmentChangeDao the enrolmentChangeDao to set
+     * Set the enrolment change part DAO.
+     * 
+     * @param enrolmentChangeDao the enrolment change part DAO to set.
      */
-    public void setEnrolmentChangeDao(EnrolmentChangeDao enrolmentChangeDao) {
-        this.enrolmentChangeDao = enrolmentChangeDao;
+    public void setEnrolmentChangePartDao(EnrolmentChangePartDao enrolmentChangePartDao) {
+        this.enrolmentChangePartDao = enrolmentChangePartDao;
     }
 }

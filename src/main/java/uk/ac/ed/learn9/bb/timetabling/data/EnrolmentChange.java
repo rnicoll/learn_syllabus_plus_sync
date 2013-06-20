@@ -1,7 +1,6 @@
 package uk.ac.ed.learn9.bb.timetabling.data;
 
 import java.io.Serializable;
-import java.sql.Timestamp;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -19,7 +18,7 @@ import javax.persistence.Transient;
  */
 @Entity
 @Table(name="enrolment_change")
-public class EnrolmentChange extends Object implements Comparable<EnrolmentChange>, Serializable {
+public class EnrolmentChange extends Object implements Serializable {
     /**
      * The type of change this record relates to.
      */
@@ -46,29 +45,6 @@ public class EnrolmentChange extends Object implements Comparable<EnrolmentChang
     private SynchronisationRun run;
     private Activity activity;
     private StudentSet studentSet;
-    private ChangeResult result;
-    private Timestamp updateCompleted;
-
-    @Override
-    public int compareTo(final EnrolmentChange other) {
-        if (null == this.getUpdateCompleted()) {
-            if (null == other.getUpdateCompleted()) {
-                return this.changeId - other.changeId;
-            } else {
-                return -1;
-            }
-        } else if (null == other.getUpdateCompleted()) {
-            return 1;
-        } else {
-            int timeComparison = this.getUpdateCompleted().compareTo(other.getUpdateCompleted());
-            
-            if (0 == timeComparison) {
-                return this.changeId - other.changeId;
-            } else {
-                return timeComparison;
-            }
-        }
-    }
     
     @Override
     public boolean equals(final Object o) {
@@ -83,14 +59,13 @@ public class EnrolmentChange extends Object implements Comparable<EnrolmentChang
     
     @Override
     public int hashCode() {
-        return this.getUpdateCompleted().hashCode();
+        return this.getChangeId();
     }
     
     @Override
     public String toString() {
         return this.getChangeType() + " student "
-            + this.getStudentSet().getHostKey() + " at "
-            + this.getUpdateCompleted() + " to "
+            + this.getStudentSet().getHostKey() + " to "
             + this.getActivity().getActivityName() + ".";
     }
     
@@ -161,28 +136,6 @@ public class EnrolmentChange extends Object implements Comparable<EnrolmentChang
     }
 
     /**
-     * @return the result
-     */
-    @ManyToOne
-    @JoinColumn(name="RESULT_CODE")
-    public ChangeResult getResult() {
-        return result;
-    }
-    
-    /**
-     * Returns a human readable string describing the outcome of this change.
-     * 
-     * @return 
-     */
-    @Transient
-    public String getResultLabel() {
-        if (null == this.getResult()) {
-            return null;
-        }
-        return this.getResult().getLabel();
-    }
-
-    /**
      * Gets the synchronisation run this change belongs to.
      * 
      * @return the synchronisation run this change belongs to.
@@ -202,17 +155,6 @@ public class EnrolmentChange extends Object implements Comparable<EnrolmentChang
     @JoinColumn(name="TT_STUDENT_SET_ID")
     public StudentSet getStudentSet() {
         return studentSet;
-    }
-
-    /**
-     * Gets the time at which this change was completed.
-     * 
-     * @return the time at which this change was completed, or null if not
-     * yet completed.
-     */
-    @Column(name="update_completed")
-    public Timestamp getUpdateCompleted() {
-        return updateCompleted;
     }
     
     /**
@@ -261,23 +203,9 @@ public class EnrolmentChange extends Object implements Comparable<EnrolmentChang
     }
 
     /**
-     * @param result the result to set
-     */
-    public void setResult(ChangeResult result) {
-        this.result = result;
-    }
-
-    /**
      * @param studentSet the student set to set.
      */
     public void setStudentSet(StudentSet studentSet) {
         this.studentSet = studentSet;
-    }
-
-    /**
-     * @param updateCompleted the completion time to set.
-     */
-    public void setUpdateCompleted(Timestamp updateCompleted) {
-        this.updateCompleted = updateCompleted;
     }
 }

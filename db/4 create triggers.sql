@@ -1,4 +1,11 @@
 set define off;
+CREATE OR REPLACE TRIGGER ACTIVITY_GROUP_PK
+  BEFORE INSERT ON ACTIVITY_GROUP
+    for each row
+    begin
+      select ACTIVITY_GROUP_SEQ.nextval into :new.activity_group_id from dual;
+    end;
+/
 CREATE OR REPLACE TRIGGER ENROLMENT_CHANGE_PK
   BEFORE INSERT ON ENROLMENT_CHANGE
     for each row
@@ -11,6 +18,13 @@ CREATE OR REPLACE TRIGGER ENROLMENT_CHANGE_PART_PK
     for each row
     begin
       select ENROLMENT_CHANGE_PART_SEQ.nextval into :new.part_id from dual;
+    end;
+/
+CREATE OR REPLACE TRIGGER MODULE_COURSE_PK
+  BEFORE INSERT ON MODULE_COURSE
+    for each row
+    begin
+      select MODULE_COURSE_SEQ.nextval into :new.module_course_id from dual;
     end;
 /
 

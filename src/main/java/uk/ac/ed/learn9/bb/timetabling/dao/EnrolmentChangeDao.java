@@ -16,12 +16,4 @@ public interface EnrolmentChangeDao {
      * @return the change.
      */
     public EnrolmentChange getById(final int changeId);
-    
-    /**
-     * Retrieves all changes for a single Learn course.
-     * 
-     * @param course the course to retrieve changes for.
-     * @return a list of changes.
-     */
-    public List<EnrolmentChange> getByCourse(final Course course);
 }

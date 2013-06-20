@@ -44,11 +44,13 @@ comment on column module.learn_course_code is 'Course code as used in Learn, bef
 comment on column module.webct_active is 'Yes/No indicator for whether this course is to be synchronised from EUGEX to Learn. Copied from EUGEX.';
 
 CREATE TABLE module_course (
+  module_course_id INTEGER NOT NULL,
   tt_module_id VARCHAR2(40) NOT NULL,
   learn_course_code VARCHAR2(40) NOT NULL,
   learn_course_id VARCHAR2(40) DEFAULT NULL,
-  constraint "MODULE_COURSE_PK" PRIMARY KEY (tt_module_id, learn_course_code)
+  constraint "MODULE_COURSE_PK" PRIMARY KEY (module_course_id)
 ) tablespace "SATVLE_DATA";
+comment on column module_course.module_course_id is 'Automatically generated ID for this relationship, based on the MODULE_COURSE_SEQ sequence.';
 comment on column module_course.tt_module_id is 'ID for the module, copied from Timetabling RDB.';
 comment on column module_course.learn_course_code is 'Course code for a course in Learn that the module feeds into.';
 comment on column module_course.learn_course_id is 'ID for the course in Learn that the "learn_course_code" field relates to.';
@@ -82,13 +84,15 @@ comment on column activity.learn_group_name is 'Human readable name for the grou
 comment on column activity.description is 'Human readable description for the group(s) to be created in Learn.';
 
 CREATE TABLE activity_group (
-    tt_activity_id VARCHAR2(32) NOT NULL,
-    learn_course_code VARCHAR2(40) NOT NULL,
-    learn_group_id VARCHAR2(40) DEFAULT NULL,
-    learn_group_created DATE DEFAULT NULL,
-    constraint "ACTIVITY_GROUP_PK" PRIMARY KEY(tt_activity_id, learn_course_code),
-    constraint "LEARN_GROUP_ACTIVITY" FOREIGN KEY (tt_activity_id) REFERENCES activity(tt_activity_id)
+  activity_group_id INTEGER NOT NULL,
+  tt_activity_id VARCHAR2(32) NOT NULL,
+  learn_course_code VARCHAR2(40) NOT NULL,
+  learn_group_id VARCHAR2(40) DEFAULT NULL,
+  learn_group_created DATE DEFAULT NULL,
+  constraint "ACTIVITY_GROUP_PK" PRIMARY KEY(activity_group_id),
+  constraint "LEARN_GROUP_ACTIVITY" FOREIGN KEY (tt_activity_id) REFERENCES activity(tt_activity_id)
 );
+comment on column activity_group.activity_group_id is 'Automatically generated ID for this relationship, based on the ACTIVITY_GROUP_SEQ sequence.';
 comment on column activity_group.tt_activity_id is 'ID for the activity, copied from Timetabling RDB.';
 comment on column activity_group.learn_course_code is 'Course code for a course in Learn that the activity feeds into. Based on mapping from activity to module to courses.';
 comment on column activity_group.learn_group_id is 'ID for the group created in Learn for the activity on the course.';

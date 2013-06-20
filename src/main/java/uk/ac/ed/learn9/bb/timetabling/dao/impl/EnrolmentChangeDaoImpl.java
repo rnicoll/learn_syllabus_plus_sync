@@ -21,15 +21,5 @@ public class EnrolmentChangeDaoImpl extends HibernateDaoSupport implements Enrol
     @Override
     public EnrolmentChange getById(final int changeId) {
         return (EnrolmentChange)this.getSession().get(EnrolmentChange.class, changeId);
-    }
-
-    @Override
-    public List<EnrolmentChange> getByCourse(final Course course) {
-        return (List<EnrolmentChange>)this.getSession().createCriteria(EnrolmentChange.class)
-            .createCriteria("activity")
-            .createCriteria("module")
-            .add(Restrictions.eq("learnCourseId", course.getId().getExternalString()))
-                .list();
-    }
-    
+    }    
 }

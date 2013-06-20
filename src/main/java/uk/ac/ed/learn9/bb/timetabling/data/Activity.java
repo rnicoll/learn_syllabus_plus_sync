@@ -18,7 +18,6 @@ public class Activity extends Object implements Serializable {
     private String activityId;
     private String activityName;
     private Module module;
-    private String learnGroupId;
     private String learnGroupName;
     private String description;
 
@@ -54,18 +53,6 @@ public class Activity extends Object implements Serializable {
     @Column(name="description", nullable=true, length=400)
     public String getDescription() {
         return description;
-    }
-
-    /**
-     * Gets the ID of the group in Learn that this activity maps to,
-     * where applicable.
-     * 
-     * @return the ID of the group in Learn that this activity maps to,
-     * or null if no mapping has been established yet.
-     */
-    @Column(name="learn_group_id", nullable=true, length=80)
-    public String getLearnGroupId() {
-        return learnGroupId;
     }
 
     /**
@@ -124,13 +111,5 @@ public class Activity extends Object implements Serializable {
      */
     public void setModule(Module module) {
         this.module = module;
-    }
-
-    /**
-     * @param learnGroupId the ID of the group in Learn that this activity
-     * relates to.
-     */
-    public void setLearnGroupId(String learnGroupId) {
-        this.learnGroupId = learnGroupId;
     }
 }

@@ -1,10 +1,14 @@
 package uk.ac.ed.learn9.bb.timetabling.data;
 
 import java.io.Serializable;
+import java.util.List;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
+
 import org.hibernate.annotations.Type;
 
 /**
@@ -13,7 +17,7 @@ import org.hibernate.annotations.Type;
 @Entity
 @Table(name="module")
 public class Module extends Object implements Serializable {
-    private String timetablingModueId;
+    private String timetablingModuleId;
     private String timetablingCourseCode;
     private String timetablingModuleName;
     private String timetablingAcademicYear;
@@ -21,9 +25,9 @@ public class Module extends Object implements Serializable {
     private String cacheOccurrenceCode;
     private String cacheCourseCode;
     private String learnAcademicYear;
-    private String learnCourseId;
     private String learnCourseCode;
     private Boolean webctActive;
+    private List<ModuleCourse> courses;
 
     /**
      * Gets the ID of this module (a 32 character identifier).
@@ -33,18 +37,7 @@ public class Module extends Object implements Serializable {
     @Id
     @Column(name="tt_module_id", nullable=false, length=32)
     public String getModuleId() {
-        return timetablingModueId;
-    }
-
-    /**
-     * Get the ID of the course in Learn, where such a course exists.
-     * 
-     * @return the ID of the course in Learn, or null if no matching course
-     * has been identified yet.
-     */
-    @Column(name="learn_course_id", nullable=true, length=80)
-    public String getLearnCourseId() {
-        return learnCourseId;
+        return timetablingModuleId;
     }
 
     /**
@@ -111,6 +104,16 @@ public class Module extends Object implements Serializable {
     @Column(name="cache_course_code", nullable=true, length=12, updatable=false)
     public String getCacheCourseCode() {
         return cacheCourseCode;
+    }
+
+    /**
+     * Get the Learn courses this timetabling module maps to.
+     * 
+     * @return the Learn courses this timetabling module maps to.
+     */
+    @OneToMany(mappedBy="module")
+    public List<ModuleCourse> getCourses() {
+        return courses;
     }
 
     /**
@@ -196,17 +199,19 @@ public class Module extends Object implements Serializable {
     }
 
     /**
-     * @param learnCourseId the ID of the course in Learn to set.
+     * Set the Learn courses this timetabling module maps to.
+     * 
+     * @param courses the Learn courses this timetabling module maps to.
      */
-    public void setLearnCourseId(String learnCourseId) {
-        this.learnCourseId = learnCourseId;
+    public void setCourses(final List<ModuleCourse> courses) {
+        this.courses = courses;
     }
 
     /**
      * @param moduleId the moduleId to set
      */
     public void setModuleId(String moduleId) {
-        this.timetablingModueId = moduleId;
+        this.timetablingModuleId = moduleId;
     }
 
     /**
