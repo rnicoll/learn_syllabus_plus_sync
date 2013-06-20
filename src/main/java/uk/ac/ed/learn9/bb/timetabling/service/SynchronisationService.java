@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -297,6 +298,67 @@ public class SynchronisationService extends Object {
             destination.close();
         }
     }
+
+    /**
+     * Generate activity groups based on the courses that each activity maps
+     * to via their module.
+     */
+    public void generateActivityGroups() throws SQLException {
+        final Connection stagingDatabase = this.getStagingDataSource().getConnection();
+        
+        try {
+            final Statement statement = stagingDatabase.createStatement();
+            try {
+                statement.executeUpdate("INSERT INTO activity_group "
+                        + "(tt_activity_id, module_course_id) "
+                        + "(SELECT tt_module_id, learn_course_code "
+                            + "FROM module_course_merged_vw "
+                            + "WHERE tt_activity_id NOT IN (SELECT tt_activity_id FROM activity_group)"
+                        + ")"
+                );
+            } finally {
+                statement.close();
+            }
+        } finally {
+            stagingDatabase.close();
+        }
+    }
+
+    /**
+     * Generate module-course relationships based on the modules from Timetabling,
+     * and the merged courses data from the BBL Feeds database.
+     */
+    public void generateModuleCourses() throws SQLException {
+        final Connection stagingDatabase = this.getStagingDataSource().getConnection();
+        
+        try {
+            final Statement statement = stagingDatabase.createStatement();
+            try {
+                // Insert merged courses into the table first, and then only
+                // insert unmerged courses where there is not a merged course
+                // already.
+                
+                statement.executeUpdate("INSERT INTO module_course "
+                        + "(tt_module_id, learn_course_code) "
+                        + "(SELECT tt_module_id, learn_course_code "
+                            + "FROM module_course_merged_vw "
+                            + "WHERE tt_module_id NOT IN (SELECT tt_module_id FROM module_course)"
+                        + ")"
+                );
+                statement.executeUpdate("INSERT INTO module_course "
+                        + "(tt_module_id, learn_course_code) "
+                        + "(SELECT tt_module_id, learn_course_code "
+                            + "FROM module_course_unmerged_vw "
+                            + "WHERE tt_module_id NOT IN (SELECT tt_module_id FROM module_course)"
+                        + ")"
+                );
+            } finally {
+                statement.close();
+            }
+        } finally {
+            stagingDatabase.close();
+        }
+    }
     
     /**
      * Executes a synchronisation run.
@@ -312,7 +374,10 @@ public class SynchronisationService extends Object {
             throws SQLException, PersistenceException, ValidationException {
         this.synchroniseTimetablingData();
         this.synchroniseEugexData();
+        this.synchroniseMergedCoursesData();
         this.getConcurrencyService().markCacheCopyCompleted(run);
+        this.generateModuleCourses();
+        this.generateActivityGroups();
         this.generateDiff(run);
         this.getConcurrencyService().markDiffCompleted(run);
         this.updateGroupDescriptions();
@@ -408,6 +473,13 @@ public class SynchronisationService extends Object {
         } finally {
             destination.close();
         }
+    }
+
+    /**
+     * Synchronises details of merged courses from the BBL Feeds database.
+     */
+    public void synchroniseMergedCoursesData() throws SQLException {
+        this.getMergedCoursesService().synchroniseMergedCourses();
     }
     
     /**

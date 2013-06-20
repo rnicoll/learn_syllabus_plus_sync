@@ -131,21 +131,6 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     }
 
     /**
-     * Test of applyEnrolmentChanges method, of class SynchronisationService.
-     */
-    /*
-    @Test
-    public void testApplyEnrolmentChanges() throws Exception {
-        System.out.println("applyEnrolmentChanges");
-        SynchronisationRun run = null;
-        SynchronisationService instance = this.getService();
-        instance.applyEnrolmentChanges(run);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-     */
-
-    /**
      * Test of buildGroupsDescription method, of class SynchronisationService.
      */
     @Test
@@ -160,35 +145,6 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
             instance.buildGroupDescription("Course Name/1", "Tutorial", null));
         
     }
-
-    /**
-     * Test of createGroupsForActivities method, of class SynchronisationService.
-     */
-    /*
-    @Test
-    public void testCreateGroupsForActivities() throws Exception {
-        System.out.println("createGroupsForActivities");
-        SynchronisationRun run = null;
-        SynchronisationService instance = this.getService();
-        instance.createGroupsForActivities(run);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-     */
-
-    /**
-     * Test of mapModulesToCourses method, of class SynchronisationService.
-     */
-    /*
-    @Test
-    public void testMapModulesToCourses() throws Exception {
-        System.out.println("mapModulesToCourses");
-        SynchronisationService instance = this.getService();
-        instance.mapModulesToCourses();
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-     */
     
     /**
      * Test of synchroniseTimetablingData method, of class SynchronisationService.
@@ -401,6 +357,20 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
         }
     }
 
+    /**
+     * Test of generateModuleCourses method, of class SynchronisationService.
+     */
+    @Test
+    public void testGenerateModuleCourses() throws Exception {
+        System.out.println("generateModuleCourses");
+        
+        SynchronisationService instance = this.getService();
+        
+        // XXX: Generate module and merged module data to handle and test
+        
+        instance.generateModuleCourses();
+    }
+
     public ActivityDao getActivityDao() throws BeansException {
         return this.applicationContext.getBean(ActivityDao.class);
     }
@@ -408,33 +378,4 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     public ModuleDao getModuleDao() throws BeansException {
         return this.applicationContext.getBean(ModuleDao.class);
     }
-
-    /**
-     * Test of mapStudentSetsToUsers method, of class SynchronisationService.
-     */
-    /*
-    @Test
-    public void testMapStudentSetsToUsers() throws Exception {
-        System.out.println("mapStudentSetsToUsers");
-        SynchronisationRun run = null;
-        SynchronisationService instance = this.getService();
-        instance.mapStudentSetsToUsers(run);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-     */
-
-    /**
-     * Test of updateGroupDescriptions method, of class SynchronisationService.
-     */
-    /*
-    @Test
-    public void testUpdateGroupDescriptions() throws Exception {
-        System.out.println("updateGroupDescriptions");
-        SynchronisationService instance = this.getService();
-        instance.updateGroupDescriptions();
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-    */
 }
