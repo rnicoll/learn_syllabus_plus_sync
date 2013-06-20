@@ -86,15 +86,16 @@ comment on column activity.description is 'Human readable description for the gr
 CREATE TABLE activity_group (
   activity_group_id INTEGER NOT NULL,
   tt_activity_id VARCHAR2(32) NOT NULL,
-  learn_course_code VARCHAR2(40) NOT NULL,
+  module_course_id INTEGER NOT NULL,
   learn_group_id VARCHAR2(40) DEFAULT NULL,
   learn_group_created DATE DEFAULT NULL,
-  constraint "ACTIVITY_GROUP_PK" PRIMARY KEY(activity_group_id),
-  constraint "LEARN_GROUP_ACTIVITY" FOREIGN KEY (tt_activity_id) REFERENCES activity(tt_activity_id)
+  constraint ACTIVITY_GROUP_PK PRIMARY KEY(activity_group_id),
+  constraint ACTIVITY_GROUP_COURSE FOREIGN KEY (module_course_id) REFERENCES module_course(module_course_id),
+  constraint LEARN_GROUP_ACTIVITY FOREIGN KEY (tt_activity_id) REFERENCES activity(tt_activity_id)
 );
 comment on column activity_group.activity_group_id is 'Automatically generated ID for this relationship, based on the ACTIVITY_GROUP_SEQ sequence.';
 comment on column activity_group.tt_activity_id is 'ID for the activity, copied from Timetabling RDB.';
-comment on column activity_group.learn_course_code is 'Course code for a course in Learn that the activity feeds into. Based on mapping from activity to module to courses.';
+comment on column activity_group.module_course_id is 'ID of the module/course relationship this is group based on.';
 comment on column activity_group.learn_group_id is 'ID for the group created in Learn for the activity on the course.';
 comment on column activity_group.learn_group_created is 'Timestamp when the group was created in Learn.';
 
@@ -193,7 +194,7 @@ CREATE TABLE student_set (
   constraint "STUDENT_SET_PK" PRIMARY KEY (tt_student_set_id)
 ) tablespace "SATVLE_DATA";
 comment on column student_set.tt_student_set_id is 'ID for the student set, copied from Timetabling RDB.';
-comment on column student_set.tt_host_key_id is 'Host key for the student set, copied from Timetabling RDB. Typically this is their username.';
+comment on column student_set.tt_host_key is 'Host key for the student set, copied from Timetabling RDB. Typically this is their username.';
 comment on column student_set.learn_user_id is 'ID for the user the student set relates to, in Learn, where applicable.';
 
 CREATE TABLE enrolment_change (

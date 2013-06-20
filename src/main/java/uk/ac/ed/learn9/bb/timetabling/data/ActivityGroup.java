@@ -7,6 +7,7 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 
 /**
@@ -17,7 +18,7 @@ import javax.persistence.Table;
 public class ActivityGroup {
     private int activityGroupId;
     private Activity activity;
-    private String learnCourseCode;
+    private ModuleCourse moduleCourse;
     private String learnGroupId;
     private Timestamp learnGroupCreated;
 
@@ -42,17 +43,6 @@ public class ActivityGroup {
     public Activity getActivity() {
         return this.activity;
     }
-    
-    /**
-     * The Learn course code for the course this group belongs to. 
-     * 
-     * @return the Learn course code for the course this group belongs to. 
-     */
-    @Column(name="learn_course_code", nullable=false)
-    public String getLearnCourseCode() {
-        return learnCourseCode;
-    }
-
 
     /**
      * Gets the ID of the group in Learn that the activity maps to,
@@ -74,6 +64,17 @@ public class ActivityGroup {
     public Timestamp getLearnGroupCreated() {
         return learnGroupCreated;
     }
+
+    /**
+     * Get the module-course relationship this group is based on.
+     * 
+     * @return the module-course relationship this group is based on.
+     */
+    @ManyToOne
+    @JoinColumn(name="module_course_id")
+    public ModuleCourse getModuleCourse() {
+        return moduleCourse;
+    }
     
     public void setActivity(final Activity newActivity) {
         this.activity = newActivity;
@@ -87,13 +88,6 @@ public class ActivityGroup {
     }
 
     /**
-     * @param learnCourseCode the learnCourseCode to set
-     */
-    public void setLearnCourseCode(String learnCourseCode) {
-        this.learnCourseCode = learnCourseCode;
-    }
-
-    /**
      * Set the ID of the group in Learn that the activity relates to.
      * 
      * @param learnGroupId the ID of the group in Learn that te activity
@@ -104,10 +98,21 @@ public class ActivityGroup {
     }
 
     /**
-     * @param learnGroupCreated the learnGroupCreated to set
+     * Set the time at which the group was created in Learn.
+     * 
+     * @param learnGroupCreated the creation time to set.
      */
     public void setLearnGroupCreated(Timestamp learnGroupCreated) {
         this.learnGroupCreated = learnGroupCreated;
+    }
+
+    /**
+     * Set the module-course relationship this group is based on.
+     * 
+     * @param moduleCourse the module-course relationship to set.
+     */
+    public void setModuleCourse(ModuleCourse moduleCourse) {
+        this.moduleCourse = moduleCourse;
     }
     
 }

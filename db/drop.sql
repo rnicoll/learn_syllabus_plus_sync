@@ -25,6 +25,7 @@ DROP TABLE activity_parents;
 DROP TABLE activity_group;
 DROP TABLE activity;
 DROP TABLE learn_merged_course;
+DROP TABLE module_course;
 DROP TABLE module;
 DROP TABLE student_set;
 DROP TABLE activity_template;
