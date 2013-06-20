@@ -6,6 +6,13 @@ CREATE OR REPLACE TRIGGER ENROLMENT_CHANGE_PK
       select ENROLMENT_CHANGE_SEQ.nextval into :new.change_id from dual;
     end;
 /
+CREATE OR REPLACE TRIGGER ENROLMENT_CHANGE_PART_PK
+  BEFORE INSERT ON ENROLMENT_CHANGE_PART
+    for each row
+    begin
+      select ENROLMENT_CHANGE_PART_SEQ.nextval into :new.part_id from dual;
+    end;
+/
 
 CREATE OR REPLACE TRIGGER course_code_ins BEFORE INSERT OR UPDATE ON module
    FOR EACH ROW WHEN ( REGEXP_LIKE (new.tt_course_code, '^[A-Z][A-Z0-9]+_[A-Z][A-Z0-9]+_[A-Z][A-Z0-9\\+]+$') )
