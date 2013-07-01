@@ -1,8 +1,8 @@
 DROP VIEW change_part_vw;
 DROP VIEW removed_enrolment_vw;
 DROP VIEW added_enrolment_vw;
-DROP VIEW jta_sync_activity_vw;
-DROP VIEW non_jta_sync_activity_vw;
+DROP VIEW jta_activity_group_vw;
+DROP VIEW non_jta_activity_group_vw;
 DROP VIEW sync_activity_vw;
 DROP VIEW sync_module_vw;
 DROP VIEW sync_template_vw;

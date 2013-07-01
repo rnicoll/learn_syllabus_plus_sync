@@ -213,18 +213,22 @@ CREATE VIEW sync_activity_vw AS
             AND t.set_size>'1'
     );
 
-CREATE VIEW non_jta_sync_activity_vw AS
-    (SELECT a.tt_activity_id, a.tt_activity_name,
-            a.learn_group_name, a.description, a.tt_type_id, a.tt_template_id
+CREATE VIEW non_jta_activity_group_vw AS
+    (SELECT ag.activity_group_id, a.tt_activity_id, a.tt_activity_name,
+            a.learn_group_name, a.description, a.tt_type_id, a.tt_template_id,
+            ag.learn_group_id, ag.learn_group_created
         FROM sync_activity_vw a
+            JOIN activity_group ag ON ag.tt_activity_id=a.tt_activity_id
         WHERE a.tt_activity_id NOT IN (SELECT tt_activity_id FROM jta_child_activity_vw)
     );
-CREATE VIEW jta_sync_activity_vw AS
-    (SELECT a.tt_activity_id, p.tt_activity_name,
-            p.learn_group_name, p.description, p.tt_type_id, p.tt_template_id
+CREATE VIEW jta_activity_group_vw AS
+    (SELECT ag.activity_group_id, a.tt_activity_id, p.tt_activity_name,
+            p.learn_group_name, p.description, p.tt_type_id, p.tt_template_id,
+            ag.learn_group_id, ag.learn_group_created
         FROM sync_activity_vw a
             JOIN activity_parents ap ON ap.tt_activity_id=a.tt_activity_id
             JOIN sync_activity_vw p ON p.tt_activity_id=ap.tt_parent_activity_id
+            JOIN activity_group ag ON ag.tt_activity_id=p.tt_activity_id
         WHERE a.tt_activity_id IN (SELECT tt_activity_id FROM jta_child_activity_vw)
     );
 
