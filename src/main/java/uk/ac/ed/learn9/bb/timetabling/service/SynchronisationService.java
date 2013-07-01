@@ -595,9 +595,7 @@ public class SynchronisationService extends Object {
             insertStatement.close();
         }
         
-        // Generate the individual change parts for the cases where the course
-        // a module maps to is active in Learn, and therefore no course merging
-        // is to be applied
+        // Generate the individual change parts
         insertStatement = stagingDatabase.prepareStatement(
             "INSERT INTO enrolment_change_part "
                 + "(change_id, module_course_id) "
@@ -605,29 +603,8 @@ public class SynchronisationService extends Object {
                     + "FROM enrolment_change c "
                         + "JOIN activity a ON a.tt_activity_id=c.tt_activity_id "
                         + "JOIN module m ON m.tt_module_id=a.tt_module_id "
-                        + "JOIN module_course mc ON mc.tt_module_id=m.tt_module_id AND mc.merged_course='N' AND mc.learn_course_available='Y' "
+                        + "JOIN module_course mc ON mc.tt_module_id=m.tt_module_id AND mc.learn_course_available='Y' "
                     + "WHERE c.run_id=?) "
-        );
-        try {
-            insertStatement.setInt(1, run.getRunId());
-            insertStatement.executeUpdate();
-        } finally {
-            insertStatement.close();
-        }
-        
-        // Generate the individual change parts for the cases where the course
-        // a module maps to is not active in Learn, and therefore no merging
-        // applies
-        insertStatement = stagingDatabase.prepareStatement(
-            "INSERT INTO enrolment_change_part "
-                + "(change_id, module_course_id) "
-                + "(SELECT c.change_id, mc.module_course_id "
-                    + "FROM enrolment_change c "
-                        + "JOIN activity a ON a.tt_activity_id=c.tt_activity_id "
-                        + "JOIN module m ON m.tt_module_id=a.tt_module_id "
-                        + "JOIN module_course mc ON mc.tt_module_id=m.tt_module_id AND mc.merged_course='Y' "
-                        + "LEFT JOIN enrolment_change_part uniq ON uniq.change_id=c.change_id "
-                    + "WHERE c.run_id=? AND c.change_id IS NULL) "
         );
         try {
             insertStatement.setInt(1, run.getRunId());
