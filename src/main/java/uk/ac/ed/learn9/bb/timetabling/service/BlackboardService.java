@@ -64,7 +64,6 @@ public class BlackboardService {
                 "SELECT p.part_id, mc.learn_course_id, ag.learn_group_id, s.learn_user_id, c.change_type "
                     + "FROM enrolment_change c "
                         + "JOIN enrolment_change_part p ON p.change_id=c.change_id "
-                        + "JOIN change_result r ON r.result_code=p.result_code "
                         + "JOIN activity a on a.tt_activity_id=c.tt_activity_id "
                         + "JOIN module_course mc ON mc.module_course_id=p.module_course_id "
                         + "JOIN activity_group ag on ag.tt_activity_id=c.tt_activity_id AND ag.module_course_id=mc.module_course_id "
@@ -104,12 +103,12 @@ public class BlackboardService {
                 "SELECT p.part_id, mc.learn_course_id, ag.learn_group_id, s.learn_user_id, c.change_type "
                     + "FROM enrolment_change c "
                         + "JOIN enrolment_change_part p ON p.change_id=c.change_id "
-                        + "JOIN change_result r ON r.result_code=p.result_code "
+                        + "LEFT JOIN change_result r ON r.result_code=p.result_code "
                         + "JOIN module_course mc ON mc.module_course_id=p.module_course_id "
                         + "JOIN activity_group ag on ag.tt_activity_id=c.tt_activity_id AND ag.module_course_id=mc.module_course_id "
                         + "JOIN student_set s ON s.tt_student_set_id=c.tt_student_set_id "
                     + "WHERE p.update_completed IS NULL "
-                        + "AND r.retry='1' "
+                        + "AND (r.retry IS NULL OR r.retry='1') "
                     + "ORDER BY mc.learn_course_id, p.part_id");
             try {
                 applyEnrolmentChanges(queryStatement, outcome);
