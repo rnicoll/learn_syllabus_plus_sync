@@ -333,55 +333,46 @@ public class BlackboardService {
                     + "FROM module_course "
                     + "WHERE learn_course_id IS NULL");
             try {
-                mapModulesToCourses(queryStatement, updateStatement);
+                final CourseDbLoader courseDbLoader = this.getCourseDbLoader();
+                final CourseCourseDbLoader courseCourseDbLoader = this.getCourseCourseDbLoader();
+                final ResultSet rs = queryStatement.executeQuery();
+                try {
+                    while (rs.next()) {
+                        final String learnCourseCode = rs.getString("learn_course_code");
+
+                        if (!courseDbLoader.doesCourseIdExist(learnCourseCode)) {
+                            continue;
+                        }
+
+                        Course course = courseDbLoader.loadByCourseId(learnCourseCode);
+
+                        // If the course has a parent-child relationship with another
+                        // course, use the parent
+                        try {
+                            final CourseCourse courseCourse = courseCourseDbLoader.loadParent(course.getId());
+
+                            // Successfully found a parent course, replace the child with it.
+                            course = courseDbLoader.loadById(courseCourse.getParentCourseId());
+                        } catch (KeyNotFoundException e) {
+                            // No parent course, ignore
+                        }
+
+                        int paramIdx = 1;
+                        updateStatement.setString(paramIdx++, course.getId().getExternalString());
+                        updateStatement.setString(paramIdx++, course.getIsAvailable()
+                            ? "Y"
+                            : "N");
+                        updateStatement.setInt(paramIdx++, rs.getInt("module_course_id"));
+                        updateStatement.executeUpdate();
+                    }
+                } finally {
+                    rs.close();
+                }
             } finally {
                 queryStatement.close();
             }
         } finally {
             updateStatement.close();
-        }
-    }
-
-    /**
-     * Resolves modules from the timetabling system into the relevant course in
-     * Learn, where applicable.
-     */
-    private void mapModulesToCourses(final PreparedStatement queryStatement, final PreparedStatement updateStatement)
-            throws SQLException, PersistenceException {
-        final CourseDbLoader courseDbLoader = this.getCourseDbLoader();
-        final CourseCourseDbLoader courseCourseDbLoader = this.getCourseCourseDbLoader();
-        final ResultSet rs = queryStatement.executeQuery();
-        try {
-            while (rs.next()) {
-                final String learnCourseCode = rs.getString("learn_course_code");
-
-                if (!courseDbLoader.doesCourseIdExist(learnCourseCode)) {
-                    continue;
-                }
-
-                Course course = courseDbLoader.loadByCourseId(learnCourseCode);
-
-                // If the course has a parent-child relationship with another
-                // course, use the parent
-                try {
-                    final CourseCourse courseCourse = courseCourseDbLoader.loadParent(course.getId());
-
-                    // Successfully found a parent course, replace the child with it.
-                    course = courseDbLoader.loadById(courseCourse.getParentCourseId());
-                } catch (KeyNotFoundException e) {
-                    // No parent course, ignore
-                }
-
-                int paramIdx = 1;
-                updateStatement.setString(paramIdx++, course.getId().getExternalString());
-                updateStatement.setString(paramIdx++, course.getIsAvailable()
-                    ? "Y"
-                    : "N");
-                updateStatement.setInt(paramIdx++, rs.getInt("learn_course_id"));
-                updateStatement.executeUpdate();
-            }
-        } finally {
-            rs.close();
         }
     }
 
