@@ -92,6 +92,9 @@
     <bean id="enrolmentChangeDao" class="uk.ac.ed.learn9.bb.timetabling.dao.impl.EnrolmentChangeDaoImpl">
         <property name="sessionFactory" ref="sessionFactory"/>
     </bean>
+    <bean id="enrolmentChangePartDao" class="uk.ac.ed.learn9.bb.timetabling.dao.impl.EnrolmentChangePartDaoImpl">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
     <bean id="moduleDao" class="uk.ac.ed.learn9.bb.timetabling.dao.impl.ModuleDaoImpl">
         <property name="sessionFactory" ref="sessionFactory"/>
     </bean>
