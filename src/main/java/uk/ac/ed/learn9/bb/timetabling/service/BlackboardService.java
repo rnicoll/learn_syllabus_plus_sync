@@ -246,12 +246,12 @@ public class BlackboardService {
         final ManagedLearnGroupIDStatement updateStatement = new ManagedLearnGroupIDStatement(stagingDatabase);
         try {
             PreparedStatement queryStatement = stagingDatabase.prepareStatement(
-                    "(SELECT tt_activity_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
+                    "(SELECT activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
                     + "FROM non_jta_activity_group_vw "
                         + "WHERE learn_course_id IS NOT NULL AND learn_group_id IS NULL"
                     + ")"
                     + " UNION "
-                    + "(SELECT tt_activity_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
+                    + "(SELECT activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
                     + "FROM jta_activity_group_vw "
                         + "WHERE learn_course_id IS NOT NULL AND learn_group_id IS NULL"
                     + ")");
@@ -274,9 +274,9 @@ public class BlackboardService {
                         groupDbPersister.persist(group);
 
                         final Timestamp now = new Timestamp(System.currentTimeMillis());
-                        final String activityId = rs.getString("tt_activity_id");
+                        final int activityGroupId = rs.getInt("activity_group_id");
 
-                        updateStatement.recordGroupId(now, activityId, group.getId());
+                        updateStatement.recordGroupId(now, activityGroupId, group.getId());
                     }
                 } finally {
                     rs.close();
@@ -598,9 +598,9 @@ public class BlackboardService {
 
         private ManagedLearnGroupIDStatement(final Connection connection)
                 throws SQLException {
-            this.statement = connection.prepareStatement("UPDATE activity a "
-                    + "SET a.learn_group_id=?, a.learn_group_created=? "
-                    + "WHERE a.tt_activity_id=?");
+            this.statement = connection.prepareStatement("UPDATE activity_group g "
+                    + "SET g.learn_group_id=?, g.learn_group_created=? "
+                    + "WHERE g.activity_group_id=?");
         }
 
         /**
@@ -613,11 +613,14 @@ public class BlackboardService {
         }
 
         public int recordGroupId(final Timestamp now,
-                final String activityId, final Id groupId)
+                final int activityGroupId, final Id groupId)
                 throws SQLException {
-            this.statement.setString(1, groupId.toExternalString());
-            this.statement.setTimestamp(2, now);
-            this.statement.setString(3, activityId);
+            int paramIdx = 1;
+            
+            this.statement.setString(paramIdx++, groupId.toExternalString());
+            this.statement.setTimestamp(paramIdx++, now);
+            this.statement.setInt(paramIdx++, activityGroupId);
+            
             return this.statement.executeUpdate();
         }
     }
