@@ -226,8 +226,9 @@ CREATE TABLE enrolment_change_part (
   result_code VARCHAR2(20) DEFAULT NULL,
   update_completed DATE DEFAULT NULL,
   constraint "ENROLMENT_CHANGE_PART_PK" PRIMARY KEY (part_id),
-  CONSTRAINT enrol_change_module FOREIGN KEY (module_course_id) REFERENCES module_course(module_course_id),
-  constraint enrol_change_res FOREIGN KEY (result_code) REFERENCES change_result (result_code)
+  CONSTRAINT enrol_chg_part_change FOREIGN KEY (change_id) REFERENCES enrolment_change(change_id),
+  CONSTRAINT enrol_chg_part_module FOREIGN KEY (module_course_id) REFERENCES module_course(module_course_id),
+  constraint enrol_chg_part_res FOREIGN KEY (result_code) REFERENCES change_result (result_code)
 ) tablespace "SATVLE_DATA";
 comment on column enrolment_change_part.part_id is 'Automatically generated ID for this change part, based on the ENROLMENT_CHANGE_PART_SEQ sequence.';
 comment on column enrolment_change_part.change_id is 'ID for the change this is part of.';

@@ -161,8 +161,9 @@ CREATE TABLE enrolment_change_part (
   result_code VARCHAR(20) DEFAULT NULL,
   update_completed DATETIME DEFAULT NULL,
   PRIMARY KEY (part_id),
-  constraint enrol_change_module FOREIGN KEY (module_course_id) REFERENCES module_course(module_course_id),
-  constraint enrolment_change_res FOREIGN KEY (result_code) REFERENCES change_result (result_code)
+  CONSTRAINT enrol_chg_part_change FOREIGN KEY (change_id) REFERENCES enrolment_change(change_id),
+  CONSTRAINT enrol_chg_part_module FOREIGN KEY (module_course_id) REFERENCES module_course(module_course_id),
+  CONSTRAINT enrol_chg_part_res FOREIGN KEY (result_code) REFERENCES change_result (result_code)
 );
 
 
