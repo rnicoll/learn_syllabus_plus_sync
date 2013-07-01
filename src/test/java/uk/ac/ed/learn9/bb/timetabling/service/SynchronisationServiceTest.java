@@ -413,6 +413,17 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
         
         synchronisationService.generateModuleCourses();
     }
+    
+    /**
+     * Very simple test for group description update code; basically just
+     * tests the SQL is sane.
+     */
+    @Test
+    public void testUpdateGroupDescriptions() throws Exception {
+        System.out.println("doGenerateDiff");
+        final SynchronisationService synchronisationService = this.getService();
+        synchronisationService.updateGroupDescriptions();
+    }
 
     public ActivityDao getActivityDao() throws BeansException {
         return this.applicationContext.getBean(ActivityDao.class);
