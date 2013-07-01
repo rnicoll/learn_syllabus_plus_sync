@@ -326,7 +326,9 @@ public class SynchronisationService extends Object {
 
     /**
      * Generate module-course relationships based on the modules from Timetabling,
-     * and the merged courses data from the BBL Feeds database.
+     * and the merged courses data from the BBL Feeds database. This ensures
+     * we have a consistent snapshot of how the mappings are done, so that
+     * external database changes won't cause problems later.
      */
     public void generateModuleCourses() throws SQLException {
         final Connection stagingDatabase = this.getStagingDataSource().getConnection();
@@ -334,23 +336,23 @@ public class SynchronisationService extends Object {
         try {
             final Statement statement = stagingDatabase.createStatement();
             try {
-                // Insert merged courses into the table first, and then only
-                // insert unmerged courses where there is not a merged course
-                // already.
-                
                 statement.executeUpdate("INSERT INTO module_course "
-                        + "(tt_module_id, learn_course_code) "
-                        + "(SELECT tt_module_id, learn_course_code "
-                            + "FROM module_course_merged_vw "
-                            + "WHERE tt_module_id NOT IN (SELECT tt_module_id FROM module_course)"
-                        + ")"
+                    + "(tt_module_id, merged_course, learn_course_code) "
+                    + "(SELECT mc.tt_module_id, 'N', learn_course_code "
+                        + "FROM module_course mc "
+                        + "WHERE mc.tt_module_id NOT IN (SELECT tt_module_id FROM module_course WHERE merged_course='N')"
+                    + ")"
                 );
                 statement.executeUpdate("INSERT INTO module_course "
-                        + "(tt_module_id, learn_course_code) "
-                        + "(SELECT tt_module_id, learn_course_code "
-                            + "FROM module_course_unmerged_vw "
-                            + "WHERE tt_module_id NOT IN (SELECT tt_module_id FROM module_course)"
-                        + ")"
+                    + "(tt_module_id, merged_course, learn_course_code) "
+                    + "(SELECT mc.tt_module_id, 'Y', merge.learn_target_course_code "
+                        + "FROM module_course mc "
+                            + "JOIN learn_merged_course merge ON merge.learn_source_course_code = mc.learn_course_code "
+                            + "LEFT JOIN module_course exist ON exist.tt_module_id=mc.tt_module_id "
+                                + "AND exist.merged_course = 'Y' "
+                                + "AND exist.learn_course_code=mc.learn_course_code "
+                        + "WHERE exist.tt_module_id IS NULL"
+                    + ")"
                 );
             } finally {
                 statement.close();

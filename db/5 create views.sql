@@ -1,33 +1,33 @@
 
-CREATE VIEW template_set_size_vw AS
+CREATE OR REPLACE VIEW template_set_size_vw AS
     (SELECT t.tt_template_id, COUNT(b.tt_activity_id) AS set_size
         FROM activity_template t
             LEFT JOIN activity b ON t.tt_template_id = b.tt_template_id
         GROUP BY t.tt_template_id
     );
 
-CREATE VIEW jta_child_activity_vw AS
+CREATE OR REPLACE VIEW jta_child_activity_vw AS
     (SELECT a.tt_activity_id
         FROM variantjtaacts a WHERE a.tt_is_jta_child='1');
-CREATE VIEW jta_parent_activity_vw AS
+CREATE OR REPLACE VIEW jta_parent_activity_vw AS
     (SELECT a.tt_activity_id
         FROM variantjtaacts a WHERE a.tt_is_jta_parent='1');
-CREATE VIEW variant_child_activity_vw AS
+CREATE OR REPLACE VIEW variant_child_activity_vw AS
     (SELECT a.tt_activity_id
         FROM variantjtaacts a WHERE a.tt_is_variant_child='1');
-CREATE VIEW variant_parent_activity_vw AS
+CREATE OR REPLACE VIEW variant_parent_activity_vw AS
     (SELECT a.tt_activity_id
         FROM variantjtaacts a WHERE a.tt_is_variant_parent='1'
     );
 
-CREATE VIEW sync_module_vw AS
+CREATE OR REPLACE VIEW sync_module_vw AS
     (SELECT m.tt_module_id, m.tt_course_code, m.tt_module_name, m.tt_academic_year,
         m.learn_course_code
         FROM module m
         WHERE m.webct_active = 'Y'
     );
 
-CREATE VIEW sync_template_vw AS
+CREATE OR REPLACE VIEW sync_template_vw AS
     (SELECT t.tt_template_id, t.tt_template_name, t.tt_user_text_5, t.learn_group_set_id, s.set_size
         FROM activity_template t
             JOIN template_set_size_vw s ON s.tt_template_id = t.tt_template_id
@@ -35,7 +35,7 @@ CREATE VIEW sync_template_vw AS
             AND s.set_size > '1'
     );
 
-CREATE VIEW sync_activity_vw AS
+CREATE OR REPLACE VIEW sync_activity_vw AS
     (SELECT a.tt_activity_id, a.tt_activity_name, a.tt_module_id,
             a.learn_group_name, a.description, a.tt_type_id, a.tt_template_id
         FROM activity a
@@ -46,13 +46,13 @@ CREATE VIEW sync_activity_vw AS
             AND t.set_size>'1'
     );
 
-CREATE VIEW non_jta_sync_activity_vw AS
+CREATE OR REPLACE VIEW non_jta_sync_activity_vw AS
     (SELECT a.tt_activity_id, a.tt_activity_name,
             a.learn_group_name, a.description, a.tt_type_id, a.tt_template_id
         FROM sync_activity_vw a
         WHERE a.tt_activity_id NOT IN (SELECT tt_activity_id FROM jta_child_activity_vw)
     );
-CREATE VIEW jta_sync_activity_vw AS
+CREATE OR REPLACE VIEW jta_sync_activity_vw AS
     (SELECT a.tt_activity_id, p.tt_activity_name,
             p.learn_group_name, p.description, p.tt_type_id, p.tt_template_id
         FROM sync_activity_vw a
@@ -61,14 +61,14 @@ CREATE VIEW jta_sync_activity_vw AS
         WHERE a.tt_activity_id IN (SELECT tt_activity_id FROM jta_child_activity_vw)
     );
 
-CREATE VIEW sync_student_set_vw AS
+CREATE OR REPLACE VIEW sync_student_set_vw AS
     (SELECT s.tt_student_set_id, s.tt_host_key username, s.learn_user_id
         FROM student_set s
         WHERE s.tt_host_key IS NOT NULL
             AND SUBSTR(s.tt_host_key, 1, 6)!='#SPLUS'
     );
 
-CREATE VIEW added_enrolment_vw AS
+CREATE OR REPLACE VIEW added_enrolment_vw AS
     (SELECT a.run_id AS run_id,a.previous_run_id, ca.tt_student_set_id, ca.tt_activity_id,
         'ADD' AS change_type
         FROM synchronisation_run_prev a
@@ -80,7 +80,7 @@ CREATE VIEW added_enrolment_vw AS
         WHERE cb.tt_student_set_id IS NULL
     );
 
-CREATE VIEW removed_enrolment_vw AS
+CREATE OR REPLACE VIEW removed_enrolment_vw AS
     (SELECT a.run_id AS run_id, a.previous_run_id AS previous_run_id,
         ca.tt_student_set_id AS tt_student_set_id, ca.tt_activity_id AS tt_activity_id,
         'REMOVE' AS change_type
@@ -92,19 +92,8 @@ CREATE VIEW removed_enrolment_vw AS
             LEFT JOIN cache_enrolment ca ON ca.run_id = a.run_id AND cb.tt_student_set_id = ca.tt_student_set_id AND cb.tt_activity_id = ca.tt_activity_id
         WHERE ca.tt_student_set_id IS NULL
     );
-
-CREATE VIEW module_course_unmerged_vw AS
-    (SELECT m.tt_module_id, m.learn_course_code
-        FROM module m
-        WHERE m.learn_course_code NOT IN (SELECT learn_source_course_code FROM learn_merged_course)
-    );
-CREATE VIEW module_course_merged_vw AS
-    (SELECT m.tt_module_id, merge.learn_target_course_code learn_course_code
-        FROM module m
-            JOIN learn_merged_course merge ON merge.learn_source_course_code = m.learn_course_code
-    );
     
-CREATE VIEW change_part_vw AS
+CREATE OR REPLACE VIEW change_part_vw AS
     (SELECT c.run_id, c.change_id, mc.learn_course_code, mc.learn_course_id
         FROM enrolment_change c
             JOIN activity a ON a.tt_activity_id=c.tt_activity_id

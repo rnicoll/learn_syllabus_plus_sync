@@ -319,52 +319,66 @@ public class BlackboardService {
      */
     public void mapModulesToCourses(final Connection stagingDatabase)
             throws KeyNotFoundException, PersistenceException, SQLException {
-        final CourseDbLoader courseDbLoader = this.getCourseDbLoader();
-        final CourseCourseDbLoader courseCourseDbLoader = this.getCourseCourseDbLoader();
-
-        final PreparedStatement updateStatement = stagingDatabase.prepareStatement("UPDATE module "
-                + "SET learn_course_id=? "
-                + "WHERE tt_module_id=?");
+        final PreparedStatement updateStatement = stagingDatabase.prepareStatement(
+            "UPDATE module_course "
+                + "SET learn_course_id=?, "
+                    + "learn_course_available=? "
+                + "WHERE module_course_id=?");
         try {
             final PreparedStatement queryStatement = stagingDatabase.prepareStatement(
-                    "SELECT tt_module_id, effective_course_code, learn_course_id "
-                    + "FROM sync_module_vw "
-                    + "WHERE learn_course_code IS NOT NULL "
-                    + "AND learn_course_id IS NULL");
+                    "SELECT module_course_id, learn_course_code "
+                    + "FROM module_course "
+                    + "WHERE learn_course_id IS NULL");
             try {
-                final ResultSet rs = queryStatement.executeQuery();
-                while (rs.next()) {
-                    final String learnCourseCode = rs.getString("effective_course_code");
-
-                    if (!courseDbLoader.doesCourseIdExist(learnCourseCode)) {
-                        continue;
-                    }
-
-                    Course course = courseDbLoader.loadByCourseId(learnCourseCode);
-                    Id courseId;
-
-                    // If the course has a parent-child relationship with another
-                    // course, use the parent
-                    try {
-                        final CourseCourse courseCourse = courseCourseDbLoader.loadParent(course.getId());
-
-                        // Successfully found a parent course, replace the child with it.
-                        courseId = courseCourse.getParentCourseId();
-                    } catch (KeyNotFoundException e) {
-                        // No parent course, ignore
-                        courseId = course.getId();
-                    }
-                    
-                    int paramIdx = 1;
-                    updateStatement.setString(paramIdx++, courseId.getExternalString());
-                    updateStatement.setString(paramIdx++, rs.getString("tt_module_id"));
-                    updateStatement.executeUpdate();
-                }
+                mapModulesToCourses(queryStatement, updateStatement);
             } finally {
                 queryStatement.close();
             }
         } finally {
             updateStatement.close();
+        }
+    }
+
+    /**
+     * Resolves modules from the timetabling system into the relevant course in
+     * Learn, where applicable.
+     */
+    private void mapModulesToCourses(final PreparedStatement queryStatement, final PreparedStatement updateStatement)
+            throws SQLException, PersistenceException {
+        final CourseDbLoader courseDbLoader = this.getCourseDbLoader();
+        final CourseCourseDbLoader courseCourseDbLoader = this.getCourseCourseDbLoader();
+        final ResultSet rs = queryStatement.executeQuery();
+        try {
+            while (rs.next()) {
+                final String learnCourseCode = rs.getString("learn_course_code");
+
+                if (!courseDbLoader.doesCourseIdExist(learnCourseCode)) {
+                    continue;
+                }
+
+                Course course = courseDbLoader.loadByCourseId(learnCourseCode);
+
+                // If the course has a parent-child relationship with another
+                // course, use the parent
+                try {
+                    final CourseCourse courseCourse = courseCourseDbLoader.loadParent(course.getId());
+
+                    // Successfully found a parent course, replace the child with it.
+                    course = courseDbLoader.loadById(courseCourse.getParentCourseId());
+                } catch (KeyNotFoundException e) {
+                    // No parent course, ignore
+                }
+
+                int paramIdx = 1;
+                updateStatement.setString(paramIdx++, course.getId().getExternalString());
+                updateStatement.setString(paramIdx++, course.getIsAvailable()
+                    ? "Y"
+                    : "N");
+                updateStatement.setInt(paramIdx++, rs.getInt("learn_course_id"));
+                updateStatement.executeUpdate();
+            }
+        } finally {
+            rs.close();
         }
     }
 

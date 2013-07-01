@@ -1,6 +1,4 @@
 DROP VIEW change_part_vw;
-DROP VIEW module_course_merged_vw;
-DROP VIEW module_course_unmerged_vw;
 DROP VIEW removed_enrolment_vw;
 DROP VIEW added_enrolment_vw;
 DROP VIEW jta_sync_activity_vw;

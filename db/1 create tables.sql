@@ -46,14 +46,18 @@ comment on column module.webct_active is 'Yes/No indicator for whether this cour
 CREATE TABLE module_course (
   module_course_id INTEGER NOT NULL,
   tt_module_id VARCHAR2(40) NOT NULL,
+  merged_course CHAR(1) NOT NULL,
   learn_course_code VARCHAR2(40) NOT NULL,
   learn_course_id VARCHAR2(40) DEFAULT NULL,
+  learn_course_available CHAR(1) DEFAULT NULL,
   constraint "MODULE_COURSE_PK" PRIMARY KEY (module_course_id)
 ) tablespace "SATVLE_DATA";
 comment on column module_course.module_course_id is 'Automatically generated ID for this relationship, based on the MODULE_COURSE_SEQ sequence.';
 comment on column module_course.tt_module_id is 'ID for the module, copied from Timetabling RDB.';
+comment on column module_course.merged_course IS 'Yes/No indicator for whether the course is from the external merge process.';
 comment on column module_course.learn_course_code is 'Course code for a course in Learn that the module feeds into.';
 comment on column module_course.learn_course_id is 'ID for the course in Learn that the "learn_course_code" field relates to.';
+comment on column module_course.learn_course_available is 'Yes/No indicator for whether the course in Learn is available. Null if not yet determined.';
 
 CREATE TABLE learn_merged_course (
   learn_source_course_code VARCHAR2(40) NOT NULL,
