@@ -29,10 +29,10 @@ class ChangeOutcomeUpdateStatement {
     public              ChangeOutcomeUpdateStatement(final Connection connection)
             throws SQLException {
         this.statement = connection.prepareStatement(
-            "UPDATE enrolment_change "
+            "UPDATE enrolment_change_part "
                 + "SET update_completed=?, "
                     + "result_code=? "
-                + "WHERE change_id=? "
+                + "WHERE part_id=? "
                     + "AND update_completed IS NULL");
     }
     
@@ -75,13 +75,22 @@ class ChangeOutcomeUpdateStatement {
         return this.update(this.now, Result.SUCCESS, changeId);
     }
 
-    private boolean update(final Timestamp now, final Result result, final int changeId)
+    /**
+     * Write out the result for a change part.
+     * 
+     * @param now the timestamp to mark the result as being at.
+     * @param result the result to write out.
+     * @param partId the ID of the change part to update.
+     * @return true if successfully written, false otherwise.
+     * @throws SQLException if there was a problem writing out the change.
+     */
+    private boolean update(final Timestamp now, final Result result, final int partId)
             throws SQLException {
         int paramIdx = 1;
         
         this.statement.setTimestamp(paramIdx++, now);
         this.statement.setString(paramIdx++, result.name());
-        this.statement.setInt(paramIdx++, changeId);
+        this.statement.setInt(paramIdx++, partId);
         return this.statement.executeUpdate() > 0;
     }
 }

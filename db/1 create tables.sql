@@ -222,14 +222,15 @@ comment on column enrolment_change.change_type is 'ID for the type of change, de
 CREATE TABLE enrolment_change_part (
   part_id INTEGER NOT NULL,
   change_id INTEGER NOT NULL,
-  learn_course_code VARCHAR2(40) NOT NULL,
-  result_code VARCHAR2(20) DEFAULT NULL CONSTRAINT enrol_change_result REFERENCES change_result(result_code),
+  module_course_id INTEGER NOT NULL,
+  result_code VARCHAR2(20) DEFAULT NULL,
   update_completed DATE DEFAULT NULL,
   constraint "ENROLMENT_CHANGE_PART_PK" PRIMARY KEY (part_id),
-  constraint enrolment_change_res FOREIGN KEY (result_code) REFERENCES change_result (result_code)
+  CONSTRAINT enrol_change_module FOREIGN KEY (module_course_id) REFERENCES module_course(module_course_id),
+  constraint enrol_change_res FOREIGN KEY (result_code) REFERENCES change_result (result_code)
 ) tablespace "SATVLE_DATA";
 comment on column enrolment_change_part.part_id is 'Automatically generated ID for this change part, based on the ENROLMENT_CHANGE_PART_SEQ sequence.';
 comment on column enrolment_change_part.change_id is 'ID for the change this is part of.';
-comment on column enrolment_change_part.learn_course_code is 'Learn course code for the course this part applies to.';
+comment on column enrolment_change_part.module_course_id is 'Module-course relationship that this part applies to.';
 comment on column enrolment_change_part.result_code is 'Change result code for this part.';
 comment on column enrolment_change_part.update_completed is 'Timestamp for when the change was completed, where relevant.';

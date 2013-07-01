@@ -61,14 +61,17 @@ public class BlackboardService {
 
         try {
             final PreparedStatement queryStatement = connection.prepareStatement(
-                    "SELECT c.change_id, m.learn_course_id, a.learn_group_id, s.learn_user_id, c.change_type "
+                "SELECT p.part_id, mc.learn_course_id, ag.learn_group_id, s.learn_user_id, c.change_type "
                     + "FROM enrolment_change c "
-                    + "JOIN activity a on a.tt_activity_id=c.tt_activity_id "
-                    + "JOIN module m ON m.tt_module_id=a.tt_module_id "
-                    + "JOIN student_set s ON s.tt_student_set_id=c.tt_student_set_id "
+                        + "JOIN enrolment_change_part p ON p.change_id=c.change_id "
+                        + "JOIN change_result r ON r.result_code=p.result_code "
+                        + "JOIN activity a on a.tt_activity_id=c.tt_activity_id "
+                        + "JOIN module_course mc ON mc.module_course_id=p.module_course_id "
+                        + "JOIN activity_group ag on ag.tt_activity_id=c.tt_activity_id AND ag.module_course_id=mc.module_course_id "
+                        + "JOIN student_set s ON s.tt_student_set_id=c.tt_student_set_id "
                     + "WHERE c.run_id=? "
-                    + "AND c.update_completed IS NULL "
-                    + "ORDER BY m.learn_course_id, c.change_id");
+                        + "AND p.update_completed IS NULL "
+                    + "ORDER BY mc.learn_course_id, p.part_id");
             try {
                 queryStatement.setInt(1, run.getRunId());
                 applyEnrolmentChanges(queryStatement, outcome);
@@ -98,15 +101,16 @@ public class BlackboardService {
 
         try {
             final PreparedStatement queryStatement = connection.prepareStatement(
-                    "SELECT c.change_id, m.learn_course_id, a.learn_group_id, s.learn_user_id, c.change_type "
+                "SELECT p.part_id, mc.learn_course_id, ag.learn_group_id, s.learn_user_id, c.change_type "
                     + "FROM enrolment_change c "
-                    + "JOIN activity a on a.tt_activity_id=c.tt_activity_id "
-                    + "JOIN module m ON m.tt_module_id=a.tt_module_id "
-                    + "JOIN student_set s ON s.tt_student_set_id=c.tt_student_set_id "
-                    + "JOIN change_result r ON r.result_code=c.result_code "
-                    + "WHERE c.update_completed IS NULL "
-                    + "AND r.retry='1' "
-                    + "ORDER BY m.learn_course_id, c.change_id");
+                        + "JOIN enrolment_change_part p ON p.change_id=c.change_id "
+                        + "JOIN change_result r ON r.result_code=p.result_code "
+                        + "JOIN module_course mc ON mc.module_course_id=p.module_course_id "
+                        + "JOIN activity_group ag on ag.tt_activity_id=c.tt_activity_id AND ag.module_course_id=mc.module_course_id "
+                        + "JOIN student_set s ON s.tt_student_set_id=c.tt_student_set_id "
+                    + "WHERE p.update_completed IS NULL "
+                        + "AND r.retry='1' "
+                    + "ORDER BY mc.learn_course_id, p.part_id");
             try {
                 applyEnrolmentChanges(queryStatement, outcome);
             } finally {
@@ -121,7 +125,7 @@ public class BlackboardService {
      * Applies a set of enrolment changes to Learn.
      *
      * @param queryStatement a prepared statement ready to be executed. Results
-     * must be ordered by course ID first, then by change ID.
+     * must be ordered by course ID first, then by change part ID.
      * @param outcome a prepared outcome persistence object.
      * @throws PersistenceException
      * @throws SQLException
@@ -142,23 +146,23 @@ public class BlackboardService {
         try {
             while (rs.next()) {
                 final EnrolmentChange.Type changeType = EnrolmentChange.Type.valueOf(rs.getString("change_type"));
-                final int changeId = rs.getInt("change_id");
+                final int partId = rs.getInt("part_id");
                 final String courseIdStr = rs.getString("learn_course_id");
                 final String groupIdStr = rs.getString("learn_group_id");
                 final String userIdStr = rs.getString("learn_user_id");
-
+                
                 if (null == courseIdStr) {
-                    outcome.markCourseMissing(changeId);
+                    outcome.markCourseMissing(partId);
                     continue;
                 }
 
                 if (null == groupIdStr) {
-                    outcome.markGroupMissing(changeId);
+                    outcome.markGroupMissing(partId);
                     continue;
                 }
 
                 if (null == userIdStr) {
-                    outcome.markStudentMissing(changeId);
+                    outcome.markStudentMissing(partId);
                     continue;
                 }
 
@@ -175,7 +179,7 @@ public class BlackboardService {
                 }
 
                 if (!validGroupIds.contains(groupId)) {
-                    outcome.markGroupMissing(changeId);
+                    outcome.markGroupMissing(partId);
                     continue;
                 }
                 
@@ -194,23 +198,23 @@ public class BlackboardService {
                         if (null == courseMembership) {
                             // Student is not on this course - probably a delay
                             // bringing in data from Learn, but we can ignore
-                            outcome.markNotOnCourse(changeId);
+                            outcome.markNotOnCourse(partId);
                             continue;
                         }
                         
                         if (null == groupMembership) {
                             groupMembershipDbPersister.persist(buildGroupMembership(courseMembership, groupId));
-                            outcome.markSuccess(changeId);
+                            outcome.markSuccess(partId);
                         } else {
-                            outcome.markAlreadyInGroup(changeId);
+                            outcome.markAlreadyInGroup(partId);
                         }
                         break;
                     case REMOVE:
                         if (null != groupMembership) {
                             groupMembershipDbPersister.deleteById(groupMembership.getId());
-                            outcome.markSuccess(changeId);
+                            outcome.markSuccess(partId);
                         } else {
-                            outcome.markAlreadyRemoved(changeId);
+                            outcome.markAlreadyRemoved(partId);
                         }
                         break;
                     default:

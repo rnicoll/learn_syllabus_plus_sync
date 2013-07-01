@@ -10,10 +10,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import org.junit.Before;
 import org.springframework.beans.BeansException;
 
 import org.springframework.test.context.ContextConfiguration;
@@ -27,6 +28,7 @@ import uk.ac.ed.learn9.bb.timetabling.data.Activity;
 import uk.ac.ed.learn9.bb.timetabling.data.ActivityTemplate;
 import uk.ac.ed.learn9.bb.timetabling.data.ActivityType;
 import uk.ac.ed.learn9.bb.timetabling.data.Module;
+import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 import uk.ac.ed.learn9.bb.timetabling.util.DbScriptUtil;
 import uk.ac.ed.learn9.bb.timetabling.util.RdbUtil;
 
@@ -60,12 +62,21 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     }
     
     /**
-     * Gets an instance of {@link SynchronisationService}.
+     * Gets an synchronisationService of {@link SynchronisationService}.
      * 
-     * @return an instance of {@link SynchronisationService}.
+     * @return an synchronisationService of {@link SynchronisationService}.
      */
     public SynchronisationService getService() {
         return this.applicationContext.getBean(SynchronisationService.class);
+    }
+    
+    /**
+     * Gets an synchronisationService of {@link SConcurrencyService}.
+     * 
+     * @return an synchronisationService of {@link ConcurrencyService}.
+     */
+    public ConcurrencyService getConcurrencyService() {
+        return this.applicationContext.getBean(ConcurrencyService.class);
     }
     
     /**
@@ -137,12 +148,12 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     public void testBuildGroupsDescription() throws Exception {
         System.out.println("buildGroupsDescription");
         
-        SynchronisationService instance = this.getService();
+        SynchronisationService synchronisationService = this.getService();
         
         assertEquals("Tutorial 1 of 3",
-            instance.buildGroupDescription("Course Name/1", "Tutorial", 3));
+            synchronisationService.buildGroupDescription("Course Name/1", "Tutorial", 3));
         assertEquals("Tutorial 1",
-            instance.buildGroupDescription("Course Name/1", "Tutorial", null));
+            synchronisationService.buildGroupDescription("Course Name/1", "Tutorial", null));
         
     }
     
@@ -152,16 +163,16 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     @Test
     public void testTimetablingSynchroniseData() throws Exception {
         System.out.println("synchroniseTimetablingData");
-        final SynchronisationService instance = this.getService();
+        final SynchronisationService synchronisationService = this.getService();
         
         AcademicYearCode academicYearCode = new AcademicYearCode("2012/3");
-        final Connection rdbConnection = instance.getRdbDataSource().getConnection();
+        final Connection rdbConnection = synchronisationService.getRdbDataSource().getConnection();
         try {
             // Test simply creating a module
             final RdbIdSource rdbIdSource = new SequentialRdbIdSource();
             final Module expResultModule = RdbUtil.createTestModule(rdbConnection, academicYearCode, rdbIdSource);
         
-            instance.synchroniseTimetablingData();
+            synchronisationService.synchroniseTimetablingData();
 
             final ModuleDao moduleDao = getModuleDao();
             List<Module> modules = moduleDao.getAll();
@@ -178,7 +189,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
             academicYearCode = new AcademicYearCode("2013/4");
             RdbUtil.updateModuleAyr(rdbConnection, academicYearCode, expResultModule);
             
-            instance.synchroniseTimetablingData();
+            synchronisationService.synchroniseTimetablingData();
             
             modules = moduleDao.getAll();
             
@@ -200,7 +211,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
                 = RdbUtil.createTestActivity(rdbConnection, activityTemplateSync,
                     expResultModule, RdbUtil.SchedulingMethod.SCHEDULED, activityId++, rdbIdSource);
             
-            instance.synchroniseTimetablingData();
+            synchronisationService.synchroniseTimetablingData();
             
             final ActivityDao activityDao = this.getActivityDao();
             final List<Activity> activities = activityDao.getAll();
@@ -222,9 +233,9 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     @Test
     public void testActivityTemplateFiltering() throws Exception {
         System.out.println("activityCourseCodeGeneration");
-        final SynchronisationService instance = this.getService();
+        final SynchronisationService synchronisationService = this.getService();
         final AcademicYearCode academicYearCode = new AcademicYearCode("2012/3");            
-        final Connection rdbConnection = instance.getRdbDataSource().getConnection();
+        final Connection rdbConnection = synchronisationService.getRdbDataSource().getConnection();
         
         try {
             final RdbIdSource rdbIdSource = new SequentialRdbIdSource();
@@ -256,14 +267,14 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
             RdbUtil.createTestActivity(rdbConnection, activityTemplateNoSync,
                     module, RdbUtil.SchedulingMethod.SCHEDULED, activityId++, rdbIdSource);
 
-            instance.synchroniseTimetablingData();
+            synchronisationService.synchroniseTimetablingData();
             
             // Check the set of activity templates in the database view against
             // the ones we expect to see
             final Set<String> expResultIds = Collections.singleton(activityTemplateSync.getTemplateId());
             final Set<String> resultIds = new HashSet<String>();
             
-            final Connection cacheConnection = instance.getStagingDataSource().getConnection();
+            final Connection cacheConnection = synchronisationService.getStagingDataSource().getConnection();
             try {
                 final PreparedStatement selectStatement = cacheConnection.prepareStatement("SELECT tt_template_id "
                     + "FROM sync_template_vw");
@@ -295,14 +306,14 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     @Test
     public void testModuleCourseCodeGeneration() throws Exception {
         System.out.println("activityCourseCodeGeneration");
-        final SynchronisationService instance = this.getService();
+        final SynchronisationService synchronisationService = this.getService();
         final AcademicYearCode academicYearCode = new AcademicYearCode("2012/3");
-        final Connection rdbConnection = instance.getRdbDataSource().getConnection();
+        final Connection rdbConnection = synchronisationService.getRdbDataSource().getConnection();
         try {
             final RdbIdSource rdbIdSource = new SequentialRdbIdSource();
             final Module expResultModule = RdbUtil.createTestModule(rdbConnection, academicYearCode, rdbIdSource);
         
-            instance.synchroniseTimetablingData();
+            synchronisationService.synchroniseTimetablingData();
 
             final ModuleDao moduleDao = getModuleDao();
             List<Module> modules = moduleDao.getAll();
@@ -318,6 +329,38 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
             rdbConnection.close();
         }
     }
+    
+    /**
+     * Very simple test for difference generation code; at this point this
+     * just tests the SQL is valid, without verifying the results.
+     */
+    @Test
+    public void testDoGenerateDiff() throws Exception {
+        System.out.println("doGenerateDiff");
+        final SynchronisationService synchronisationService = this.getService();
+        final ConcurrencyService concurrencyService = this.getConcurrencyService();
+        final Connection stagingConnection = synchronisationService.getStagingDataSource().getConnection();
+        try {
+            final SynchronisationRun result = concurrencyService.startNewRun();
+            synchronisationService.doGenerateDiff(result, stagingConnection);
+        } finally {
+            stagingConnection.close();
+        }
+    }
+
+    /**
+     * Test SQL for generating activity-group relationships in the database.
+     */
+    @Test
+    public void testGenerateActivityGroups() throws Exception {
+        System.out.println("generateActivityGroups");
+        final SynchronisationService synchronisationService = this.getService();
+        
+        // XXX: Need to have this actually generate data, rather than just be
+        // an SQL validity check
+        
+        synchronisationService.generateActivityGroups();
+    }
 
     /**
      * Test of generateGroupNames method, of class SynchronisationService.
@@ -326,8 +369,8 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     public void testGenerateGroupNames() throws Exception {
         System.out.println("generateGroupNames");
         final AcademicYearCode academicYearCode = new AcademicYearCode("2012/3");
-        final SynchronisationService instance = this.getService();
-        final Connection rdbConnection = instance.getRdbDataSource().getConnection();
+        final SynchronisationService synchronisationService = this.getService();
+        final Connection rdbConnection = synchronisationService.getRdbDataSource().getConnection();
         try {
             final RdbIdSource rdbIdSource = new SequentialRdbIdSource();
             final ActivityType tutorialType = RdbUtil.createTestActivityType(rdbConnection, "Tutorial", rdbIdSource);
@@ -344,10 +387,10 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
             RdbUtil.createTestActivity(rdbConnection, activityTemplateSync,
                     module, RdbUtil.SchedulingMethod.SCHEDULED, activityId++, rdbIdSource);
             
-            final Connection cacheConnection = instance.getStagingDataSource().getConnection();
+            final Connection cacheConnection = synchronisationService.getStagingDataSource().getConnection();
             try {
-                instance.synchroniseTimetablingData();
-                instance.generateGroupNames(cacheConnection);
+                synchronisationService.synchroniseTimetablingData();
+                synchronisationService.generateGroupNames(cacheConnection);
             } finally {
                 cacheConnection.close();
             }
@@ -364,11 +407,11 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     public void testGenerateModuleCourses() throws Exception {
         System.out.println("generateModuleCourses");
         
-        SynchronisationService instance = this.getService();
+        SynchronisationService synchronisationService = this.getService();
         
         // XXX: Generate module and merged module data to handle and test
         
-        instance.generateModuleCourses();
+        synchronisationService.generateModuleCourses();
     }
 
     public ActivityDao getActivityDao() throws BeansException {
