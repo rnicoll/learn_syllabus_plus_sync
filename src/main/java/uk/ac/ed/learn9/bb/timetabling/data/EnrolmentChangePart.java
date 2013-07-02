@@ -89,6 +89,39 @@ public class EnrolmentChangePart extends Object implements Comparable<EnrolmentC
     public EnrolmentChange getChange() {
         return change;
     }
+    
+    /**
+     * Gets the human readable name of the activity this change is based on,
+     * for example "Chemical Medicine Level 10/2".
+     * 
+     * @return an activity name.
+     */
+    @Transient
+    public String getActivityName() {
+        return this.getChange().getActivityName();
+    }
+
+    /**
+     * Gets a human readable type for this change.
+     * 
+     * @return the type of change, such as "Add" or "Remove".
+     */
+    @Transient
+    public String getChangeLabel() {
+        return this.getChange().getChangeLabel();
+    }
+    
+    /**
+     * Gets the name of the group that this change relates to. Note that
+     * this is the initial name, and does not reflect any renaming that
+     * has taken place in Learn.
+     * 
+     * @return the name of the group that this change relates to.
+     */
+    @Transient
+    public String getGroupName() {
+        return this.getChange().getGroupName();
+    }
 
     /**
      * Get the module-course this part relates to.
@@ -134,6 +167,17 @@ public class EnrolmentChangePart extends Object implements Comparable<EnrolmentC
     @Column(name="update_completed")
     public Timestamp getUpdateCompleted() {
         return updateCompleted;
+    }
+    
+    /**
+     * Returns the host key for the student set this change relates to, which
+     * is the username of the student for all synchronisable student sets.
+     * 
+     * @return a username.
+     */
+    @Transient
+    public String getUsername() {
+        return this.getChange().getUsername();
     }
 
     /**

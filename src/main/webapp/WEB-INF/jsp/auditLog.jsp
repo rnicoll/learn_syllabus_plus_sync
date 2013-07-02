@@ -24,7 +24,7 @@
         not yet present on the course.</p>
     
     <bbNG:inventoryList emptyMsg="There are no changes to this course based on Timetabling data."
-                        className="uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange"
+                        className="uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChangePart"
                         collection="${changes}"
                         description="This following is a list of changes to student/group enrolments on this
         course"
