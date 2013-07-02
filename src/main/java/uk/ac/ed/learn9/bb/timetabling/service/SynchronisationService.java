@@ -371,7 +371,8 @@ public class SynchronisationService extends Object {
     /**
      * Executes a synchronisation run.
      * 
-     * @param run
+     * @param run the synchronisation run to be executed. These can be generated
+     * by {@link ConcurrencyService#startNewRun()}.
      * @throws PersistenceException if there was a problem loading or saving
      * data in Learn.
      * @throws SQLException if there was a problem accessing one of the databases.
@@ -380,9 +381,13 @@ public class SynchronisationService extends Object {
      */
     public void runSynchronisation(final SynchronisationRun run)
             throws SQLException, PersistenceException, ValidationException {
+        assert null != this.getMergedCoursesService();
+        
         this.synchroniseTimetablingData();
-        this.synchroniseEugexData();
-        this.synchroniseMergedCoursesData();
+        
+        this.getEugexService().synchroniseVleActiveCourses();
+        this.getMergedCoursesService().synchroniseMergedCourses();
+        
         this.getConcurrencyService().markCacheCopyCompleted(run);
         this.generateModuleCourses();
         this.generateActivityGroups();
@@ -472,8 +477,6 @@ public class SynchronisationService extends Object {
      */
     public void mapModulesToCourses()
             throws PersistenceException, SQLException {
-        this.getMergedCoursesService().synchroniseMergedCourses();
-            
         final Connection destination = this.getStagingDataSource().getConnection();
 
         try {
@@ -481,13 +484,6 @@ public class SynchronisationService extends Object {
         } finally {
             destination.close();
         }
-    }
-
-    /**
-     * Synchronises details of merged courses from the BBL Feeds database.
-     */
-    public void synchroniseMergedCoursesData() throws SQLException {
-        this.getMergedCoursesService().synchroniseMergedCourses();
     }
     
     /**
@@ -631,17 +627,6 @@ public class SynchronisationService extends Object {
             connection.close();
         }
     }
-
-    /**
-     * Copies data from EUGEX. In this case, this is just the "WEBCT_ACTIVE"
-     * field, but if there was more data to be imported later it would go
-     * here.
-     * 
-     * @throws SQLException if there was a problem accessing the databases.
-     */
-    public void synchroniseEugexData() throws SQLException {        
-        this.getEugexService().synchroniseVleActiveCourses();
-    }
     
     /**
      * Updates the descriptions of activities in the database and in Learn.
@@ -732,7 +717,9 @@ public class SynchronisationService extends Object {
     }
 
     /**
-     * @return the mergedCoursesService
+     * Get the merged courses service.
+     * 
+     * @return the merged courses service.
      */
     public MergedCoursesService getMergedCoursesService() {
         return mergedCoursesService;
