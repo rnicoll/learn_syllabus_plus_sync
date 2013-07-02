@@ -34,10 +34,7 @@ public class EnrolmentChangePartDaoImpl extends HibernateDaoSupport implements E
     @Override
     public List<EnrolmentChangePart> getByCourse(final Id courseId) {
         return (List<EnrolmentChangePart>)this.getSession().createCriteria(EnrolmentChangePart.class)
-            .createCriteria("change")
-            .createCriteria("activity")
-            .createCriteria("module")
-            .createCriteria("courses")
+            .createCriteria("moduleCourse")
             .add(Restrictions.eq("learnCourseId", courseId.getExternalString()))
                 .list();
     }
