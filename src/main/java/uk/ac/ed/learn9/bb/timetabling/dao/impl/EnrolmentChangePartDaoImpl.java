@@ -31,7 +31,7 @@ public class EnrolmentChangePartDaoImpl extends HibernateDaoSupport implements E
             .createCriteria("change")
             .createCriteria("activity")
             .createCriteria("module")
-            .createCriteria("module_course")
+            .createCriteria("courses")
             .add(Restrictions.eq("learnCourseId", course.getId().getExternalString()))
                 .list();
     }
