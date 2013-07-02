@@ -1,3 +1,6 @@
+INSERT INTO yes_no (yn_code) VALUES ('Y');
+INSERT INTO yes_no (yn_code) VALUES ('N');
+
 INSERT INTO change_type (change_type) VALUES ('ADD');
 INSERT INTO change_type (change_type) VALUES ('REMOVE');
 

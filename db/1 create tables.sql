@@ -1,3 +1,9 @@
+CREATE TABLE yes_no (
+    yn_code CHAR(1) NOT NULL,
+    constraint yes_no_code PRIMARY KEY(yn_code)
+) tablespace "SATVLE_DATA";
+comment on column yes_no.yn_code is 'Y/N, used to constrain fields which are yes/no indicators.';
+
 CREATE TABLE activity_template (
   tt_template_id VARCHAR2(32) NOT NULL,
   tt_template_name NVARCHAR2(255) DEFAULT NULL,
@@ -30,6 +36,7 @@ CREATE TABLE module (
   learn_academic_year VARCHAR2(6) DEFAULT NULL,
   learn_course_code VARCHAR2(40) DEFAULT NULL,
   webct_active CHAR(1) DEFAULT NULL,
+  constraint module_webct_active FOREIGN KEY (webct_active) REFERENCES yes_no(yn_code),
   constraint "MODULE_PK" PRIMARY KEY (tt_module_id)
 ) tablespace "SATVLE_DATA";
 comment on column module.tt_module_id is 'ID for the module, copied from Timetabling RDB.';
@@ -50,6 +57,8 @@ CREATE TABLE module_course (
   learn_course_code VARCHAR2(40) NOT NULL,
   learn_course_id VARCHAR2(40) DEFAULT NULL,
   learn_course_available CHAR(1) DEFAULT NULL,
+  constraint module_course_merged FOREIGN KEY (merged_course) REFERENCES yes_no(yn_code),
+  constraint module_course_available FOREIGN KEY (learn_course_available) REFERENCES yes_no(yn_code),
   constraint "MODULE_COURSE_PK" PRIMARY KEY (module_course_id)
 ) tablespace "SATVLE_DATA";
 comment on column module_course.module_course_id is 'Automatically generated ID for this relationship, based on the MODULE_COURSE_SEQ sequence.';

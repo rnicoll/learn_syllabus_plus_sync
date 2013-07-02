@@ -1,3 +1,8 @@
+CREATE TABLE yes_no (
+    yn_code CHAR(1) NOT NULL,
+    PRIMARY KEY(yn_code)
+);
+
 CREATE TABLE activity_template (
     tt_template_id VARCHAR(32) NOT NULL,
     tt_template_name VARCHAR(255) DEFAULT NULL,
@@ -23,7 +28,8 @@ CREATE TABLE module (
     learn_academic_year VARCHAR(6) DEFAULT NULL,
     learn_course_code VARCHAR(40) DEFAULT NULL,
     webct_active CHAR(1) DEFAULT NULL,
-    PRIMARY KEY (tt_module_id)
+    PRIMARY KEY (tt_module_id),
+    constraint module_webct_active FOREIGN KEY (webct_active) REFERENCES yes_no(yn_code)
 );
 
 CREATE TABLE module_course (
@@ -33,6 +39,8 @@ CREATE TABLE module_course (
     learn_course_code VARCHAR(40) NOT NULL,
     learn_course_id VARCHAR(40) DEFAULT NULL,
     learn_course_available CHAR(1) DEFAULT NULL,
+    constraint module_course_merged FOREIGN KEY (merged_course) REFERENCES yes_no(yn_code),
+    constraint module_course_available FOREIGN KEY (learn_course_available) REFERENCES yes_no(yn_code),
     PRIMARY KEY (module_course_id)
 );
 
@@ -297,7 +305,10 @@ CREATE TRIGGER course_code_upd BEFORE UPDATE ON module
      SET newrow.learn_academic_year=REPLACE(newrow.tt_academic_year, '/', '-');
      SET newrow.learn_course_code=CONCAT(newrow.cache_course_code, newrow.learn_academic_year, newrow.cache_occurrence_code, newrow.cache_semester_code);
    END;
-   
+ 
+INSERT INTO yes_no (yn_code) VALUES ('Y');
+INSERT INTO yes_no (yn_code) VALUES ('N');
+ 
 INSERT INTO change_type (change_type) VALUES ('ADD');
 INSERT INTO change_type (change_type) VALUES ('REMOVE');
 
