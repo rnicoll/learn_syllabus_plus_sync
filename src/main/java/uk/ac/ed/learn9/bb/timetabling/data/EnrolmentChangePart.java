@@ -21,7 +21,7 @@ import javax.persistence.Transient;
 public class EnrolmentChangePart extends Object implements Comparable<EnrolmentChangePart>, Serializable {
     private int partId;
     private EnrolmentChange change;
-    private String learnCourseCode;
+    private ModuleCourse moduleCourse;
     private ChangeResult result;
     private Timestamp updateCompleted;
 
@@ -91,11 +91,14 @@ public class EnrolmentChangePart extends Object implements Comparable<EnrolmentC
     }
 
     /**
-     * @return the Learn course code.
+     * Get the module-course this part relates to.
+     * 
+     * @return the module-course this part relates to.
      */
-    @Column(name="learn_course_code", nullable=false)
-    public String getLearnCourseCode() {
-        return learnCourseCode;
+    @ManyToOne
+    @JoinColumn(name="module_course_id", nullable=false)
+    public ModuleCourse getModuleCourse() {
+        return moduleCourse;
     }
 
     /**
@@ -148,10 +151,12 @@ public class EnrolmentChangePart extends Object implements Comparable<EnrolmentC
     }
 
     /**
-     * @param learnCoursCode the learnCourseCode to set
+     * Set the module-course this part relates to.
+     * 
+     * @param module course the module-course this part relates to.
      */
-    public void setLearnCourseCode(String learnCourseCode) {
-        this.learnCourseCode = learnCourseCode;
+    public void setModuleCourse(final ModuleCourse moduleCourse) {
+        this.moduleCourse = moduleCourse;
     }
 
     /**

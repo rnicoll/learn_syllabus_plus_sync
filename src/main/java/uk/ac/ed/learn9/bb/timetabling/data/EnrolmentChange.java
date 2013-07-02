@@ -7,6 +7,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -153,7 +154,7 @@ public class EnrolmentChange extends Object implements Serializable {
      * 
      * @return the synchronisation run this change belongs to.
      */
-    @ManyToOne
+    @ManyToOne(fetch=FetchType.LAZY)
     @JoinColumn(name="RUN_ID")
     public SynchronisationRun getRun() {
         return run;
