@@ -7,6 +7,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.Type;
+
 /**
  * Relationship between a module in Timetabling, and a course in Learn. Required
  * as this can be a one to many relationship.
@@ -18,6 +20,8 @@ public class ModuleCourse {
     private Module module;
     private String learnCourseId;
     private String learnCourseCode;
+    private boolean mergedCourse;
+    private Boolean learnCourseAvaiable;
 
     /**
      * Gets the ID of this relationship.
@@ -39,6 +43,18 @@ public class ModuleCourse {
     @JoinColumn(name="tt_module_id", nullable=false)
     public Module getModule() {
         return this.module;
+    }
+
+    /**
+     * Get whether this course is available in Learn.
+     * 
+     * @return whether this course is available in Learn. May be null if
+     * unknown, or no matching course is present in Learn.
+     */
+    @Column(name="learn_course_available", nullable=true)
+    @Type(type="yes_no")
+    public Boolean getLearnCourseAvaiable() {
+        return learnCourseAvaiable;
     }
 
     /**
@@ -64,6 +80,19 @@ public class ModuleCourse {
     }
 
     /**
+     * Determine whether this course represents the module before merging from
+     * the BBL Feeds database (false) or after (true).
+     * 
+     * @return whether this course represents the module before merging from
+     * the BBL Feeds database (false) or after (true).
+     */
+    @Column(name="merged_course", nullable=false)
+    @Type(type="yes_no")
+    public boolean isMergedCourse() {
+        return mergedCourse;
+    }
+
+    /**
      * Set the ID of this relationship.
      * 
      * @param id the ID to set.
@@ -73,16 +102,20 @@ public class ModuleCourse {
     }
 
     /**
-     * @param module the module to set
+     * Set whether this course is available in Learn, where applicable.
+     * 
+     * @param learnCourseAvaiable whether this course is available in Learn.
      */
-    public void setModule(Module module) {
-        this.module = module;
+    public void setLearnCourseAvaiable(Boolean learnCourseAvaiable) {
+        this.learnCourseAvaiable = learnCourseAvaiable;
     }
 
     /**
-     * @param learnCourseId the learnCourseId to set
+     * Set the ID of the matching course in Learn, where applicable.
+     * 
+     * @param learnCourseId the ID of the matching course in Learn.
      */
-    public void setLearnCourseId(String learnCourseId) {
+    public void setLearnCourseId(final String learnCourseId) {
         this.learnCourseId = learnCourseId;
     }
 
@@ -91,6 +124,20 @@ public class ModuleCourse {
      */
     public void setLearnCourseCode(String learnCourseCode) {
         this.learnCourseCode = learnCourseCode;
+    }
+
+    /**
+     * @param mergedCourse the mergedCourse to set
+     */
+    public void setMergedCourse(boolean mergedCourse) {
+        this.mergedCourse = mergedCourse;
+    }
+
+    /**
+     * @param module the module to set
+     */
+    public void setModule(Module module) {
+        this.module = module;
     }
     
 }

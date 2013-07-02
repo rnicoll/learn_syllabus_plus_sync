@@ -1,6 +1,7 @@
 package uk.ac.ed.learn9.bb.timetabling.data;
 
 import java.io.Serializable;
+import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -9,6 +10,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
@@ -45,6 +47,7 @@ public class EnrolmentChange extends Object implements Serializable {
     private SynchronisationRun run;
     private Activity activity;
     private StudentSet studentSet;
+    private List<EnrolmentChangePart> parts;
     
     @Override
     public boolean equals(final Object o) {
@@ -136,6 +139,16 @@ public class EnrolmentChange extends Object implements Serializable {
     }
 
     /**
+     * Gets the parts of this change set.
+     * 
+     * @return the parts
+     */
+    @OneToMany(mappedBy="change")
+    public List<EnrolmentChangePart> getParts() {
+        return parts;
+    }
+
+    /**
      * Gets the synchronisation run this change belongs to.
      * 
      * @return the synchronisation run this change belongs to.
@@ -193,6 +206,13 @@ public class EnrolmentChange extends Object implements Serializable {
      */
     public void setChangeType(final Type newChangeType) {
         this.changeType = newChangeType;
+    }
+
+    /**
+     * @param parts the parts to set
+     */
+    public void setParts(List<EnrolmentChangePart> parts) {
+        this.parts = parts;
     }
     
     /**

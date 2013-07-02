@@ -1,11 +1,13 @@
 package uk.ac.ed.learn9.bb.timetabling.data;
 
 import java.io.Serializable;
+import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 /**
@@ -20,6 +22,7 @@ public class Activity extends Object implements Serializable {
     private Module module;
     private String learnGroupName;
     private String description;
+    private List<ActivityGroup> groups;
 
     /**
      * Gets the ID of the activity (a 32 character identifier used by Timetabling),
@@ -53,6 +56,16 @@ public class Activity extends Object implements Serializable {
     @Column(name="description", nullable=true, length=400)
     public String getDescription() {
         return description;
+    }
+
+    /**
+     * Get the Learn groups that relate to this activity.
+     * 
+     * @return the Learn groups that relate to this activity.
+     */
+    @OneToMany(mappedBy="activity")
+    public List<ActivityGroup> getGroups() {
+        return groups;
     }
 
     /**
@@ -111,5 +124,12 @@ public class Activity extends Object implements Serializable {
      */
     public void setModule(Module module) {
         this.module = module;
+    }
+
+    /**
+     * @param groups the groups to set
+     */
+    public void setGroups(List<ActivityGroup> groups) {
+        this.groups = groups;
     }
 }

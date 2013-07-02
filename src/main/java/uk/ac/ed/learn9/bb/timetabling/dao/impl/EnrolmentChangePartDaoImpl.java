@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import blackboard.data.course.Course;
+import blackboard.persist.Id;
 import uk.ac.ed.learn9.bb.timetabling.dao.EnrolmentChangePartDao;
 import uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChangePart;
 
@@ -27,12 +28,17 @@ public class EnrolmentChangePartDaoImpl extends HibernateDaoSupport implements E
 
     @Override
     public List<EnrolmentChangePart> getByCourse(final Course course) {
+        return this.getByCourse(course.getId());
+    }
+    
+    @Override
+    public List<EnrolmentChangePart> getByCourse(final Id courseId) {
         return (List<EnrolmentChangePart>)this.getSession().createCriteria(EnrolmentChangePart.class)
             .createCriteria("change")
             .createCriteria("activity")
             .createCriteria("module")
             .createCriteria("courses")
-            .add(Restrictions.eq("learnCourseId", course.getId().getExternalString()))
+            .add(Restrictions.eq("learnCourseId", courseId.getExternalString()))
                 .list();
     }
     

@@ -62,18 +62,18 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     }
     
     /**
-     * Gets an synchronisationService of {@link SynchronisationService}.
+     * Gets an instance of {@link SynchronisationService}.
      * 
-     * @return an synchronisationService of {@link SynchronisationService}.
+     * @return an instance of {@link SynchronisationService}.
      */
     public SynchronisationService getService() {
         return this.applicationContext.getBean(SynchronisationService.class);
     }
     
     /**
-     * Gets an synchronisationService of {@link SConcurrencyService}.
+     * Gets an instance of {@link SConcurrencyService}.
      * 
-     * @return an synchronisationService of {@link ConcurrencyService}.
+     * @return an instance of {@link ConcurrencyService}.
      */
     public ConcurrencyService getConcurrencyService() {
         return this.applicationContext.getBean(ConcurrencyService.class);
