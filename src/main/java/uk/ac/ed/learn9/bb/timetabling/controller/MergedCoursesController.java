@@ -34,6 +34,9 @@ public class MergedCoursesController extends AbstractController {
      * @param request the request from the remote client.
      * @param response the response to be returned to the remote client.
      * @return the data model and view of it to be rendered.
+     * @throws SQLException if there was a problem accessing the database.
+     * @throws UnsupportedEncodingException if the US-ASCII character set is
+     * not supported, and as such URL elements cannot be encoded.
      */
     @RequestMapping("/mergedCourses")
     public ModelAndView getMergedCourses(final HttpServletRequest request, final HttpServletResponse response)

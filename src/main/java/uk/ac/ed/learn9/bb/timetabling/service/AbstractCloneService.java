@@ -21,11 +21,16 @@ import java.util.TreeSet;
 public abstract class AbstractCloneService extends Object {
     /**
      * Enum to describe which parts of a synchronisation should be done.
+     * Note that deletion is not supported in any scenario.
      */
     public enum Mode {
+        /** Insert and update records during synchronisation */
         INSERT_UPDATE(true, true),
+        /** Insert, but do not update records during synchronisation. */
         INSERT_ONLY(true,false),
+        /** Only update existing records during synchronisation. */
         UPDATE_ONLY(false,true),
+        /** Do not write any changes back to the database. Used during testing only. */
         DRY_RUN(false,false);
         
         private boolean doInsert;
@@ -35,11 +40,21 @@ public abstract class AbstractCloneService extends Object {
             this.doInsert = setInsert;
             this.doUpdate = setUpdate;
         }
-                
+        
+        /**
+         * Get whether to perform insert operations during synchronisation.
+         * 
+         * @return true if inserts should be executed, false otherwise.
+         */
         public boolean getInsert() {
             return this.doInsert;
         }
-                
+            
+        /**
+         * Get whether to perform update operations during synchronisation.
+         * 
+         * @return true if updates should be executed, false otherwise.
+         */    
         public boolean getUpdate() {
             return this.doUpdate;
         }
@@ -104,8 +119,8 @@ public abstract class AbstractCloneService extends Object {
      * status on this database will be modified as part of the clone process.
      * @param sourceTable the name of the table to read records from.
      * @param destinationTable the name of the table to write records to.
-     * @param sourcePkField the name of the primary key field on the source
-     * table. Tables with compound primary keys are not supported.
+     * @param sourcePkFields the names of the primary key fields on the source
+     * table.
      * @param fieldMappings a mapping from source field names to destination
      * fields.
      * 
@@ -219,7 +234,8 @@ public abstract class AbstractCloneService extends Object {
      * table.
      * @param fieldMappings a mapping from source field names to destination
      * fields.
-     * 
+     * @param mode indicates which database changes (insert and/or update) should
+     * be applied.
      * @throws SQLException if there was a problem accessing one of the
      * databases.
      */
@@ -245,7 +261,8 @@ public abstract class AbstractCloneService extends Object {
      * table.
      * @param fieldMappings a mapping from source field names to destination
      * fields.
-     * 
+     * @param mode indicates which database changes (insert and/or update) should
+     * be applied.
      * @throws SQLException if there was a problem accessing one of the
      * databases.
      */
@@ -423,6 +440,14 @@ public abstract class AbstractCloneService extends Object {
     public class PrimaryKey extends Object implements Comparable<PrimaryKey> {
         private final String[] components;
         
+        /**
+         * Construct a primary key value for a table row, based on the provided
+         * key components.
+         * 
+         * @param setComponents an array of key components. The ordering and length
+         * of these components must be consistent for all keys for the same table.
+         * Null components are not supported.
+         */
         public          PrimaryKey(final String[] setComponents) {
             this.components = setComponents;
         }

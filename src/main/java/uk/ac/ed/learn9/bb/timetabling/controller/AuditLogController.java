@@ -37,6 +37,8 @@ public class AuditLogController extends AbstractController {
      * @param request the request from the remote client.
      * @param response the response to be returned to the remote client.
      * @return the data model and view of it to be rendered.
+     * @throws UnsupportedEncodingException if the US-ASCII character set is
+     * not supported, and as such URL elements cannot be encoded.
      */
     @RequestMapping("/index")
     public ModelAndView getAuditLog(final HttpServletRequest request, final HttpServletResponse response)
@@ -71,7 +73,7 @@ public class AuditLogController extends AbstractController {
     /**
      * Set the enrolment change part DAO.
      * 
-     * @param enrolmentChangeDao the enrolment change part DAO to set.
+     * @param enrolmentChangePartDao the enrolment change part DAO to set.
      */
     public void setEnrolmentChangePartDao(EnrolmentChangePartDao enrolmentChangePartDao) {
         this.enrolmentChangePartDao = enrolmentChangePartDao;

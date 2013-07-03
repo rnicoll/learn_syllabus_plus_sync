@@ -39,8 +39,6 @@ public class ConcurrencyService {
     /**
      * Marks a session as abandoned.
      * 
-     * @param stagingDatabase a connection to the staging database.
-     * @param now the current time.
      * @param run the session to mark abandoned.
      * @return whether the change was written out successfully. Failure typically
      * indicates the session has already finished.

@@ -75,12 +75,18 @@ public class ActivityGroup {
         return moduleCourse;
     }
     
+    /**
+     * Set the activity this relationship refers to.
+     * @param newActivity the activity this relationship refers to.
+     */
     public void setActivity(final Activity newActivity) {
         this.activity = newActivity;
     }
 
     /**
-     * @param activityGroupId the activityGroupId to set
+     * Set the ID for this activity-group relationship.
+     * 
+     * @param activityGroupId the ID to set for this activity-group relationship.
      */
     public void setActivityGroupId(int activityGroupId) {
         this.activityGroupId = activityGroupId;

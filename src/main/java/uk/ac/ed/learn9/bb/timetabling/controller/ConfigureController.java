@@ -62,6 +62,20 @@ public class ConfigureController extends AbstractController {
         return modelAndView;
     }
 
+    /**
+     * Runs the synchronisation process manually. Note that this frequently
+     * creates a request timed out page - possibly should start the synchronisation
+     * in the background instead?
+     * 
+     * @param request the request from the remote client.
+     * @param response the response to be returned to the remote client.
+     * @return the data model and view of it to be rendered.
+     * @throws SQLException if there was a problem accessing the database.
+     * @throws PersistenceException if there was a problem saving changes to
+     * Learn.
+     * @throws ValidationException if there was a problem validating data to be
+     * written back to Learn.
+     */
     @RequestMapping(value="/run")
     public ModelAndView doRun(final HttpServletRequest request, final HttpServletResponse response)
         throws SQLException, PersistenceException, ValidationException {
@@ -93,35 +107,45 @@ public class ConfigureController extends AbstractController {
     }
 
     /**
-     * @return the synchronisationRunDao
+     * Get the synchronisation run data access object.
+     * 
+     * @return the synchronisation run data access object.
      */
     public SynchronisationRunDao getSynchronisationRunDao() {
         return synchronisationRunDao;
     }
 
     /**
-     * @param synchronisationRunDao the synchronisationRunDao to set
+     * Set the synchronisation run data access object.
+     * 
+     * @param synchronisationRunDao the synchronisation run data access object to set.
      */
     public void setSynchronisationRunDao(SynchronisationRunDao synchronisationRunDao) {
         this.synchronisationRunDao = synchronisationRunDao;
     }
 
     /**
-     * @return the synchronisationService
+     * Get the synchronisation service.
+     * 
+     * @return the synchronisation service.
      */
     public SynchronisationService getSynchronisationService() {
         return synchronisationService;
     }
 
     /**
-     * @param synchronisationService the synchronisationService to set
+     * Set the synchronisation service.
+     * 
+     * @param synchronisationService the synchronisation service to set.
      */
     public void setSynchronisationService(SynchronisationService synchronisationService) {
         this.synchronisationService = synchronisationService;
     }
 
     /**
-     * @return the concurrencyService
+     * Get the concurrency service.
+     * 
+     * @return the concurrency service.
      */
     public ConcurrencyService getConcurrencyService() {
         return concurrencyService;

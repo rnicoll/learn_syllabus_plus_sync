@@ -33,6 +33,7 @@ public class TimetablingCourseCode extends AbstractCourseCode<TimetablingCourseC
      * @param occurrence the occurrence of the course, for example "SV1".
      * @param semester the semester the course is running in, for example "SEM1".
      * @return the course code as used in timetabling.
+     * @throws IllegalArgumentException if the resulting course code is invalid.
      */
     public static TimetablingCourseCode buildCode(final String courseCode,
             final String occurrence, final String semester)

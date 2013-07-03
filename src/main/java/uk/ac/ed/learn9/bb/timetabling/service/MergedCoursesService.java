@@ -85,6 +85,8 @@ public class MergedCoursesService extends AbstractCloneService {
     /**
      * Synchronises details of merged courses from the BBL feeds database,
      * into the staging database.
+     * 
+     * @throws SQLException if there was a problem accessing one of the databases.
      */
     public void synchroniseMergedCourses()
             throws SQLException {
@@ -104,6 +106,8 @@ public class MergedCoursesService extends AbstractCloneService {
     /**
      * Synchronises details of merged courses from the BBL feeds database,
      * into the staging database.
+     * 
+     * @throws SQLException if there was a problem accessing one of the databases.
      */
     private void synchroniseMergedCourses(final Connection stagingDatabase, final Connection bblFeedsDatabase)
             throws SQLException {
@@ -171,7 +175,7 @@ public class MergedCoursesService extends AbstractCloneService {
     /**
      * Set the BBL Feeds database data source.
      * 
-     * @param dataSource the BBL Feeds database data source to set.
+     * @param bblFeedsDataSource the BBL Feeds database data source to set.
      */
     public void setBblFeedsDataSource(DataSource bblFeedsDataSource) {
         this.bblFeedsDataSource = bblFeedsDataSource;
@@ -189,7 +193,7 @@ public class MergedCoursesService extends AbstractCloneService {
     /**
      * Set the staging database data source.
      * 
-     * @param dataSource the staging database data source to set.
+     * @param stagingDataSource the staging database data source to set.
      */
     public void setStagingDataSource(DataSource stagingDataSource) {
         this.stagingDataSource = stagingDataSource;

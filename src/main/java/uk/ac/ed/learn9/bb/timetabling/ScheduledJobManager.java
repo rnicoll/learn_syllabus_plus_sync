@@ -174,6 +174,9 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
     public class Task extends TimerTask {
         private final Logger log = Logger.getLogger(ScheduledJobManager.Task.class);
         
+        /**
+         * Default constructor.
+         */
         public Task() {
         }
     

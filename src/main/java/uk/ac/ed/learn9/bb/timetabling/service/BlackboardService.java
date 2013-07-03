@@ -294,6 +294,7 @@ public class BlackboardService {
      * @param groupDbLoader the group loader to use.
      * @param courseId the ID of the course to retrieve groups for.
      * @return a set of group IDs
+     * @throws KeyNotFoundExeption if no matching course could be found.
      * @throws PersistenceException if there was a problem loading group details.
      */
     public Set<Id> getCourseGroupIds(final GroupDbLoader groupDbLoader, final Id courseId)
@@ -544,8 +545,9 @@ public class BlackboardService {
     }
 
     /**
-     * Gets an instance of a {@link GroupMembershipDbLoader}. This method exists
-     * to allow overriding for test-cases.
+     * Gets a group membership loader. This method exists so subclasses can
+     * override the process for generating group membership loaders, for use in
+     * automated testing.
      *
      * @return a group membership loader.
      * @throws PersistenceException if there was a problem constructing the
@@ -555,6 +557,15 @@ public class BlackboardService {
         return GroupMembershipDbLoader.Default.getInstance();
     }
 
+    /**
+     * Gets a group membership persister. This method exists so subclasses can
+     * override the process for generating group membership persisters, for use in
+     * automated testing.
+     *
+     * @return a group membership persister.
+     * @throws PersistenceException if there was a problem constructing the
+     * loader.
+     */
     protected GroupMembershipDbPersister getGroupMembershipDbPersister() throws PersistenceException {
         return GroupMembershipDbPersister.Default.getInstance();
     }

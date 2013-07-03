@@ -24,6 +24,13 @@ public abstract class AbstractCode<T extends AbstractCode> extends Object implem
         this.val = setValue;
     }
     
+    /**
+     * Compares this code with another based on string comparison of the stored values.
+     * 
+     * @param other the other code to compare with.
+     * @return 0 if they match, -1 if this is less than the other code, 1 if
+     * greater.
+     */
     @Override
     public int compareTo(final AbstractCode other) {
         return this.val.compareTo(other.val);

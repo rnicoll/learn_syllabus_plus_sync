@@ -9,6 +9,11 @@ import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
  * database.
  */
 public interface SynchronisationRunDao {
+    /**
+     * Get all synchronisation runs.
+     * 
+     * @return an unsorted collection of all synchronisation runs.
+     */
     public Collection<SynchronisationRun> getAll();
     
     /**

@@ -197,14 +197,16 @@ public class EnrolmentChangePart extends Object implements Comparable<EnrolmentC
     /**
      * Set the module-course this part relates to.
      * 
-     * @param module course the module-course this part relates to.
+     * @param moduleCourse the module-course this part relates to.
      */
     public void setModuleCourse(final ModuleCourse moduleCourse) {
         this.moduleCourse = moduleCourse;
     }
 
     /**
-     * @param result the result to set
+     * Set the result for this part of the enrolment change.
+     * 
+     * @param result the result to set.
      */
     public void setResult(ChangeResult result) {
         this.result = result;

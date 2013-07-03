@@ -97,7 +97,6 @@ public class SynchronisationService extends Object {
      * the database unnecessarily. In this case "old" is defined as occurring
      * over a day ago.
      * 
-     * @param stagingDatabase a connection to the staging database.
      * @return the number of records deleted.
      * @throws SQLException if there was a problem communicating with the database.
      */
@@ -306,8 +305,12 @@ public class SynchronisationService extends Object {
     /**
      * Generate activity-group relationships in the staging database, based on
      * the courses that each activity maps to via their module.
+     * 
+     * @throws SQLException if there was a problem accessing one the staging
+     * database.
      */
-    public void generateActivityGroups() throws SQLException {
+    public void generateActivityGroups()
+            throws SQLException {
         final Connection stagingDatabase = this.getStagingDataSource().getConnection();
         
         try {
@@ -334,8 +337,12 @@ public class SynchronisationService extends Object {
      * and the merged courses data from the BBL Feeds database. This ensures
      * we have a consistent snapshot of how the mappings are done, so that
      * external database changes won't cause problems later.
+     * 
+     * @throws SQLException if there was a problem accessing one the staging
+     * database.
      */
-    public void generateModuleCourses() throws SQLException {
+    public void generateModuleCourses()
+            throws SQLException {
         final Connection stagingDatabase = this.getStagingDataSource().getConnection();
         
         try {

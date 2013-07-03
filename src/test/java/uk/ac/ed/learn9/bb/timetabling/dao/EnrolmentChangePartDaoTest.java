@@ -8,7 +8,6 @@ import java.util.List;
 
 import javax.sql.DataSource;
 
-import org.hibernate.SessionFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,7 +15,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 
 import blackboard.persist.Id;
-import uk.ac.ed.learn9.bb.timetabling.dao.impl.EnrolmentChangePartDaoImpl;
 import uk.ac.ed.learn9.bb.timetabling.util.DbScriptUtil;
 
 /**
@@ -28,6 +26,9 @@ public class EnrolmentChangePartDaoTest extends AbstractJUnit4SpringContextTests
     public EnrolmentChangePartDaoTest() {
     }
     
+    /**
+     * Name of the staging data source bean.
+     */
     public static final String BEAN_STAGING_DATA_SOURCE = "stagingDataSource";
     
     /**
@@ -50,8 +51,14 @@ public class EnrolmentChangePartDaoTest extends AbstractJUnit4SpringContextTests
         return (EnrolmentChangePartDao)this.applicationContext.getBean("enrolmentChangePartDao");
     }
     
+    /**
+     * Get a connection to the staging database.
+     * 
+     * @return a connection to the staging database.
+     * @throws SQLException if there was a problem connecting to the database.
+     */
     private Connection getConnection() throws SQLException {
-        final DataSource stagingDatasource = (DataSource)this.applicationContext.getBean(BEAN_STAGING_DATA_SOURCE);
+        final DataSource stagingDatasource = this.applicationContext.getBean(BEAN_STAGING_DATA_SOURCE, javax.sql.DataSource.class);
         return stagingDatasource.getConnection();
     }
     
