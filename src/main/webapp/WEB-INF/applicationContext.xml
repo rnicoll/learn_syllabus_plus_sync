@@ -123,8 +123,6 @@
     
     <!-- Event listener to start/stop the scheduled synchronisation job -->
     <bean id="scheduledJobManager" class="uk.ac.ed.learn9.bb.timetabling.ScheduledJobManager">
-        <property name="concurrencyService" ref="concurrencyService"/>
-        <property name="synchronisationService" ref="synchronisationService"/>
     </bean>
 
 </beans>

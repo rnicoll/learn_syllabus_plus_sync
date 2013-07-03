@@ -7,7 +7,7 @@ import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ApplicationContextEvent;
 import org.springframework.context.event.ContextClosedEvent;
@@ -15,7 +15,6 @@ import org.springframework.context.event.ContextRefreshedEvent;
 
 import blackboard.data.ValidationException;
 import blackboard.persist.PersistenceException;
-import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationResult;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 import uk.ac.ed.learn9.bb.timetabling.service.ConcurrencyService;
 import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService;
@@ -53,10 +52,7 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
      */
     public static long INTERVAL_IN_MILLIS = 24 * 60 * 60 * 1000L;
     
-    @Autowired
-    private ConcurrencyService concurrencyService;
-    @Autowired
-    private SynchronisationService synchronisationService;
+    private ApplicationContext applicationContext;
     
     private AtomicReference<Timer> timerRef = new AtomicReference<Timer>();
     private Logger log = Logger.getLogger(ScheduledJobManager.class);
@@ -77,9 +73,11 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
     @Override
     public void onApplicationEvent(final ApplicationContextEvent e) {
         if (e instanceof ContextRefreshedEvent) {
+            this.applicationContext = e.getApplicationContext();
             this.startTimer();
         } else if (e instanceof ContextClosedEvent) {
             this.cancel();
+            this.applicationContext = null;
         }
     }
 
@@ -158,7 +156,7 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
      * @return the concurrency service.
      */
     public ConcurrencyService getConcurrencyService() {
-        return concurrencyService;
+        return this.applicationContext.getBean(ConcurrencyService.class);
     }
 
     /**
@@ -167,26 +165,7 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
      * @return the synchronisation service. 
      */
     public SynchronisationService getSynchronisationService() {
-        return synchronisationService;
-    }
-
-    /**
-     * Sets the concurrency service for the scheduled tasks to use to ensure
-     * only one task is running at  time.
-     * 
-     * @param concurrencyService the concurrency service to set
-     */
-    public void setConcurrencyService(ConcurrencyService concurrencyService) {
-        this.concurrencyService = concurrencyService;
-    }
-
-    /**
-     * Sets the synchronisation service for the scheduled tasks to use.
-     * 
-     * @param service the synchronisation service to set.
-     */
-    public void setSynchronisationService(SynchronisationService service) {
-        this.synchronisationService = service;
+        return this.applicationContext.getBean(SynchronisationService.class);
     }
     
     /**
