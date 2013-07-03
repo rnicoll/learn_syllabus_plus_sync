@@ -48,6 +48,9 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
      */
     public static final long DELAY_WAIT_TIMER_EXIT = 100L;
     
+    /**
+     * Interval between running the job, in milliseconds.
+     */
     public static long INTERVAL_IN_MILLIS = 24 * 60 * 60 * 1000L;
     
     @Autowired
@@ -103,10 +106,17 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
         return true;
     }
 
-    public static Calendar getNextSynchronisationStartTime(final long nowMillis) {
+    /**
+     * Generates the time at which to start the next synchronisation run.
+     * 
+     * @param baseTimeMillis the time after which the run should be scheduled
+     * for.
+     * @return the time of the next synchronisation run.
+     */
+    private static Calendar getNextSynchronisationStartTime(final long baseTimeMillis) {
         final Calendar calendar = Calendar.getInstance();
         // Strip seconds & milliseconds
-        final long thisMinuteMillis = nowMillis - (nowMillis % (60 * 1000L));
+        final long thisMinuteMillis = baseTimeMillis - (baseTimeMillis % (60 * 1000L));
         calendar.setTimeInMillis(thisMinuteMillis);
         // Set the time of day
         calendar.set(Calendar.MINUTE, START_MINUTE);
@@ -142,19 +152,6 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
     }
 
     /**
-     * Calculates the delay (in milliseconds) before running the synchronisation
-     * again.
-     * 
-     * @param nowMillis the current time in milliseconds.
-     * @return the delay in milliseconds.
-     */
-    public static long calculateDelay(final long nowMillis) {
-        Calendar calendar = getNextSynchronisationStartTime(nowMillis);
-        
-        return calendar.getTimeInMillis() - nowMillis;
-    }
-
-    /**
      * Gets the concurrency service for the scheduled tasks to use to ensure
      * only one task is running at  time.
      * 
@@ -167,7 +164,7 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
     /**
      * Gets the synchronisation service for this task.
      * 
-     * @return the synchronisation service.
+     * @return the synchronisation service. 
      */
     public SynchronisationService getSynchronisationService() {
         return synchronisationService;
