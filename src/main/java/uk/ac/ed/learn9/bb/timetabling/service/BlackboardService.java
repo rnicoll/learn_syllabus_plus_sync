@@ -55,7 +55,7 @@ public class BlackboardService {
      * @throws ValidationException if a newly generated group enrolment was
      * invalid.
      */
-    public void applyEnrolmentChanges(final Connection connection, final SynchronisationRun run)
+    public void applyNewEnrolmentChanges(final Connection connection, final SynchronisationRun run)
             throws SQLException, PersistenceException, ValidationException {
         final ChangeOutcomeUpdateStatement outcome = new ChangeOutcomeUpdateStatement(connection);
 
@@ -73,7 +73,7 @@ public class BlackboardService {
                     + "ORDER BY mc.learn_course_id, p.part_id");
             try {
                 queryStatement.setInt(1, run.getRunId());
-                applyEnrolmentChanges(queryStatement, outcome);
+                applyEnrolmentChanges(queryStatement, connection);
             } finally {
                 queryStatement.close();
             }
@@ -96,27 +96,21 @@ public class BlackboardService {
      */
     public void applyPreviouslyFailedEnrolmentChanges(final Connection connection)
             throws SQLException, PersistenceException, ValidationException {
-        final ChangeOutcomeUpdateStatement outcome = new ChangeOutcomeUpdateStatement(connection);
-
+        final PreparedStatement queryStatement = connection.prepareStatement(
+            "SELECT p.part_id, mc.learn_course_id, ag.learn_group_id, s.learn_user_id, c.change_type "
+                + "FROM enrolment_change c "
+                    + "JOIN enrolment_change_part p ON p.change_id=c.change_id "
+                    + "LEFT JOIN change_result r ON r.result_code=p.result_code "
+                    + "JOIN module_course mc ON mc.module_course_id=p.module_course_id "
+                    + "JOIN activity_group ag on ag.tt_activity_id=c.tt_activity_id AND ag.module_course_id=mc.module_course_id "
+                    + "JOIN student_set s ON s.tt_student_set_id=c.tt_student_set_id "
+                + "WHERE p.update_completed IS NULL "
+                    + "AND (r.retry IS NULL OR r.retry='1') "
+                + "ORDER BY mc.learn_course_id, p.part_id");
         try {
-            final PreparedStatement queryStatement = connection.prepareStatement(
-                "SELECT p.part_id, mc.learn_course_id, ag.learn_group_id, s.learn_user_id, c.change_type "
-                    + "FROM enrolment_change c "
-                        + "JOIN enrolment_change_part p ON p.change_id=c.change_id "
-                        + "LEFT JOIN change_result r ON r.result_code=p.result_code "
-                        + "JOIN module_course mc ON mc.module_course_id=p.module_course_id "
-                        + "JOIN activity_group ag on ag.tt_activity_id=c.tt_activity_id AND ag.module_course_id=mc.module_course_id "
-                        + "JOIN student_set s ON s.tt_student_set_id=c.tt_student_set_id "
-                    + "WHERE p.update_completed IS NULL "
-                        + "AND (r.retry IS NULL OR r.retry='1') "
-                    + "ORDER BY mc.learn_course_id, p.part_id");
-            try {
-                applyEnrolmentChanges(queryStatement, outcome);
-            } finally {
-                queryStatement.close();
-            }
+            applyEnrolmentChanges(queryStatement, connection);
         } finally {
-            outcome.close();
+            queryStatement.close();
         }
     }
 
@@ -125,104 +119,133 @@ public class BlackboardService {
      *
      * @param queryStatement a prepared statement ready to be executed. Results
      * must be ordered by course ID first, then by change part ID.
-     * @param outcome a prepared outcome persistence object.
-     * @throws PersistenceException
-     * @throws SQLException
-     * @throws ValidationException
+     * @param connection a connection to the staging database.
+     * @throws PersistenceException if there was a problem loading or saving
+     * data from/to Learn.
+     * @throws SQLException if there was a problem with the staging database.
+     * @throws ValidationException if a newly generated group enrolment was
+     * invalid.
      */
-    private void applyEnrolmentChanges(final PreparedStatement queryStatement, final ChangeOutcomeUpdateStatement outcome)
+    private void applyEnrolmentChanges(final PreparedStatement queryStatement, final Connection connection)
             throws PersistenceException, SQLException, ValidationException {
         final CourseMembershipDbLoader courseMembershipDbLoader = this.getCourseMembershipDbLoader();
         final GroupDbLoader groupDbLoader = this.getGroupDbLoader();
         final GroupMembershipDbLoader groupMembershipDbLoader = this.getGroupMembershipDbLoader();
         final GroupMembershipDbPersister groupMembershipDbPersister = this.getGroupMembershipDbPersister();
 
-        Id currentCourseId = null;
-        Map<Id, CourseMembership> studentCourseMemberships = null;
-        Set<Id> validGroupIds = null;
+        // Stores group IDs that are no longer valid, and need to be purged from
+        // the database.
+        final Set<Id> noLongerValidGroupIds = new HashSet<Id>();
 
-        final ResultSet rs = queryStatement.executeQuery();
+        final ChangeOutcomeUpdateStatement outcome = new ChangeOutcomeUpdateStatement(connection);
+
         try {
-            while (rs.next()) {
-                final EnrolmentChange.Type changeType = EnrolmentChange.Type.valueOf(rs.getString("change_type"));
-                final int partId = rs.getInt("part_id");
-                final String courseIdStr = rs.getString("learn_course_id");
-                final String groupIdStr = rs.getString("learn_group_id");
-                final String userIdStr = rs.getString("learn_user_id");
-                
-                if (null == courseIdStr) {
-                    outcome.markCourseMissing(partId);
-                    continue;
-                }
+            Id currentCourseId = null;
+            Map<Id, CourseMembership> studentCourseMemberships = null;
+            Set<Id> validGroupIds = null;
 
-                if (null == groupIdStr) {
-                    outcome.markGroupMissing(partId);
-                    continue;
-                }
+            final ResultSet rs = queryStatement.executeQuery();
+            try {
+                while (rs.next()) {
+                    final EnrolmentChange.Type changeType = EnrolmentChange.Type.valueOf(rs.getString("change_type"));
+                    final int partId = rs.getInt("part_id");
+                    final String courseIdStr = rs.getString("learn_course_id");
+                    final String groupIdStr = rs.getString("learn_group_id");
+                    final String userIdStr = rs.getString("learn_user_id");
 
-                if (null == userIdStr) {
-                    outcome.markStudentMissing(partId);
-                    continue;
-                }
+                    if (null == courseIdStr) {
+                        outcome.markCourseMissing(partId);
+                        continue;
+                    }
 
-                final Id courseId = Id.generateId(Course.DATA_TYPE, courseIdStr);
-                final Id groupId = Id.generateId(Group.DATA_TYPE, groupIdStr);
-                final Id userId = Id.generateId(User.DATA_TYPE, userIdStr);
+                    if (null == groupIdStr) {
+                        outcome.markGroupMissing(partId);
+                        continue;
+                    }
 
-                if (null == currentCourseId
-                        || !currentCourseId.equals(courseId)) {
-                    // Load student memberships on the current course
-                    currentCourseId = courseId;
-                    studentCourseMemberships = getStudentCourseMemberships(courseMembershipDbLoader, courseId);
-                    validGroupIds = getCourseGroupIds(groupDbLoader, courseId);
-                }
+                    if (null == userIdStr) {
+                        outcome.markStudentMissing(partId);
+                        continue;
+                    }
 
-                if (!validGroupIds.contains(groupId)) {
-                    outcome.markGroupMissing(partId);
-                    continue;
-                }
-                
-                // Load the group membership if possible.
-                GroupMembership groupMembership;
-                try {
-                    groupMembership = groupMembershipDbLoader.loadByGroupAndUserId(groupId, userId);
-                } catch(KeyNotFoundException e) {
-                    groupMembership = null;
-                }
-                switch (changeType) {
-                    case ADD:
-                        // final CourseMembership courseMembership = studentCourseMemberships.get(studentId);
-                        final CourseMembership courseMembership = courseMembershipDbLoader.loadByCourseAndUserId(courseId, userId);
+                    final Id courseId = Id.generateId(Course.DATA_TYPE, courseIdStr);
+                    final Id groupId = Id.generateId(Group.DATA_TYPE, groupIdStr);
+                    final Id userId = Id.generateId(User.DATA_TYPE, userIdStr);
 
-                        if (null == courseMembership) {
-                            // Student is not on this course - probably a delay
-                            // bringing in data from Learn, but we can ignore
-                            outcome.markNotOnCourse(partId);
-                            continue;
-                        }
-                        
-                        if (null == groupMembership) {
-                            groupMembershipDbPersister.persist(buildGroupMembership(courseMembership, groupId));
-                            outcome.markSuccess(partId);
-                        } else {
-                            outcome.markAlreadyInGroup(partId);
-                        }
-                        break;
-                    case REMOVE:
-                        if (null != groupMembership) {
-                            groupMembershipDbPersister.deleteById(groupMembership.getId());
-                            outcome.markSuccess(partId);
-                        } else {
-                            outcome.markAlreadyRemoved(partId);
-                        }
-                        break;
-                    default:
-                        throw new RuntimeException("Unexpected change type \""
-                                + changeType + "\".");
+                    if (null == currentCourseId
+                            || !currentCourseId.equals(courseId)) {
+                        // Load student memberships on the current course
+                        currentCourseId = courseId;
+                        studentCourseMemberships = getStudentCourseMemberships(courseMembershipDbLoader, courseId);
+                        validGroupIds = getCourseGroupIds(groupDbLoader, courseId);
+                    }
+
+                    if (!validGroupIds.contains(groupId)) {
+                        // Wipe the group ID recorded against this part
+                        outcome.markGroupMissing(partId);
+                        noLongerValidGroupIds.add(groupId);
+                        continue;
+                    }
+
+                    // Load the group membership if possible.
+                    GroupMembership groupMembership;
+                    try {
+                        groupMembership = groupMembershipDbLoader.loadByGroupAndUserId(groupId, userId);
+                    } catch(KeyNotFoundException e) {
+                        groupMembership = null;
+                    }
+                    switch (changeType) {
+                        case ADD:
+                            // final CourseMembership courseMembership = studentCourseMemberships.get(studentId);
+                            final CourseMembership courseMembership = courseMembershipDbLoader.loadByCourseAndUserId(courseId, userId);
+
+                            if (null == courseMembership) {
+                                // Student is not on this course - probably a delay
+                                // bringing in data from Learn, but we can ignore
+                                outcome.markNotOnCourse(partId);
+                                continue;
+                            }
+
+                            if (null == groupMembership) {
+                                groupMembershipDbPersister.persist(buildGroupMembership(courseMembership, groupId));
+                                outcome.markSuccess(partId);
+                            } else {
+                                outcome.markAlreadyInGroup(partId);
+                            }
+                            break;
+                        case REMOVE:
+                            if (null != groupMembership) {
+                                groupMembershipDbPersister.deleteById(groupMembership.getId());
+                                outcome.markSuccess(partId);
+                            } else {
+                                outcome.markAlreadyRemoved(partId);
+                            }
+                            break;
+                        default:
+                            throw new RuntimeException("Unexpected change type \""
+                                    + changeType + "\".");
+                    }
                 }
+            } finally {
+                rs.close();
             }
         } finally {
-            rs.close();
+            outcome.close();
+        }
+        
+        if (!noLongerValidGroupIds.isEmpty()) {
+            final PreparedStatement updateStatement = queryStatement
+                    .getConnection()
+                    .prepareStatement("UPDATE activity_group SET learn_group_id=NULL, learn_group_created=? "
+                        + "WHERE learn_group_id=?");
+            try {
+                for (Id groupId: noLongerValidGroupIds) {
+                    updateStatement.setString(1, groupId.getExternalString());
+                    updateStatement.executeUpdate();
+                }
+            } finally {
+                updateStatement.close();
+            }
         }
     }
 
@@ -244,8 +267,8 @@ public class BlackboardService {
 
         final ManagedLearnGroupIDStatement updateStatement = new ManagedLearnGroupIDStatement(stagingDatabase);
         try {
-            PreparedStatement queryStatement = stagingDatabase.prepareStatement(
-                    "(SELECT activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
+            final PreparedStatement queryStatement = stagingDatabase.prepareStatement(
+                "(SELECT activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
                     + "FROM non_jta_activity_group_vw "
                         + "WHERE learn_course_id IS NOT NULL AND learn_group_id IS NULL"
                     + ")"

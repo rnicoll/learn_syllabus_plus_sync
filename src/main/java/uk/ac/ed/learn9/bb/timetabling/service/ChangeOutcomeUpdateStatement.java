@@ -17,6 +17,7 @@ class ChangeOutcomeUpdateStatement {
         SUCCESS,
         COURSE_MISSING,
         GROUP_MISSING,
+        CANNOT_REMOVE_SAFELY,
         STUDENT_MISSING,
         NOT_ON_COURSE,
         ALREADY_REMOVED,
@@ -58,6 +59,11 @@ class ChangeOutcomeUpdateStatement {
     public boolean markGroupMissing(final int changeId)
             throws SQLException {
         return this.update(null, Result.GROUP_MISSING, changeId);
+    }
+    
+    public boolean markRemoveUnsafe(final int changeId)
+            throws SQLException {
+        return this.update(null, Result.CANNOT_REMOVE_SAFELY, changeId);
     }
     
     public boolean markNotOnCourse(final int changeId)

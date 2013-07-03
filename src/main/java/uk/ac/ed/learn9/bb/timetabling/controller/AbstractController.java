@@ -1,7 +1,7 @@
 package uk.ac.ed.learn9.bb.timetabling.controller;
 
 /**
- * Abstract controller. Stores common elements used by controllers.
+ * Abstract controller, which stores common elements used by other controllers.
  */
 public abstract class AbstractController {
     /**

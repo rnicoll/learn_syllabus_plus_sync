@@ -82,14 +82,40 @@ public class SynchronisationService extends Object {
      */
     public void applyEnrolmentChanges(final SynchronisationRun run)
         throws PersistenceException, SQLException, ValidationException {
-        final Connection connection = this.getStagingDataSource().getConnection();
+        final Connection stagingDatabase = this.getStagingDataSource().getConnection();
         
         try {
-            this.getBlackboardService().applyPreviouslyFailedEnrolmentChanges(connection);
-            this.getBlackboardService().applyEnrolmentChanges(connection, run);
+            this.applyEnrolmentChanges(run, stagingDatabase);
         } finally {
-            connection.close();
+            stagingDatabase.close();
         }
+    }
+    
+    /**
+     * Apply student/course group enrolment changes in the staging database,
+     * into Learn. This re-attempts any previously failed changes first
+     * (for example to fix problems where a student-enrolment on a course was
+     * missing during an earlier attempt), then applies the new changes from
+     * the given run.
+     * 
+     * @param run the synchronisation run to apply changes for. Previously
+     * failed changes will also be re-attempted.
+     * @throws PersistenceException if there was a problem loading or saving
+     * data in Learn.
+     * @throws SQLException if there was a problem accessing one of the databases.
+     * @throws ValidationException if there was a problem validating data to be
+     * written back to Learn.
+     */
+    public void applyEnrolmentChanges(final SynchronisationRun run, final Connection stagingDatabase)
+        throws PersistenceException, SQLException, ValidationException {
+        this.getBlackboardService().applyPreviouslyFailedEnrolmentChanges(stagingDatabase);
+        this.getBlackboardService().applyNewEnrolmentChanges(stagingDatabase, run);
+
+        // Rebuild any groups found to be damaged during the first run
+        this.getBlackboardService().generateGroupsForActivities(stagingDatabase);
+
+        // Re-attempt any pending changes
+        this.getBlackboardService().applyPreviouslyFailedEnrolmentChanges(stagingDatabase);
     }
     
     /**
@@ -280,27 +306,6 @@ public class SynchronisationService extends Object {
         
         return groupName.toString();
     }
-    
-    /**
-     * Creates groups in Learn to match activities which have student enrolments
-     * to be synchronised.
-     * 
-     * @throws PersistenceException if there was a problem loading or saving
-     * data in Learn.
-     * @throws SQLException if there was a problem accessing one of the databases.
-     * @throws ValidationException if a newly generated group fails validation
-     * by Learn prior to persistence.
-     */
-    public void createGroupsForActivities()
-            throws PersistenceException, SQLException, ValidationException {
-        final Connection destination = this.getStagingDataSource().getConnection();
-        try {
-            generateGroupNames(destination);
-            this.getBlackboardService().generateGroupsForActivities(destination);
-        } finally {
-            destination.close();
-        }
-    }
 
     /**
      * Generate activity-group relationships in the staging database, based on
@@ -400,11 +405,21 @@ public class SynchronisationService extends Object {
         this.generateActivityGroups();
         this.generateDiff(run);
         this.getConcurrencyService().markDiffCompleted(run);
-        this.mapModulesToCourses();
-        this.updateGroupDescriptions();
-        this.createGroupsForActivities();
-        this.mapStudentSetsToUsers();
-        this.applyEnrolmentChanges(run);
+        
+        final Connection stagingDatabase = this.getStagingDataSource().getConnection();
+        try {
+            final BlackboardService bbService = this.getBlackboardService();
+            
+            bbService.mapModulesToCourses(stagingDatabase);
+            this.updateGroupDescriptions(stagingDatabase);
+        
+            this.generateGroupNames(stagingDatabase);
+            bbService.generateGroupsForActivities(stagingDatabase);
+            bbService.mapStudentSetsToUsers(stagingDatabase);
+            this.applyEnrolmentChanges(run, stagingDatabase);
+        } finally {
+            stagingDatabase.close();
+        }
 
         this.getConcurrencyService().markSucceeded(run);
         this.getConcurrencyService().clearAbandonedRuns();
@@ -469,27 +484,6 @@ public class SynchronisationService extends Object {
             }
         } finally {
             updateStatement.close();
-        }
-    }
-    
-    /**
-     * Resolves the modules that activities belong to, to the courses they
-     * represent in Learn, where applicable. This also includes importing
-     * details of joint taught activities (so that the child activities can be
-     * mapped to the correct module and then onwards to the correct course).
-     * 
-     * @throws PersistenceException if there was a problem loading or saving
-     * data in Learn.
-     * @throws SQLException if there was a problem accessing one of the databases.
-     */
-    public void mapModulesToCourses()
-            throws PersistenceException, SQLException {
-        final Connection destination = this.getStagingDataSource().getConnection();
-
-        try {
-            this.getBlackboardService().mapModulesToCourses(destination);
-        } finally {
-            destination.close();
         }
     }
     
@@ -616,24 +610,6 @@ public class SynchronisationService extends Object {
             insertStatement.close();
         }
     }
-
-    /**
-     * Identifies students sets with group enrolments to be copied to Learn,
-     * and maps them to their IDs in Learn.
-     * 
-     * @throws PersistenceException if there was a problem loading or saving
-     * data in Learn.
-     * @throws SQLException if there was a problem accessing the database.
-     */
-    public void mapStudentSetsToUsers()
-        throws PersistenceException, SQLException {
-        final Connection connection = this.getStagingDataSource().getConnection();
-        try {
-            this.getBlackboardService().mapStudentSetsToUsers(connection);
-        } finally {
-            connection.close();
-        }
-    }
     
     /**
      * Updates the descriptions of activities in the database and in Learn.
@@ -647,6 +623,24 @@ public class SynchronisationService extends Object {
     public void updateGroupDescriptions() 
             throws SQLException, PersistenceException, ValidationException {
         final Connection stagingDatabase = this.getStagingDataSource().getConnection();
+        try {
+            this.updateGroupDescriptions(stagingDatabase);
+        } finally {
+            stagingDatabase.close();
+        }
+    }
+    
+    /**
+     * Updates the descriptions of activities in the database and in Learn.
+     * 
+     * @throws PersistenceException if there was a problem loading or saving
+     * data in Learn.
+     * @throws SQLException if there was a problem accessing the staging database.
+     * @throws ValidationException if there was a problem validating the updated
+     * group.
+     */
+    public void updateGroupDescriptions(final Connection stagingDatabase) 
+            throws SQLException, PersistenceException, ValidationException {
         final PreparedStatement updateStatement = stagingDatabase.prepareStatement(
                 "UPDATE activity SET description=? WHERE tt_activity_id=?"
         );
