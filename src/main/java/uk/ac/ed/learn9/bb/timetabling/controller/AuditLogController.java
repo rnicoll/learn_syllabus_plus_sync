@@ -46,17 +46,24 @@ public class AuditLogController extends AbstractController {
         final Context context = ContextManagerFactory.getInstance().getContext();
         final ModelAndView modelAndView = new ModelAndView("auditLog");
         final Course course = context.getCourse();
-        final List<EnrolmentChangePart> changes = new ArrayList<EnrolmentChangePart>();
+        final List<EnrolmentChangePart> completedChanges = new ArrayList<EnrolmentChangePart>();
+        final List<EnrolmentChangePart> pendingChanges = new ArrayList<EnrolmentChangePart>();
         
-        // Log group creation?
-        
-        changes.addAll(this.getEnrolmentChangePartDao().getByCourse(course));
-        Collections.sort(changes);
+        for (EnrolmentChangePart change: this.getEnrolmentChangePartDao().getByCourse(course)) {
+            if (change.getResult().isRetry()) {
+                pendingChanges.add(change);
+            } else {
+                completedChanges.add(change);
+            }
+        }
+        Collections.sort(completedChanges);
+        Collections.sort(pendingChanges);
         
         modelAndView.addObject("mergedCourses", PlugInUtil.getUri(PLUGIN_VENDOR_ID,
                 PLUGIN_ID, "mergedCourses?course_id="
                 + URLEncoder.encode(course.getId().getExternalString(), US_ASCII)));
-        modelAndView.addObject("changes", changes);
+        modelAndView.addObject("completedChanges", completedChanges);
+        modelAndView.addObject("pendingChanges", pendingChanges);
         
         return modelAndView;
     }

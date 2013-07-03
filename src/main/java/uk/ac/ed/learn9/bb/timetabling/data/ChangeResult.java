@@ -6,8 +6,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 /**
- *
- * @author jnicoll2
+ * An outcome from an change to a student-group enrolment.
  */
 @Entity
 @Table(name="change_result")
@@ -26,7 +25,9 @@ public class ChangeResult {
     }
 
     /**
-     * @return the label
+     * Get a human readable label for this result.
+     * 
+     * @return a human readable label for this result.
      */
     @Column(name="LABEL", length=80)
     public String getLabel() {
@@ -34,7 +35,9 @@ public class ChangeResult {
     }
 
     /**
-     * @return the retry
+     * Get whether to retry changes with this result.
+     * 
+     * @return whether to retry changes with this result.
      */
     @Column(name="RETRY")
     public boolean isRetry() {

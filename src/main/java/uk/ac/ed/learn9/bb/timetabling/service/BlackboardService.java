@@ -32,7 +32,6 @@ import blackboard.persist.course.GroupDbPersister;
 import blackboard.persist.course.GroupMembershipDbLoader;
 import blackboard.persist.course.GroupMembershipDbPersister;
 import blackboard.persist.user.UserDbLoader;
-
 import uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 
@@ -140,12 +139,12 @@ public class BlackboardService {
         final ChangeOutcomeUpdateStatement outcome = new ChangeOutcomeUpdateStatement(connection);
 
         try {
-            Id currentCourseId = null;
-            Map<Id, CourseMembership> studentCourseMemberships = null;
-            Set<Id> validGroupIds = null;
-
             final ResultSet rs = queryStatement.executeQuery();
             try {
+                Id currentCourseId = null;
+                Map<Id, CourseMembership> studentCourseMemberships = null;
+                Map<Id, Group> courseGroups = null;
+            
                 while (rs.next()) {
                     final EnrolmentChange.Type changeType = EnrolmentChange.Type.valueOf(rs.getString("change_type"));
                     final int partId = rs.getInt("part_id");
@@ -177,10 +176,12 @@ public class BlackboardService {
                         // Load student memberships on the current course
                         currentCourseId = courseId;
                         studentCourseMemberships = getStudentCourseMemberships(courseMembershipDbLoader, courseId);
-                        validGroupIds = getCourseGroupIds(groupDbLoader, courseId);
+                        courseGroups = getCourseGroups(groupDbLoader, courseId);
                     }
 
-                    if (!validGroupIds.contains(groupId)) {
+                    final Group group = courseGroups.get(groupId);
+                    
+                    if (null == group) {
                         // Wipe the group ID recorded against this part
                         outcome.markGroupMissing(partId);
                         noLongerValidGroupIds.add(groupId);
@@ -215,8 +216,12 @@ public class BlackboardService {
                             break;
                         case REMOVE:
                             if (null != groupMembership) {
-                                groupMembershipDbPersister.deleteById(groupMembership.getId());
-                                outcome.markSuccess(partId);
+                                if (this.isGroupMembershipRemovalUnsafe(group, groupMembership)) {
+                                    outcome.markRemoveUnsafe(partId);
+                                } else {
+                                    groupMembershipDbPersister.deleteById(groupMembership.getId());
+                                    outcome.markSuccess(partId);
+                                }
                             } else {
                                 outcome.markAlreadyRemoved(partId);
                             }
@@ -312,23 +317,23 @@ public class BlackboardService {
     }
     
     /**
-     * Get the set of valid group IDs within a course.
+     * Get the set of valid groups within a course.
      * 
      * @param groupDbLoader the group loader to use.
      * @param courseId the ID of the course to retrieve groups for.
-     * @return a set of group IDs
+     * @return a mapping from group ID to group.
      * @throws KeyNotFoundExeption if no matching course could be found.
      * @throws PersistenceException if there was a problem loading group details.
      */
-    public Set<Id> getCourseGroupIds(final GroupDbLoader groupDbLoader, final Id courseId)
+    private Map<Id, Group> getCourseGroups(final GroupDbLoader groupDbLoader, final Id courseId)
         throws KeyNotFoundException, PersistenceException {
-        final Set<Id> groupIds = new HashSet<Id>();
+        final Map<Id, Group> groups = new HashMap<Id, Group>();
         
         for (Group group: groupDbLoader.loadByCourseId(courseId)) {
-            groupIds.add(group.getId());
+            groups.put(group.getId(), group);
         }
         
-        return groupIds;
+        return groups;
     }
 
     /**
@@ -507,6 +512,26 @@ public class BlackboardService {
         }
 
         return studentCourseMemberships;
+    }
+
+    /**
+     * Determines whether it is safe to remove a group membership (as in, doing
+     * so will not cause data loss from forums or similar).
+     * 
+     * @param group the group that membership is being removed from.
+     * @param groupMembership the group membership to be removed.
+     * @return true if the removal is unsafe, false if it is safe.
+     * @throws PersistenceException if there was a problem determining whether
+     * the change is safe.
+     */
+    private boolean isGroupMembershipRemovalUnsafe(final Group group, final GroupMembership groupMembership)
+        throws PersistenceException {
+        if (group.getIsAvailable()) {
+            return group.hasGroupToolWithGradeableItem()
+                || group.getIsDiscussionBoardAvailable();
+        }
+        
+        return false;
     }
 
     /**
