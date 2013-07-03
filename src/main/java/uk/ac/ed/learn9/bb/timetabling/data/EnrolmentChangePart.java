@@ -27,6 +27,28 @@ public class EnrolmentChangePart extends Object implements Comparable<EnrolmentC
 
     @Override
     public int compareTo(final EnrolmentChangePart other) {
+        // First sort any changes that are still pending, to the top of the
+        // list
+        if (null == this.getResult()) {
+            if (null != other.getResult()) {
+                return -1;
+            }
+        } else {
+            if (null == other.getResult()) {
+                return 1;
+            } else {
+                if (this.getResult().isRetry()) {
+                    if (!other.getResult().isRetry()) {
+                        return -1;
+                    }
+                } else {
+                    if (other.getResult().isRetry()) {
+                        return 1;
+                    }
+                }
+            }
+        }
+        
         if (null == this.getUpdateCompleted()) {
             if (null == other.getUpdateCompleted()) {
                 return this.partId - other.partId;
