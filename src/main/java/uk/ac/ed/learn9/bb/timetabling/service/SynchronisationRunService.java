@@ -400,6 +400,9 @@ public class SynchronisationRunService {
             statement.setInt(paramIdx++, run.getRunId());
             if (statement.executeUpdate() > 0) {
                 this.getSynchronisationRunDao().refresh(run);
+
+                sendErrorOutcomeMail(cause);
+                
                 return true;
             }
         } finally {
@@ -454,15 +457,8 @@ public class SynchronisationRunService {
             statement.setInt(paramIdx++, run.getRunId());
             if (statement.executeUpdate() > 0) {
                 this.getSynchronisationRunDao().refresh(run);
-                
-                SimpleMailMessage msg = new SimpleMailMessage(this.getTemplateMessage());
-                msg.setTo("Ross.Nicoll@ed.ac.uk");
-                msg.setText("The Learn/Timetabling synchronisation process completed successfully at "
-                    + new Date() + ".");
 
-                log.debug("Sending success message.");
-
-                this.mailSender.send(msg);
+                sendSuccessOutcomeMail();
                 
                 return true;
             }
@@ -649,6 +645,28 @@ public class SynchronisationRunService {
      */
     public void setVelocityEngine(VelocityEngine velocityEngine) {
         this.velocityEngine = velocityEngine;
+    }
+
+    private void sendErrorOutcomeMail(final Throwable cause) throws MailException {
+        SimpleMailMessage msg = new SimpleMailMessage(this.getTemplateMessage());
+        msg.setTo("Ross.Nicoll@ed.ac.uk");
+        msg.setText("The Learn/Timetabling synchronisation process failed due to a serious error "
+            + new Date() + ".");
+
+        log.debug("Sending success message.");
+
+        this.mailSender.send(msg);
+    }
+
+    private void sendSuccessOutcomeMail() throws MailException {
+        SimpleMailMessage msg = new SimpleMailMessage(this.getTemplateMessage());
+        msg.setTo("Ross.Nicoll@ed.ac.uk");
+        msg.setText("The Learn/Timetabling synchronisation process completed successfully at "
+            + new Date() + ".");
+
+        log.debug("Sending success message.");
+
+        this.mailSender.send(msg);
     }
 
     /**
