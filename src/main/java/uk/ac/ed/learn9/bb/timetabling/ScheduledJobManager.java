@@ -16,7 +16,7 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import blackboard.data.ValidationException;
 import blackboard.persist.PersistenceException;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
-import uk.ac.ed.learn9.bb.timetabling.service.ConcurrencyService;
+import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationRunService;
 import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService;
 
 /**
@@ -155,8 +155,8 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
      * 
      * @return the concurrency service.
      */
-    public ConcurrencyService getConcurrencyService() {
-        return this.applicationContext.getBean(ConcurrencyService.class);
+    public SynchronisationRunService getConcurrencyService() {
+        return this.applicationContext.getBean(SynchronisationRunService.class);
     }
 
     /**
@@ -188,7 +188,7 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
             log.info("Running Learn/Timetabling synchronisation.");
             
             try {
-                final ConcurrencyService concurrencyService = ScheduledJobManager.this.getConcurrencyService();
+                final SynchronisationRunService concurrencyService = ScheduledJobManager.this.getConcurrencyService();
                 
                 if (null == concurrencyService) {
                     throw new IllegalStateException("Concurrency service has not been wired in.");
@@ -209,7 +209,7 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
                     concurrencyService.handleErrorOutcome(run, e);
                     log.error("Error validating entities to be persisted in Learn.", e);
                 }
-            }  catch (ConcurrencyService.SynchronisationAlreadyInProgressException ex) {
+            }  catch (SynchronisationRunService.SynchronisationAlreadyInProgressException ex) {
                 // This is expected under normal circumstances, due to more than one
                 // possible server trying to run the job. Ignore.
             } catch(SQLException e) {

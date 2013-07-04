@@ -112,7 +112,7 @@
     </bean>
     
     <bean id="blackboardService" class="uk.ac.ed.learn9.bb.timetabling.service.BlackboardService" />
-    <bean id="concurrencyService" class="uk.ac.ed.learn9.bb.timetabling.service.ConcurrencyService">
+    <bean id="synchronisationRunService" class="uk.ac.ed.learn9.bb.timetabling.service.SynchronisationRunService">
         <property name="mailSender" ref="mailSender"/>
         <property name="templateMessage" ref="templateMessage"/>
         <property name="synchronisationRunDao" ref="synchronisationRunDao"/>

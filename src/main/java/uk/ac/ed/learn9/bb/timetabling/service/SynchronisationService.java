@@ -12,6 +12,7 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,8 +21,6 @@ import blackboard.data.course.Group;
 import blackboard.persist.Id;
 import blackboard.persist.KeyNotFoundException;
 import blackboard.persist.PersistenceException;
-import blackboard.platform.log.LogService;
-import blackboard.platform.log.LogServiceFactory;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationResult;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 
@@ -47,6 +46,8 @@ public class SynchronisationService extends Object {
      */
     public static final int DAYS_KEEP_ENROLMENT_CACHE = 3;
     
+    private Logger log = Logger.getLogger(SynchronisationService.class);
+    
     @Autowired
     private DataSource stagingDataSource;
     @Autowired
@@ -55,7 +56,7 @@ public class SynchronisationService extends Object {
     @Autowired
     private BlackboardService blackboardService;
     @Autowired
-    private ConcurrencyService concurrencyService;
+    private SynchronisationRunService concurrencyService;
     @Autowired
     private EugexSynchroniseService eugexSynchroniseService;
     @Autowired
@@ -433,8 +434,6 @@ public class SynchronisationService extends Object {
      */
     public void generateGroupNames(final Connection stagingDatabase)
             throws SQLException {
-        final LogService logService = LogServiceFactory.getInstance();
-        
         final Map<String, String> activityGroupNames = new HashMap<String, String>();
         // Find groups that need their names completed.
         final PreparedStatement queryStatement = stagingDatabase.prepareStatement(
@@ -456,7 +455,7 @@ public class SynchronisationService extends Object {
                     final String groupName = buildGroupName(activityName, moduleName, activityType);
                     
                     if (null == groupName) {
-                        logService.logWarning("Could not create group name for activity "
+                        log.warn("Could not create group name for activity "
                             + activityId + " due to missing data (module name, type, etc.)");
                         continue;
                     }
@@ -695,7 +694,7 @@ public class SynchronisationService extends Object {
      * 
      * @return the concurrency management service.
      */
-    public ConcurrencyService getConcurrencyService() {
+    public SynchronisationRunService getConcurrencyService() {
         return concurrencyService;
     }
 
@@ -745,7 +744,7 @@ public class SynchronisationService extends Object {
     /**
      * @param concurrencyService the concurrencyService to set
      */
-    public void setConcurrencyService(ConcurrencyService concurrencyService) {
+    public void setConcurrencyService(SynchronisationRunService concurrencyService) {
         this.concurrencyService = concurrencyService;
     }
 

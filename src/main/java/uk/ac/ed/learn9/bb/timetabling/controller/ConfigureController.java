@@ -21,7 +21,7 @@ import blackboard.platform.plugin.PlugInUtil;
 
 import uk.ac.ed.learn9.bb.timetabling.dao.SynchronisationRunDao;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
-import uk.ac.ed.learn9.bb.timetabling.service.ConcurrencyService;
+import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationRunService;
 import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService;
 
 /**
@@ -30,7 +30,7 @@ import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService;
 @Controller
 public class ConfigureController extends AbstractController {
     @Autowired
-    private ConcurrencyService concurrencyService;
+    private SynchronisationRunService concurrencyService;
     @Autowired
     private SynchronisationService synchronisationService;
     @Autowired
@@ -83,7 +83,7 @@ public class ConfigureController extends AbstractController {
         
         try {
             run = this.getConcurrencyService().startNewRun();
-        } catch (ConcurrencyService.SynchronisationAlreadyInProgressException ex) {
+        } catch (SynchronisationRunService.SynchronisationAlreadyInProgressException ex) {
             // This is expected under normal circumstances, due to more than one
             // possible server trying to run the job.
             // XXX: Return a useful error
@@ -153,14 +153,14 @@ public class ConfigureController extends AbstractController {
      * 
      * @return the concurrency service.
      */
-    public ConcurrencyService getConcurrencyService() {
+    public SynchronisationRunService getConcurrencyService() {
         return concurrencyService;
     }
 
     /**
      * @param concurrencyService the concurrencyService to set
      */
-    public void setConcurrencyService(ConcurrencyService concurrencyService) {
+    public void setConcurrencyService(SynchronisationRunService concurrencyService) {
         this.concurrencyService = concurrencyService;
     }
 }

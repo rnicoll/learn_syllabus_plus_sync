@@ -14,26 +14,26 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
-import uk.ac.ed.learn9.bb.timetabling.service.ConcurrencyService.SynchronisationAlreadyInProgressException;
+import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationRunService.SynchronisationAlreadyInProgressException;
 import uk.ac.ed.learn9.bb.timetabling.util.DbScriptUtil;
 
 /**
- * Automated unit/integration tests for {@link ConcurrencyService}.
+ * Automated unit/integration tests for {@link SynchronisationRunService}.
  */
 @ContextConfiguration(locations={"classpath:applicationContext-test.xml"})
-public class ConcurrencyServiceTest extends AbstractJUnit4SpringContextTests {
+public class SynchronisationRunServiceTest extends AbstractJUnit4SpringContextTests {
     private static final long A_FEW_DAYS_IN_MILLIS = 3 * 24 * 60 * 60 * 1000L;
     
-    public ConcurrencyServiceTest() {
+    public SynchronisationRunServiceTest() {
     }
     
     /**
-     * Gets an instance of ConcurrencyService.
+     * Gets an instance of the synchronisation run service.
      * 
-     * @return an instance of ConcurrencyService.
+     * @return an instance of SynchronisationRunService.
      */
-    public ConcurrencyService getService() {
-        return this.applicationContext.getBean(ConcurrencyService.class);
+    public SynchronisationRunService getService() {
+        return this.applicationContext.getBean(SynchronisationRunService.class);
     }
     
     /**
@@ -78,12 +78,12 @@ public class ConcurrencyServiceTest extends AbstractJUnit4SpringContextTests {
     }
 
     /**
-     * Test of startNewRun method, of class ConcurrencyService.
+     * Test of startNewRun() method, of class SynchronisationRunService.
      */
     @Test
     public void testStartNewRun() throws Exception {
         System.out.println("startNewRun");
-        final ConcurrencyService instance = this.getService();
+        final SynchronisationRunService instance = this.getService();
         final SynchronisationRun result = instance.startNewRun();
     }
 
@@ -94,7 +94,7 @@ public class ConcurrencyServiceTest extends AbstractJUnit4SpringContextTests {
     @Test(expected=SynchronisationAlreadyInProgressException.class)
     public void testStartNewRunCollision() throws Exception {
         System.out.println("startNewRun");
-        final ConcurrencyService instance = this.getService();
+        final SynchronisationRunService instance = this.getService();
         final SynchronisationRun resultA = instance.startNewRun();
         final SynchronisationRun resultB = instance.startNewRun();
     }
@@ -106,19 +106,19 @@ public class ConcurrencyServiceTest extends AbstractJUnit4SpringContextTests {
     @Test
     public void testStartNoAbandonedRunCollision() throws Exception {
         System.out.println("startNewRun");
-        final ConcurrencyService instance = this.getService();
+        final SynchronisationRunService instance = this.getService();
         final SynchronisationRun resultA = instance.startNewRun();
         instance.handleAbandonedOutcome(resultA);
         final SynchronisationRun resultB = instance.startNewRun();
     }
 
     /**
-     * Test of timeoutOldSessions method, of class ConcurrencyService.
+     * Test of timeoutOldSessions method, of class SynchronisationRunService.
      */
     @Test
     public void testTimeoutOldSessions() throws Exception {
         System.out.println("timeoutOldSessions");
-        ConcurrencyService instance = this.getService();
+        SynchronisationRunService instance = this.getService();
         Connection cacheDatabase = instance.getStagingDataSource().getConnection();
         try {
             final Timestamp now = new Timestamp(System.currentTimeMillis());

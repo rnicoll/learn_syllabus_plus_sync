@@ -16,7 +16,7 @@ import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 import uk.ac.ed.learn9.bb.timetabling.util.DbScriptUtil;
 
 @ContextConfiguration(locations={"classpath:applicationContext-test.xml"})
-public class EugexServiceTest extends AbstractJUnit4SpringContextTests {
+public class EugexSynchronisationServiceTest extends AbstractJUnit4SpringContextTests {
     /**
      * Location of the script used to generate the test reporting database schema,
      * expressed in the Spring resource location format.
@@ -41,7 +41,7 @@ public class EugexServiceTest extends AbstractJUnit4SpringContextTests {
     /**
      * Default constructor.
      */
-    public EugexServiceTest() {
+    public EugexSynchronisationServiceTest() {
     }
     
     /**

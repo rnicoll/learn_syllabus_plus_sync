@@ -10,6 +10,7 @@ import java.util.Date;
 
 import javax.sql.DataSource;
 
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.MailException;
 import org.springframework.mail.MailSender;
@@ -25,7 +26,7 @@ import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
  * concurrent runs).
  */
 @Service
-public class ConcurrencyService {
+public class SynchronisationRunService {
     /**
      * How long to wait before assuming a synchronisation run has failed, and
      * mark it as timed out.
@@ -35,6 +36,8 @@ public class ConcurrencyService {
      * Number of days to keep details of abandoned runs.
      */
     public static final int DAYS_KEEP_ABANDONED_RUNS = 1;
+    
+    private Logger log = Logger.getLogger(SynchronisationRunService.class);
     
     @Autowired
     private DataSource stagingDataSource;
@@ -448,18 +451,21 @@ public class ConcurrencyService {
             statement.setInt(paramIdx++, run.getRunId());
             if (statement.executeUpdate() > 0) {
                 this.getSynchronisationRunDao().refresh(run);
+                
+                SimpleMailMessage msg = new SimpleMailMessage(this.getTemplateMessage());
+                msg.setTo("Ross.Nicoll@ed.ac.uk");
+                msg.setText("The Learn/Timetabling synchronisation process completed successfully at "
+                    + new Date() + ".");
+
+                log.debug("Sending success message.");
+
+                this.mailSender.send(msg);
+                
                 return true;
             }
         } finally {
             statement.close();
         }
-        
-        SimpleMailMessage msg = new SimpleMailMessage(this.getTemplateMessage());
-        msg.setTo("Ross.Nicoll@ed.ac.uk");
-        msg.setText("The Learn/Timetabling synchronisation process completed successfully at "
-            + new Date() + ".");
-        
-        this.mailSender.send(msg);
         
         return false;
     }

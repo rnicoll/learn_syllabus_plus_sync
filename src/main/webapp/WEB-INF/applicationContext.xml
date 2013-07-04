@@ -69,6 +69,15 @@
         </property>
     </bean>
     
+    <bean id="velocityEngine" class="org.springframework.ui.velocity.VelocityEngineFactoryBean">
+      <property name="velocityProperties">
+         <value>
+          resource.loader=class
+          class.resource.loader.class=org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader
+         </value>
+      </property>
+   </bean>
+    
     <bean id="transactionManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">
         <property name="sessionFactory" ref="sessionFactory" />
     </bean>
@@ -108,11 +117,12 @@
     </bean>
     
     <bean id="blackboardService" class="uk.ac.ed.learn9.bb.timetabling.service.BlackboardService" />
-    <bean id="concurrencyService" class="uk.ac.ed.learn9.bb.timetabling.service.ConcurrencyService">
+    <bean id="synchronisationRunService" class="uk.ac.ed.learn9.bb.timetabling.service.SynchronisationRunService">
         <property name="mailSender" ref="mailSender"/>
         <property name="templateMessage" ref="templateMessage"/>
         <property name="synchronisationRunDao" ref="synchronisationRunDao"/>
         <property name="stagingDataSource" ref="stagingDataSource"/>
+        <property name="velocityEngine" ref="velocityEngine"/>
     </bean>
     <bean id="eugexSynchroniseService" class="uk.ac.ed.learn9.bb.timetabling.service.EugexSynchroniseService">
         <property name="stagingDataSource" ref="stagingDataSource"/>
@@ -142,7 +152,7 @@
     </bean>
     
     <bean id="configureController" class="uk.ac.ed.learn9.bb.timetabling.controller.ConfigureController">
-        <property name="concurrencyService" ref="concurrencyService"/>
+        <property name="synchronisationRunService" ref="synchronisationRunService"/>
         <property name="synchronisationRunDao" ref="synchronisationRunDao"/>
         <property name="synchronisationService" ref="synchronisationService"/>
     </bean>
