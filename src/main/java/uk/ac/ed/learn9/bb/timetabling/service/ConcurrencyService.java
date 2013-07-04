@@ -45,11 +45,11 @@ public class ConcurrencyService {
      * @throws SQLException if there was a problem communicating with the staging
      * database.
      */
-    public boolean abandonSession(final SynchronisationRun run)
+    public boolean handleAbandonedOutcome(final SynchronisationRun run)
             throws SQLException {
         final Connection stagingDatabase = this.getStagingDataSource().getConnection();
         try {
-            return this.abandonSession(stagingDatabase, run, new Timestamp(System.currentTimeMillis()));
+            return this.handleAbandonedOutcome(stagingDatabase, run, new Timestamp(System.currentTimeMillis()));
         } finally {
             stagingDatabase.close();
         }
@@ -66,7 +66,7 @@ public class ConcurrencyService {
      * @throws SQLException if there was a problem communicating with the staging
      * database.
      */
-    public boolean abandonSession(final Connection stagingDatabase, final SynchronisationRun run, final Timestamp now)
+    public boolean handleAbandonedOutcome(final Connection stagingDatabase, final SynchronisationRun run, final Timestamp now)
             throws SQLException {
         final PreparedStatement statement = stagingDatabase.prepareStatement(
             "UPDATE synchronisation_run "
@@ -344,11 +344,11 @@ public class ConcurrencyService {
      * @throws SQLException if there was a problem communicating with the staging
      * database.
      */
-    public boolean markErrored(final SynchronisationRun run, final Throwable cause)
+    public boolean handleErrorOutcome(final SynchronisationRun run, final Throwable cause)
         throws SQLException {
         final Connection stagingDatabase = this.getStagingDataSource().getConnection();
         try {
-            return this.markErrored(stagingDatabase, run, cause, new Timestamp(System.currentTimeMillis()));
+            return this.handleErrorOutcome(stagingDatabase, run, cause, new Timestamp(System.currentTimeMillis()));
         } finally {
             stagingDatabase.close();
         }
@@ -366,7 +366,7 @@ public class ConcurrencyService {
      * @throws SQLException if there was a problem communicating with the staging
      * database.
      */
-    public boolean markErrored(final Connection stagingDatabase, final SynchronisationRun run,
+    public boolean handleErrorOutcome(final Connection stagingDatabase, final SynchronisationRun run,
             final Throwable cause, final Timestamp now)
             throws SQLException {
         // XXX: Should log the error in the database.
@@ -402,11 +402,11 @@ public class ConcurrencyService {
      * @throws SQLException if there was a problem communicating with the staging
      * database.
      */
-    public boolean markSucceeded(final SynchronisationRun run)
+    public boolean handleSuccessOutcome(final SynchronisationRun run)
         throws SQLException {
         final Connection stagingDatabase = this.getStagingDataSource().getConnection();
         try {
-            return this. markSucceeded(stagingDatabase, run, new Timestamp(System.currentTimeMillis()));
+            return this.handleSuccessOutcome(stagingDatabase, run, new Timestamp(System.currentTimeMillis()));
         } finally {
             stagingDatabase.close();
         }
@@ -423,7 +423,7 @@ public class ConcurrencyService {
      * @throws SQLException if there was a problem communicating with the staging
      * database.
      */
-    public boolean markSucceeded(final Connection stagingDatabase, final SynchronisationRun run, final Timestamp now)
+    public boolean handleSuccessOutcome(final Connection stagingDatabase, final SynchronisationRun run, final Timestamp now)
             throws SQLException {
         final PreparedStatement statement = stagingDatabase.prepareStatement(
             "UPDATE synchronisation_run "
@@ -475,7 +475,7 @@ public class ConcurrencyService {
             } catch(SynchronisationAlreadyInProgressException already) {
                 // Roll back the assignment of a previous run.
                 stagingDatabase.rollback();
-                this.abandonSession(stagingDatabase, run, now);
+                this.handleAbandonedOutcome(stagingDatabase, run, now);
                 throw already;
             } finally {
                 // Rollback any uncomitted changes in case of a serious

@@ -96,7 +96,7 @@ public class ConfigureController extends AbstractController {
             service.runSynchronisation(run);
         } catch(Exception e) {
             try {
-                concurrencyService.markErrored(run, e);
+                concurrencyService.handleErrorOutcome(run, e);
             } catch(SQLException logError) {
                 // Give up
             }

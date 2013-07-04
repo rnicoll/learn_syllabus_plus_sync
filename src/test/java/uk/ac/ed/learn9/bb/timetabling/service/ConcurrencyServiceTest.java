@@ -108,7 +108,7 @@ public class ConcurrencyServiceTest extends AbstractJUnit4SpringContextTests {
         System.out.println("startNewRun");
         final ConcurrencyService instance = this.getService();
         final SynchronisationRun resultA = instance.startNewRun();
-        instance.abandonSession(resultA);
+        instance.handleAbandonedOutcome(resultA);
         final SynchronisationRun resultB = instance.startNewRun();
     }
 

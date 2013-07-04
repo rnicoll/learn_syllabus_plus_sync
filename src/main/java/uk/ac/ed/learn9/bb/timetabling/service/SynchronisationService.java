@@ -419,7 +419,7 @@ public class SynchronisationService extends Object {
             stagingDatabase.close();
         }
 
-        this.getConcurrencyService().markSucceeded(run);
+        this.getConcurrencyService().handleSuccessOutcome(run);
         this.getConcurrencyService().clearAbandonedRuns();
         this.clearEnrolmentCache();
     }
