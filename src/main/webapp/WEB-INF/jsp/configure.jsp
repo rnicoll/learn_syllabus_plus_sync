@@ -7,7 +7,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 
-<bbNG:learningSystemPage title="Timetabling Groups" authentication="Y" entitlement="course.content.VIEW">
+<bbNG:genericPage title="Timetabling Groups" authentication="Y" entitlement="course.content.VIEW">
 
     <bbNG:pageHeader instructions="Timetabling Groups Configuration">
         <bbNG:pageTitleBar title="Timetabling Groups"/>
@@ -35,4 +35,4 @@
         <bbNG:listElement name="result" label="Result">${fn:escapeXml(run.result)}</bbNG:listElement>
     </bbNG:inventoryList>
 
-</bbNG:learningSystemPage>
+</bbNG:genericPage>

@@ -16,7 +16,9 @@
    </bbNG:breadcrumbBar>
   </bbNG:pageHeader>
     
-    <bbNG:button label="Audit Log" url="${auditLog}"></bbNG:button>
+    <bbNG:actionControlBar>
+        <bbNG:actionButton id="merged_courses" title="Audit Log" primary="true" url="${auditLog}" />
+    </bbNG:actionControlBar>
     
     <p>The following is a list of merged courses that feed into this course:</p>
     

@@ -15,14 +15,18 @@
             <bbNG:breadcrumb title="Timetabling Groups"/>
         </bbNG:breadcrumbBar>
     </bbNG:pageHeader>
-    
-    <bbNG:button label="Merged Courses" url="${mergedCourses}"></bbNG:button>
+
+    <bbNG:actionControlBar>
+        <bbNG:actionButton id="merged_courses" title="Merged Courses" primary="true" url="${mergedCourses}" />
+    </bbNG:actionControlBar>
 
     <p>The following is a list of changes to student/group enrolments on this
         course, driven by Timetabling. Please note that this list may include
         changes that have not yet been performed, for example if a student is
-        not yet present on the course.</p>
-    
+        not yet present on the course. Detailed guidance on the synchronisation
+        process can be found at
+        <a href="http://www.ed.ac.uk/schools-departments/information-services/services/learning-technology/virtual-environments/learn/staff/learn-tools/groups-timetabling">http://www.ed.ac.uk/schools-departments/information-services/services/learning-technology/virtual-environments/learn/staff/learn-tools/groups-timetabling</a>.</p>
+   
     <bbNG:inventoryList emptyMsg="There are no changes to this course based on Timetabling data."
                         className="uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChangePart"
                         collection="${changes}"
