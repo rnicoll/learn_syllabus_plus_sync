@@ -15,7 +15,7 @@ import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
  */
 @Transactional
 @Scope("singleton")
-@Component
+@Component("runDao")
 public class SynchronisationRunDaoImpl extends HibernateDaoSupport implements SynchronisationRunDao {
     @Override
     public List<SynchronisationRun> getAll() {
