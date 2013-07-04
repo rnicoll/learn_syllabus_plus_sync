@@ -24,7 +24,7 @@ import uk.ac.ed.learn9.bb.timetabling.data.LearnCourseCode;
  * Service for communicating with the "merged courses" database.
  */
 @Service
-public class MergedCoursesService extends AbstractCloneService {
+public class MergedCoursesService extends AbstractSynchroniseService {
     private static final Logger logger = Logger.getLogger(BlackboardService.class);
     
     @Autowired

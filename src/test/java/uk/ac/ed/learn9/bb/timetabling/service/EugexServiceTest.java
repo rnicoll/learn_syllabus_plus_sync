@@ -49,8 +49,8 @@ public class EugexServiceTest extends AbstractJUnit4SpringContextTests {
      * 
      * @return an instance of {@link SynchronisationService}.
      */
-    public EugexService getService() {
-        return this.applicationContext.getBean(EugexService.class);
+    public EugexSynchroniseService getService() {
+        return this.applicationContext.getBean(EugexSynchroniseService.class);
     }
     
     /**
@@ -121,7 +121,7 @@ public class EugexServiceTest extends AbstractJUnit4SpringContextTests {
     @Test
     public void testSynchroniseVleActiveCourses() throws Exception {
         System.out.println("synchroniseVleActiveCourses");
-        final EugexService instance = this.getService();
+        final EugexSynchroniseService instance = this.getService();
         instance.synchroniseVleActiveCourses();
     }
 }

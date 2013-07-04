@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
  * complexity to ensuring transaction safety).
  */
 @Service
-public class TimetablingCloneService extends AbstractCloneService {
+public class TimetablingSynchroniseService extends AbstractSynchroniseService {
     /**
      * Name of the activity table in the reporting database.
      */

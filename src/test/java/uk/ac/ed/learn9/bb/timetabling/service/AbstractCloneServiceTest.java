@@ -20,7 +20,7 @@ public class AbstractCloneServiceTest extends AbstractJUnit4SpringContextTests {
     public AbstractCloneServiceTest() {
     }
     
-    private AbstractCloneService getService() {
+    private AbstractSynchroniseService getService() {
         return new AbstractCloneServiceImpl();
     }
 
@@ -76,7 +76,7 @@ public class AbstractCloneServiceTest extends AbstractJUnit4SpringContextTests {
             add("ACTIVITY_ID");
         }};
         final Collection<String> allFields = pkFields;
-        final AbstractCloneService instance = this.getService();
+        final AbstractSynchroniseService instance = this.getService();
         final String expResult = "SELECT ACTIVITY_ID FROM ACTIVITY ORDER BY ACTIVITY_ID";
         final String result = instance.buildQuery(table, pkFields, allFields);
         
@@ -96,7 +96,7 @@ public class AbstractCloneServiceTest extends AbstractJUnit4SpringContextTests {
             add("ACTIVITY_ID");
         }};
         final Collection<String> allFields = Arrays.asList(new String[] {"ACTIVITY_ID", "FIELD_1", "FIELD_2"});
-        final AbstractCloneService instance = this.getService();
+        final AbstractSynchroniseService instance = this.getService();
         final String expResult = "SELECT ACTIVITY_ID, FIELD_1, FIELD_2 FROM ACTIVITY ORDER BY ACTIVITY_ID";
         final String result = instance.buildQuery(table, pkFields, allFields);
         
@@ -117,13 +117,13 @@ public class AbstractCloneServiceTest extends AbstractJUnit4SpringContextTests {
             add("TEMPLATE_ID");
         }};
         final Collection<String> allFields = Arrays.asList(new String[] {"ACTIVITY_ID", "TEMPLATE_ID", "FIELD_1", "FIELD_2"});
-        final AbstractCloneService instance = this.getService();
+        final AbstractSynchroniseService instance = this.getService();
         final String expResult = "SELECT ACTIVITY_ID, TEMPLATE_ID, FIELD_1, FIELD_2 FROM ACTIVITY ORDER BY ACTIVITY_ID, TEMPLATE_ID";
         final String result = instance.buildQuery(table, pkFields, allFields);
         
         assertEquals(expResult, result);
     }
 
-    public class AbstractCloneServiceImpl extends AbstractCloneService {
+    public class AbstractCloneServiceImpl extends AbstractSynchroniseService {
     }
 }

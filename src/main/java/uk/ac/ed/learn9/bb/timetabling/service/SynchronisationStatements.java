@@ -18,7 +18,7 @@ import java.util.TreeMap;
  * Wrapper around a pair of an INSERT and an UPDATE statement, used to write
  * changes back to the database from a result set.
  */
-class CloningStatements extends Object {
+class SynchronisationStatements extends Object {
     private final PreparedStatement insertStatement;
     private final PreparedStatement updateStatement;
     private final SortedSet<String> sourcePrimaryKeyFields;
@@ -43,7 +43,7 @@ class CloningStatements extends Object {
      * used to determine field types.
      * @throws SQLException if there is a problem working with the database.
      */
-    public CloningStatements(final Connection database, final String setTable,
+    public SynchronisationStatements(final Connection database, final String setTable,
             final SortedSet<String> setSourcePrimaryKeyFields,
             final Map<String, String> setFieldMappings, final ResultSet destinationRs)
                 throws SQLException {

@@ -18,7 +18,7 @@ import java.util.TreeSet;
  * method; the other clone methods are intended for cases with more complex
  * queries.
  */
-public abstract class AbstractCloneService extends Object {
+public abstract class AbstractSynchroniseService extends Object {
     /**
      * Enum to describe which parts of a synchronisation should be done.
      * Note that deletion is not supported in any scenario.
@@ -270,7 +270,7 @@ public abstract class AbstractCloneService extends Object {
             final SortedSet<String> sourcePkFields, final Map<String, String> fieldMappings,
             final Mode mode)
             throws SQLException {        
-        final CloningStatements cloningStatements = new CloningStatements(
+        final SynchronisationStatements cloningStatements = new SynchronisationStatements(
                 destinationRs.getStatement().getConnection(),
                 destinationTable, sourcePkFields,
                 fieldMappings, destinationRs);

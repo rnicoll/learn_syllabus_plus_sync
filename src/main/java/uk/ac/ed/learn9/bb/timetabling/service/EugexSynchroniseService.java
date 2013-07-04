@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
  * Service for monitoring which courses in Learn are synchronised from EUGEX.
  */
 @Service
-public class EugexService extends AbstractCloneService {
+public class EugexSynchroniseService extends AbstractSynchroniseService {
     @Autowired
     private DataSource stagingDataSource;
     @Autowired

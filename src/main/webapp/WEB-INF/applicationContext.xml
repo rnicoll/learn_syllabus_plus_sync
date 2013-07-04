@@ -103,12 +103,12 @@
         <property name="runDao" ref="runDao"/>
         <property name="stagingDataSource" ref="stagingDataSource"/>
     </bean>
-    <bean id="eugexService" class="uk.ac.ed.learn9.bb.timetabling.service.EugexService">
+    <bean id="eugexService" class="uk.ac.ed.learn9.bb.timetabling.service.EugexSynchroniseService">
         <property name="stagingDataSource" ref="stagingDataSource"/>
         <property name="eugexDataSource" ref="eugexDataSource"/>
     </bean>
     
-    <bean id="timetablingCloneService" class="uk.ac.ed.learn9.bb.timetabling.service.TimetablingCloneService" />
+    <bean id="timetablingCloneService" class="uk.ac.ed.learn9.bb.timetabling.service.TimetablingSynchroniseService" />
     
     <bean id="mergedCoursesService" class="uk.ac.ed.learn9.bb.timetabling.service.MergedCoursesService" />
     

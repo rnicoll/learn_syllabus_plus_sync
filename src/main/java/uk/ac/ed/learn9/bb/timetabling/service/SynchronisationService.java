@@ -59,11 +59,11 @@ public class SynchronisationService extends Object {
     @Autowired
     private ConcurrencyService concurrencyService;
     @Autowired
-    private EugexService eugexService;
+    private EugexSynchroniseService eugexService;
     @Autowired
     private MergedCoursesService mergedCoursesService;
     @Autowired
-    private TimetablingCloneService cloneService;
+    private TimetablingSynchroniseService cloneService;
     
     /**
      * Apply student/course group enrolment changes in the staging database,
@@ -688,7 +688,7 @@ public class SynchronisationService extends Object {
      * 
      * @return the timetabling data cloning service.
      */
-    public TimetablingCloneService getCloneService() {
+    public TimetablingSynchroniseService getCloneService() {
         return cloneService;
     }
 
@@ -713,7 +713,7 @@ public class SynchronisationService extends Object {
      * 
      * @return the EUGEX service.
      */
-    public EugexService getEugexService() {
+    public EugexSynchroniseService getEugexService() {
         return eugexService;
     }
 
@@ -747,7 +747,7 @@ public class SynchronisationService extends Object {
     /**
      * @param cloneService the cloneService to set
      */
-    public void setCloneService(TimetablingCloneService cloneService) {
+    public void setCloneService(TimetablingSynchroniseService cloneService) {
         this.cloneService = cloneService;
     }
 
@@ -770,7 +770,7 @@ public class SynchronisationService extends Object {
     /**
      * @param eugexService the eugexService to set
      */
-    public void setEugexService(EugexService eugexService) {
+    public void setEugexService(EugexSynchroniseService eugexService) {
         this.eugexService = eugexService;
     }
 
