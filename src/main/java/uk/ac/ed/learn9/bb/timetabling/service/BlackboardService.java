@@ -5,12 +5,17 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.apache.velocity.app.VelocityEngine;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.MailSender;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.stereotype.Service;
 
 import blackboard.base.FormattedText;
@@ -41,6 +46,14 @@ import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 @Service
 public class BlackboardService {
     private static final Logger logger = Logger.getLogger(BlackboardService.class);
+    
+    @Autowired
+    private MailSender mailSender;
+    @Autowired
+    private VelocityEngine velocityEngine;
+    
+    @Autowired
+    private SimpleMailMessage templateMessage;
 
     /**
      * Applies pending changes to Learn. Normally this would be called by
@@ -127,6 +140,7 @@ public class BlackboardService {
      */
     private void applyEnrolmentChanges(final PreparedStatement queryStatement, final Connection connection)
             throws PersistenceException, SQLException, ValidationException {
+        final CourseDbLoader courseDbLoader = this.getCourseDbLoader();
         final CourseMembershipDbLoader courseMembershipDbLoader = this.getCourseMembershipDbLoader();
         final GroupDbLoader groupDbLoader = this.getGroupDbLoader();
         final GroupMembershipDbLoader groupMembershipDbLoader = this.getGroupMembershipDbLoader();
@@ -135,13 +149,19 @@ public class BlackboardService {
         // Stores group IDs that are no longer valid, and need to be purged from
         // the database.
         final Set<Id> noLongerValidGroupIds = new HashSet<Id>();
+        
+        // Stores group memberships that should have been removed, but are
+        // unsafe to do so. These are then e-mailed out at the end of the process.
+        final UnsafeGroupMembershipManager unsafeGroups
+                = new UnsafeGroupMembershipManager(courseMembershipDbLoader, this.getUserDbLoader(),
+                this.getVelocityEngine(), this.getMailSender(), this.getTemplateMessage());
 
         final ChangeOutcomeUpdateStatement outcome = new ChangeOutcomeUpdateStatement(connection);
 
         try {
             final ResultSet rs = queryStatement.executeQuery();
             try {
-                Id currentCourseId = null;
+                Course currentCourse = null;
                 Map<Id, CourseMembership> studentCourseMemberships = null;
                 Map<Id, Group> courseGroups = null;
             
@@ -171,10 +191,16 @@ public class BlackboardService {
                     final Id groupId = Id.generateId(Group.DATA_TYPE, groupIdStr);
                     final Id userId = Id.generateId(User.DATA_TYPE, userIdStr);
 
-                    if (null == currentCourseId
-                            || !currentCourseId.equals(courseId)) {
+                    if (null == currentCourse
+                            || !currentCourse.getId().equals(courseId)) {
                         // Load student memberships on the current course
-                        currentCourseId = courseId;
+                        try {
+                            currentCourse = courseDbLoader.loadById(courseId);
+                        } catch(KeyNotFoundException e) {
+                            // XXX: Wipe the stored association?
+                            outcome.markCourseMissing(partId);
+                            continue;
+                        }
                         studentCourseMemberships = getStudentCourseMemberships(courseMembershipDbLoader, courseId);
                         courseGroups = getCourseGroups(groupDbLoader, courseId);
                     }
@@ -217,6 +243,7 @@ public class BlackboardService {
                         case REMOVE:
                             if (null != groupMembership) {
                                 if (this.isGroupMembershipRemovalUnsafe(group, groupMembership)) {
+                                    unsafeGroups.addMembership(currentCourse, groupMembership);
                                     outcome.markRemoveUnsafe(partId);
                                 } else {
                                     groupMembershipDbPersister.deleteById(groupMembership.getId());
@@ -252,6 +279,8 @@ public class BlackboardService {
                 updateStatement.close();
             }
         }
+        
+        unsafeGroups.emailMemberships();
     }
 
     /**
@@ -644,6 +673,48 @@ public class BlackboardService {
      */
     protected UserDbLoader getUserDbLoader() throws PersistenceException {
         return UserDbLoader.Default.getInstance();
+    }
+
+    /**
+     * @return the mailSender
+     */
+    public MailSender getMailSender() {
+        return mailSender;
+    }
+
+    /**
+     * @return the velocityEngine
+     */
+    public VelocityEngine getVelocityEngine() {
+        return velocityEngine;
+    }
+
+    /**
+     * @return the templateMessage
+     */
+    public SimpleMailMessage getTemplateMessage() {
+        return templateMessage;
+    }
+
+    /**
+     * @param mailSender the mailSender to set
+     */
+    public void setMailSender(MailSender mailSender) {
+        this.mailSender = mailSender;
+    }
+
+    /**
+     * @param velocityEngine the velocityEngine to set
+     */
+    public void setVelocityEngine(VelocityEngine velocityEngine) {
+        this.velocityEngine = velocityEngine;
+    }
+
+    /**
+     * @param templateMessage the templateMessage to set
+     */
+    public void setTemplateMessage(SimpleMailMessage templateMessage) {
+        this.templateMessage = templateMessage;
     }
 
     /**

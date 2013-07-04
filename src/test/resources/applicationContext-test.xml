@@ -120,7 +120,11 @@
         <property name="sessionFactory" ref="sessionFactory"/>
     </bean>
     
-    <bean id="blackboardService" class="uk.ac.ed.learn9.bb.timetabling.service.BlackboardService" />
+    <bean id="blackboardService" class="uk.ac.ed.learn9.bb.timetabling.service.BlackboardService">
+        <property name="mailSender" ref="mailSender"/>
+        <property name="templateMessage" ref="templateMessage"/>
+        <property name="velocityEngine" ref="velocityEngine"/>
+    </bean>
     <bean id="synchronisationRunService" class="uk.ac.ed.learn9.bb.timetabling.service.SynchronisationRunService">
         <property name="mailSender" ref="mailSender"/>
         <property name="templateMessage" ref="templateMessage"/>
