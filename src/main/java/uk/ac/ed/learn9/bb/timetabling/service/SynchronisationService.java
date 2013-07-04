@@ -51,19 +51,17 @@ public class SynchronisationService extends Object {
     private DataSource stagingDataSource;
     @Autowired
     private DataSource rdbDataSource;
-    @Autowired
-    private DataSource eugexDataSource;
     
     @Autowired
     private BlackboardService blackboardService;
     @Autowired
     private ConcurrencyService concurrencyService;
     @Autowired
-    private EugexSynchroniseService eugexService;
+    private EugexSynchroniseService eugexSynchroniseService;
     @Autowired
     private MergedCoursesService mergedCoursesService;
     @Autowired
-    private TimetablingSynchroniseService cloneService;
+    private TimetablingSynchroniseService timetablingSynchroniseService;
     
     /**
      * Apply student/course group enrolment changes in the staging database,
@@ -397,7 +395,7 @@ public class SynchronisationService extends Object {
         
         this.synchroniseTimetablingData();
         
-        this.getEugexService().synchroniseVleActiveCourses();
+        this.getEugexSynchroniseService().synchroniseVleActiveCourses();
         this.getMergedCoursesService().synchroniseMergedCourses();
         
         this.getConcurrencyService().markCacheCopyCompleted(run);
@@ -502,13 +500,13 @@ public class SynchronisationService extends Object {
             final Connection destination = this.getStagingDataSource().getConnection();
 
             try {
-                this.cloneService.cloneModules(source, destination);
-                this.cloneService.cloneActivityTypes(source, destination);
-                this.cloneService.cloneActivityTemplates(source, destination);
-                this.cloneService.cloneActivities(source, destination);
-                this.cloneService.cloneActivityParents(source, destination);
-                this.cloneService.cloneVariantJointTaughtActivities(source, destination);
-                this.cloneService.cloneStudentSets(source, destination);
+                this.timetablingSynchroniseService.cloneModules(source, destination);
+                this.timetablingSynchroniseService.cloneActivityTypes(source, destination);
+                this.timetablingSynchroniseService.cloneActivityTemplates(source, destination);
+                this.timetablingSynchroniseService.cloneActivities(source, destination);
+                this.timetablingSynchroniseService.cloneActivityParents(source, destination);
+                this.timetablingSynchroniseService.cloneVariantJointTaughtActivities(source, destination);
+                this.timetablingSynchroniseService.cloneStudentSets(source, destination);
             } finally {
                 destination.close();
             }
@@ -684,37 +682,30 @@ public class SynchronisationService extends Object {
     }
 
     /**
-     * Gets the timetabling data cloning service.
+     * Gets the timetabling data synchronisation service.
      * 
-     * @return the timetabling data cloning service.
+     * @return the timetabling data synchronisation service.
      */
-    public TimetablingSynchroniseService getCloneService() {
-        return cloneService;
+    public TimetablingSynchroniseService getTimetablingSynchroniseService() {
+        return timetablingSynchroniseService;
     }
 
     /**
-     * @return the concurrencyService
+     * Get the concurrency management service.
+     * 
+     * @return the concurrency management service.
      */
     public ConcurrencyService getConcurrencyService() {
         return concurrencyService;
     }
 
     /**
-     * Gets the data source for the EUGEX database.
+     * Gets the EUGEX data synchronisation service.
      * 
-     * @return the data source for the EUGEX database.
+     * @return the EUGEX data synchronisation service.
      */
-    public DataSource getEugexDataSource() {
-        return eugexDataSource;
-    }
-
-    /**
-     * Gets the EUGEX service.
-     * 
-     * @return the EUGEX service.
-     */
-    public EugexSynchroniseService getEugexService() {
-        return eugexService;
+    public EugexSynchroniseService getEugexSynchroniseService() {
+        return eugexSynchroniseService;
     }
 
     /**
@@ -747,8 +738,8 @@ public class SynchronisationService extends Object {
     /**
      * @param cloneService the cloneService to set
      */
-    public void setCloneService(TimetablingSynchroniseService cloneService) {
-        this.cloneService = cloneService;
+    public void setTimetablingSynchroniseService(TimetablingSynchroniseService cloneService) {
+        this.timetablingSynchroniseService = cloneService;
     }
 
     /**
@@ -759,19 +750,10 @@ public class SynchronisationService extends Object {
     }
 
     /**
-     * Sets the EUGEX database data source.
-     * 
-     * @param eugexDataSource the EUGEX database data source to set.
-     */
-    public void setEugexDataSource(DataSource eugexDataSource) {
-        this.eugexDataSource = eugexDataSource;
-    }
-
-    /**
      * @param eugexService the eugexService to set
      */
-    public void setEugexService(EugexSynchroniseService eugexService) {
-        this.eugexService = eugexService;
+    public void setEugexSynchroniseService(final EugexSynchroniseService newEugexSynchroniseService) {
+        this.eugexSynchroniseService = newEugexSynchroniseService;
     }
 
     /**
