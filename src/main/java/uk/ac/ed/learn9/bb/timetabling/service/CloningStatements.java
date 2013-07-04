@@ -25,6 +25,24 @@ class CloningStatements extends Object {
     private final SortedMap<String, String> fieldMappings = new TreeMap<String, String>();
     private final Map<String, Integer> fieldTypes = new HashMap<String, Integer>();
 
+    /**
+     * Constructs a pair of SQL statements:
+     * 
+     * 1. An INSERT statement for writing out new entries based on the contents
+     * of the source database.
+     * 2. An UPDATE statement for updating existing entries where they have
+     * changed in the source database.
+     * 
+     * @param database the database to write changes into.
+     * @param setTable the table to write changes into, within the database.
+     * @param setSourcePrimaryKeyFields the names of the primary key fields in
+     * the <b>source</b> table.
+     * @param setFieldMappings a mapping from the names of fields in the source
+     * database, to those in the destination database.
+     * @param destinationRs a result set across all fields in the target table,
+     * used to determine field types.
+     * @throws SQLException if there is a problem working with the database.
+     */
     public CloningStatements(final Connection database, final String setTable,
             final SortedSet<String> setSourcePrimaryKeyFields,
             final Map<String, String> setFieldMappings, final ResultSet destinationRs)
