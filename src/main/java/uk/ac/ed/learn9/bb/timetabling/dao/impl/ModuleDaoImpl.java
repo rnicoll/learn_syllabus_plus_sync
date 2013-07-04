@@ -13,7 +13,7 @@ import uk.ac.ed.learn9.bb.timetabling.data.Module;
  */
 @Transactional
 @Scope("singleton")
-@Component("moduleDao")
+@Component
 public class ModuleDaoImpl extends HibernateDaoSupport implements ModuleDao {
 
     @Override
