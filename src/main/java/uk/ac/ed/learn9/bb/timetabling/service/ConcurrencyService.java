@@ -6,11 +6,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.Date;
 
 import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.MailException;
+import org.springframework.mail.MailSender;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.stereotype.Service;
+
 import uk.ac.ed.learn9.bb.timetabling.dao.SynchronisationRunDao;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationResult;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
@@ -34,7 +39,12 @@ public class ConcurrencyService {
     @Autowired
     private DataSource stagingDataSource;
     @Autowired
-    private SynchronisationRunDao runDao;
+    private MailSender mailSender;
+    @Autowired
+    private SynchronisationRunDao synchronisationRunDao;
+    
+    @Autowired
+    private SimpleMailMessage templateMessage;
     
     /**
      * Marks a session as abandoned.
@@ -270,7 +280,7 @@ public class ConcurrencyService {
             statement.setTimestamp(paramIdx++, now);
             statement.setInt(paramIdx++, run.getRunId());
             if (statement.executeUpdate() > 0) {
-                this.getRunDao().refresh(run);
+                this.getSynchronisationRunDao().refresh(run);
                 return true;
             }
         } finally {
@@ -325,7 +335,7 @@ public class ConcurrencyService {
             statement.setTimestamp(paramIdx++, now);
             statement.setInt(paramIdx++, run.getRunId());
             if (statement.executeUpdate() > 0) {
-                this.getRunDao().refresh(run);
+                this.getSynchronisationRunDao().refresh(run);
                 return true;
             }
         } finally {
@@ -383,7 +393,7 @@ public class ConcurrencyService {
             statement.setString(paramIdx++, SynchronisationResult.FATAL.name());
             statement.setInt(paramIdx++, run.getRunId());
             if (statement.executeUpdate() > 0) {
-                this.getRunDao().refresh(run);
+                this.getSynchronisationRunDao().refresh(run);
                 return true;
             }
         } finally {
@@ -403,7 +413,7 @@ public class ConcurrencyService {
      * database.
      */
     public boolean handleSuccessOutcome(final SynchronisationRun run)
-        throws SQLException {
+        throws MailException, SQLException {
         final Connection stagingDatabase = this.getStagingDataSource().getConnection();
         try {
             return this.handleSuccessOutcome(stagingDatabase, run, new Timestamp(System.currentTimeMillis()));
@@ -424,7 +434,7 @@ public class ConcurrencyService {
      * database.
      */
     public boolean handleSuccessOutcome(final Connection stagingDatabase, final SynchronisationRun run, final Timestamp now)
-            throws SQLException {
+            throws MailException, SQLException {
         final PreparedStatement statement = stagingDatabase.prepareStatement(
             "UPDATE synchronisation_run "
                 + "SET end_time=?, result_code=? "
@@ -437,12 +447,19 @@ public class ConcurrencyService {
             statement.setString(paramIdx++, SynchronisationResult.SUCCESS.name());
             statement.setInt(paramIdx++, run.getRunId());
             if (statement.executeUpdate() > 0) {
-                this.getRunDao().refresh(run);
+                this.getSynchronisationRunDao().refresh(run);
                 return true;
             }
         } finally {
             statement.close();
         }
+        
+        SimpleMailMessage msg = new SimpleMailMessage(this.getTemplateMessage());
+        msg.setTo("Ross.Nicoll@ed.ac.uk");
+        msg.setText("The Learn/Timetabling synchronisation process completed successfully at "
+            + new Date() + ".");
+        
+        this.mailSender.send(msg);
         
         return false;
     }
@@ -467,7 +484,7 @@ public class ConcurrencyService {
             runId = this.getNextId(stagingDatabase);
             
             insertRunRecord(stagingDatabase, runId, now);
-            run = this.getRunDao().getRun(runId);
+            run = this.getSynchronisationRunDao().getRun(runId);
             
             stagingDatabase.setAutoCommit(false);
             try {
@@ -542,6 +559,20 @@ public class ConcurrencyService {
             statement.close();
         }
     }
+
+    /**
+     * @return the mailSender
+     */
+    public MailSender getMailSender() {
+        return mailSender;
+    }
+
+    /**
+     * @param mailSender the mailSender to set
+     */
+    public void setMailSender(MailSender mailSender) {
+        this.mailSender = mailSender;
+    }
     
     /**
      * Gets the data source for the staging database.
@@ -553,19 +584,21 @@ public class ConcurrencyService {
     }
 
     /**
-     * Gets the DAO for synchronisation runs.
+     * Get the synchronisation run data access object.
      * 
-     * @return the DAO for synchronisation runs.
+     * @return the synchronisation run data access object.
      */
-    public SynchronisationRunDao getRunDao() {
-        return runDao;
+    public SynchronisationRunDao getSynchronisationRunDao() {
+        return synchronisationRunDao;
     }
 
     /**
-     * @param runDao the runDao to set
+     * Set the synchronisation run data access object.
+     * 
+     * @param synchronisationRunDao the synchronisation run data access object to set.
      */
-    public void setRunDao(SynchronisationRunDao runDao) {
-        this.runDao = runDao;
+    public void setSynchronisationRunDao(SynchronisationRunDao synchronisationRunDao) {
+        this.synchronisationRunDao = synchronisationRunDao;
     }
 
     /**
@@ -573,8 +606,26 @@ public class ConcurrencyService {
      * 
      * @param dataSource the staging database data source to set.
      */
-    public void setStagingDataSource(DataSource dataSource) {
+    public void setStagingDataSource(final DataSource dataSource) {
         this.stagingDataSource = dataSource;
+    }
+
+    /**
+     * Get the template e-mail message.
+     * 
+     * @return the template e-mail message.
+     */
+    public SimpleMailMessage getTemplateMessage() {
+        return templateMessage;
+    }
+
+    /**
+     * Set the template e-mail message.
+     * 
+     * @param newTemplateMessage the template e-mail message to set.
+     */
+    public void setTemplateMessage(final SimpleMailMessage newTemplateMessage) {
+        this.templateMessage = newTemplateMessage;
     }
 
     /**

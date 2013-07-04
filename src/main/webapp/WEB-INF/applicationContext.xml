@@ -73,6 +73,15 @@
         <property name="sessionFactory" ref="sessionFactory" />
     </bean>
     
+    <bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+      <property name="host" value="mailrelay.ed.ac.uk"/>
+      <!--<property name="host" value="bulkmailrelay.ucs.ed.ac.uk"/>-->
+    </bean>
+    <bean id="templateMessage" class="org.springframework.mail.SimpleMailMessage">
+      <property name="from" value="Ross.Nicoll@ed.ac.uk"/>
+      <property name="to" value="Ross.Nicoll@ed.ac.uk"/>
+    </bean>
+    
     <tx:annotation-driven transaction-manager="transactionManager" />
     
     <!-- Service beans -->
@@ -94,13 +103,15 @@
     <bean id="moduleDao" class="uk.ac.ed.learn9.bb.timetabling.dao.impl.ModuleDaoImpl">
         <property name="sessionFactory" ref="sessionFactory"/>
     </bean>
-    <bean id="runDao" class="uk.ac.ed.learn9.bb.timetabling.dao.impl.SynchronisationRunDaoImpl">
+    <bean id="synchronisationRunDao" class="uk.ac.ed.learn9.bb.timetabling.dao.impl.SynchronisationRunDaoImpl">
         <property name="sessionFactory" ref="sessionFactory"/>
     </bean>
     
     <bean id="blackboardService" class="uk.ac.ed.learn9.bb.timetabling.service.BlackboardService" />
     <bean id="concurrencyService" class="uk.ac.ed.learn9.bb.timetabling.service.ConcurrencyService">
-        <property name="runDao" ref="runDao"/>
+        <property name="mailSender" ref="mailSender"/>
+        <property name="templateMessage" ref="templateMessage"/>
+        <property name="synchronisationRunDao" ref="synchronisationRunDao"/>
         <property name="stagingDataSource" ref="stagingDataSource"/>
     </bean>
     <bean id="eugexSynchroniseService" class="uk.ac.ed.learn9.bb.timetabling.service.EugexSynchroniseService">
@@ -122,6 +133,22 @@
     
     <!-- Event listener to start/stop the scheduled synchronisation job -->
     <bean id="scheduledJobManager" class="uk.ac.ed.learn9.bb.timetabling.ScheduledJobManager">
+    </bean>
+    
+    <!-- Controllers -->
+    
+    <bean id="auditLogController" class="uk.ac.ed.learn9.bb.timetabling.controller.AuditLogController">
+        <property name="enrolmentChangePartDao" ref="enrolmentChangePartDao"/>
+    </bean>
+    
+    <bean id="configureController" class="uk.ac.ed.learn9.bb.timetabling.controller.ConfigureController">
+        <property name="concurrencyService" ref="concurrencyService"/>
+        <property name="synchronisationRunDao" ref="synchronisationRunDao"/>
+        <property name="synchronisationService" ref="synchronisationService"/>
+    </bean>
+    
+    <bean id="mergedCoursesController" class="uk.ac.ed.learn9.bb.timetabling.controller.MergedCoursesController">
+        <property name="mergedCoursesService" ref="mergedCoursesService"/>
     </bean>
 
 </beans>

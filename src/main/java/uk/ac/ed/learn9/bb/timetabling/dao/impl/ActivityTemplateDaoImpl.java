@@ -13,7 +13,7 @@ import uk.ac.ed.learn9.bb.timetabling.data.ActivityTemplate;
  */
 @Transactional
 @Scope("singleton")
-@Component
+@Component("activityTemplateDao")
 public class ActivityTemplateDaoImpl extends HibernateDaoSupport implements ActivityTemplateDao {
 
     @Override
