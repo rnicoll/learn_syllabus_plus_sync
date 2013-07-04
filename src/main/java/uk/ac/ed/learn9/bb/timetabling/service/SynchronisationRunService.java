@@ -11,6 +11,7 @@ import java.util.Date;
 import javax.sql.DataSource;
 
 import org.apache.log4j.Logger;
+import org.apache.velocity.app.VelocityEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.MailException;
 import org.springframework.mail.MailSender;
@@ -45,6 +46,8 @@ public class SynchronisationRunService {
     private MailSender mailSender;
     @Autowired
     private SynchronisationRunDao synchronisationRunDao;
+    @Autowired
+    private VelocityEngine velocityEngine;
     
     @Autowired
     private SimpleMailMessage templateMessage;
@@ -572,13 +575,6 @@ public class SynchronisationRunService {
     public MailSender getMailSender() {
         return mailSender;
     }
-
-    /**
-     * @param mailSender the mailSender to set
-     */
-    public void setMailSender(MailSender mailSender) {
-        this.mailSender = mailSender;
-    }
     
     /**
      * Gets the data source for the staging database.
@@ -596,6 +592,29 @@ public class SynchronisationRunService {
      */
     public SynchronisationRunDao getSynchronisationRunDao() {
         return synchronisationRunDao;
+    }
+
+    /**
+     * Get the template e-mail message.
+     * 
+     * @return the template e-mail message.
+     */
+    public SimpleMailMessage getTemplateMessage() {
+        return templateMessage;
+    }
+
+    /**
+     * @return the velocityEngine
+     */
+    public VelocityEngine getVelocityEngine() {
+        return velocityEngine;
+    }
+
+    /**
+     * @param mailSender the mailSender to set
+     */
+    public void setMailSender(MailSender mailSender) {
+        this.mailSender = mailSender;
     }
 
     /**
@@ -617,21 +636,19 @@ public class SynchronisationRunService {
     }
 
     /**
-     * Get the template e-mail message.
-     * 
-     * @return the template e-mail message.
-     */
-    public SimpleMailMessage getTemplateMessage() {
-        return templateMessage;
-    }
-
-    /**
      * Set the template e-mail message.
      * 
      * @param newTemplateMessage the template e-mail message to set.
      */
     public void setTemplateMessage(final SimpleMailMessage newTemplateMessage) {
         this.templateMessage = newTemplateMessage;
+    }
+
+    /**
+     * @param velocityEngine the velocityEngine to set
+     */
+    public void setVelocityEngine(VelocityEngine velocityEngine) {
+        this.velocityEngine = velocityEngine;
     }
 
     /**

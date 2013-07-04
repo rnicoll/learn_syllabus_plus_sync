@@ -75,6 +75,15 @@
     
     <tx:annotation-driven transaction-manager="transactionManager" />
     
+    <bean id="velocityEngine" class="org.springframework.ui.velocity.VelocityEngineFactoryBean">
+      <property name="velocityProperties">
+         <value>
+          resource.loader=class
+          class.resource.loader.class=org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader
+         </value>
+      </property>
+   </bean>
+    
     <bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
       <property name="host" value="mailrelay.ed.ac.uk"/>
       <!--<property name="host" value="bulkmailrelay.ucs.ed.ac.uk"/>-->
@@ -117,6 +126,7 @@
         <property name="templateMessage" ref="templateMessage"/>
         <property name="synchronisationRunDao" ref="synchronisationRunDao"/>
         <property name="stagingDataSource" ref="stagingDataSource"/>
+        <property name="velocityEngine" ref="velocityEngine"/>
     </bean>
     <bean id="eugexSynchroniseService" class="uk.ac.ed.learn9.bb.timetabling.service.EugexSynchroniseService">
         <property name="stagingDataSource" ref="stagingDataSource"/>
