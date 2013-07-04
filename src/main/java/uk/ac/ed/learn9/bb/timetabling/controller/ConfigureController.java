@@ -30,7 +30,7 @@ import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService;
 @Controller
 public class ConfigureController extends AbstractController {
     @Autowired
-    private SynchronisationRunService concurrencyService;
+    private SynchronisationRunService synchronisationRunService;
     @Autowired
     private SynchronisationService synchronisationService;
     @Autowired
@@ -82,7 +82,7 @@ public class ConfigureController extends AbstractController {
         final SynchronisationRun run;
         
         try {
-            run = this.getConcurrencyService().startNewRun();
+            run = this.getSynchronisationRunService().startNewRun();
         } catch (SynchronisationRunService.SynchronisationAlreadyInProgressException ex) {
             // This is expected under normal circumstances, due to more than one
             // possible server trying to run the job.
@@ -99,7 +99,7 @@ public class ConfigureController extends AbstractController {
                     service.runSynchronisation(run);
                 } catch(Exception e) {
                     try {
-                        concurrencyService.handleErrorOutcome(run, e);
+                        synchronisationRunService.handleErrorOutcome(run, e);
                     } catch(SQLException logError) {
                         // Give up
                     }
@@ -153,14 +153,14 @@ public class ConfigureController extends AbstractController {
      * 
      * @return the concurrency service.
      */
-    public SynchronisationRunService getConcurrencyService() {
-        return concurrencyService;
+    public SynchronisationRunService getSynchronisationRunService() {
+        return synchronisationRunService;
     }
 
     /**
-     * @param concurrencyService the concurrencyService to set
+     * @param synchronisationRunService the synchronisationRunService to set
      */
-    public void setConcurrencyService(SynchronisationRunService concurrencyService) {
-        this.concurrencyService = concurrencyService;
+    public void setSynchronisationRunService(SynchronisationRunService synchronisationRunService) {
+        this.synchronisationRunService = synchronisationRunService;
     }
 }
