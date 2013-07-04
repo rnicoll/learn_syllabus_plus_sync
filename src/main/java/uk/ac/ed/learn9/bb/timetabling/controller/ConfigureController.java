@@ -92,16 +92,22 @@ public class ConfigureController extends AbstractController {
         
         final SynchronisationService service = this.getSynchronisationService();
         
-        try {
-            service.runSynchronisation(run);
-        } catch(Exception e) {
-            try {
-                concurrencyService.handleErrorOutcome(run, e);
-            } catch(SQLException logError) {
-                // Give up
+        final Thread thread = new Thread("Manual timetabling sync") {
+            @Override
+            public void run() {
+                try {
+                    service.runSynchronisation(run);
+                } catch(Exception e) {
+                    try {
+                        concurrencyService.handleErrorOutcome(run, e);
+                    } catch(SQLException logError) {
+                        // Give up
+                    }
+                    log.error("Error while running synchronisation.", e);
+                }
             }
-            log.error("Error while running synchronisation.", e);
-        }
+        };
+        thread.start();
                 
         return this.getConfigure(request, response);
     }
