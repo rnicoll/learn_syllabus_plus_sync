@@ -15,7 +15,7 @@ import uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange;
  */
 @Transactional
 @Scope("singleton")
-@Component("enrolmentChangeDao")
+@Component
 public class EnrolmentChangeDaoImpl extends HibernateDaoSupport implements EnrolmentChangeDao {
 
     @Override
