@@ -5,8 +5,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 import javax.sql.DataSource;
 
@@ -51,6 +53,9 @@ public class SynchronisationRunService {
     
     @Autowired
     private SimpleMailMessage templateMessage;
+    
+    private List<String> sendErrorMessageTo = new ArrayList<String>();
+    private List<String> sendSuccessMessageTo = new ArrayList<String>();
     
     /**
      * Marks a session as abandoned.
@@ -566,10 +571,30 @@ public class SynchronisationRunService {
     }
 
     /**
-     * @return the mailSender
+     * Get the mail sender used to send success/error messages.
+     * 
+     * @return the mail sender.
      */
     public MailSender getMailSender() {
         return mailSender;
+    }
+
+    /**
+     * Get the addresses to send error messages to.
+     * 
+     * @return the sendErrorMessageTo
+     */
+    public List<String> getSendErrorMessageTo() {
+        return sendErrorMessageTo;
+    }
+
+    /**
+     * Get the addresses to send success messages to.
+     * 
+     * @return the sendSuccessMessageTo
+     */
+    public List<String> getSendSuccessMessageTo() {
+        return sendSuccessMessageTo;
     }
     
     /**
@@ -614,6 +639,20 @@ public class SynchronisationRunService {
     }
 
     /**
+     * @param sendErrorMessageTo the sendErrorMessageTo to set
+     */
+    public void setSendErrorMessageTo(final List<String> sendErrorMessageTo) {
+        this.sendErrorMessageTo = sendErrorMessageTo;
+    }
+
+    /**
+     * @param sendSuccessMessageTo the sendSuccessMessageTo to set
+     */
+    public void setSendSuccessMessageTo(final List<String> sendSuccessMessageTo) {
+        this.sendSuccessMessageTo = sendSuccessMessageTo;
+    }
+
+    /**
      * Set the synchronisation run data access object.
      * 
      * @param synchronisationRunDao the synchronisation run data access object to set.
@@ -647,24 +686,41 @@ public class SynchronisationRunService {
         this.velocityEngine = velocityEngine;
     }
 
+    /**
+     * Send e-mail notification of the synchronisation process ending in an error.
+     * 
+     * @param cause the underlying error being reported.
+     * @throws MailException if there was an error sending the message.
+     */
     private void sendErrorOutcomeMail(final Throwable cause) throws MailException {
+        if (this.getSendErrorMessageTo().isEmpty()) {
+            return;
+        }
+        
         SimpleMailMessage msg = new SimpleMailMessage(this.getTemplateMessage());
-        msg.setTo("Ross.Nicoll@ed.ac.uk");
+        msg.setTo(this.getSendErrorMessageTo().toArray(new String[0]));
+        msg.setSubject("Learn/Timetabling synchronisation process failed!");
         msg.setText("The Learn/Timetabling synchronisation process failed due to a serious error "
             + new Date() + ".");
-
-        log.debug("Sending success message.");
 
         this.mailSender.send(msg);
     }
 
+    /**
+     * Send e-mail notification of the synchronisation process ending in success.
+     * 
+     * @throws MailException if there was an error sending the message.
+     */
     private void sendSuccessOutcomeMail() throws MailException {
+        if (this.getSendSuccessMessageTo().isEmpty()) {
+            return;
+        }
+        
         SimpleMailMessage msg = new SimpleMailMessage(this.getTemplateMessage());
-        msg.setTo("Ross.Nicoll@ed.ac.uk");
+        msg.setTo(this.getSendSuccessMessageTo().toArray(new String[0]));
+        msg.setSubject("Learn/Timetabling synchronisation process completed successfully.");
         msg.setText("The Learn/Timetabling synchronisation process completed successfully at "
             + new Date() + ".");
-
-        log.debug("Sending success message.");
 
         this.mailSender.send(msg);
     }

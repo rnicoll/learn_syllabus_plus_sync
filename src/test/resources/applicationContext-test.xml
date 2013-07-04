@@ -131,6 +131,18 @@
         <property name="synchronisationRunDao" ref="synchronisationRunDao"/>
         <property name="stagingDataSource" ref="stagingDataSource"/>
         <property name="velocityEngine" ref="velocityEngine"/>
+        <property name="sendErrorMessageTo">
+            <list>
+                <!-- value>apps-tels@mlists.is.ed.ac.uk</value -->
+                <value>Ross.Nicoll@ed.ac.uk</value>
+            </list>
+        </property>
+        <property name="sendSuccessMessageTo">
+            <list>
+                <!-- value>apps-tels@mlists.is.ed.ac.uk</value -->
+                <value>Ross.Nicoll@ed.ac.uk</value>
+            </list>
+        </property>
     </bean>
     <bean id="eugexSynchroniseService" class="uk.ac.ed.learn9.bb.timetabling.service.EugexSynchroniseService">
         <property name="stagingDataSource" ref="stagingDataSource"/>

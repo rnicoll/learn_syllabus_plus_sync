@@ -23,7 +23,8 @@ import blackboard.persist.course.CourseMembershipDbLoader;
 import blackboard.persist.user.UserDbLoader;
 
 /**
- * Helper class to track group memberships 
+ * Helper class to track group memberships which could not be applied as they
+ * are unsafe.
  */
 class UnsafeGroupMembershipManager {
     private final Map<Course, Collection<GroupMembership>> unsafeMemberships

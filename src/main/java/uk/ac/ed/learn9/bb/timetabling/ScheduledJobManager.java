@@ -202,6 +202,9 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
                 } catch(PersistenceException e) {
                     concurrencyService.handleErrorOutcome(run, e);
                     log.error("Error while persisting/loading entities in Learn.", e);
+                } catch(RuntimeException e) {
+                    concurrencyService.handleErrorOutcome(run, e);
+                    log.error("Error while persisting/loading entities in Learn.", e);
                 } catch(SQLException e) {
                     concurrencyService.handleErrorOutcome(run, e);
                     log.error("Database error while synchronising groups from Timetabling.", e);
