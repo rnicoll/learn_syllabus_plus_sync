@@ -116,6 +116,12 @@
     </bean>
     
     <bean id="blackboardService" class="uk.ac.ed.learn9.bb.timetabling.service.BlackboardService">
+        <!-- This property overrides where notifications of minor issues are sent.
+           - By default they go to the instructors on each course, however this
+           - is undesirable for dev/test installations.
+           - 
+           - Comment out or remove the property setting on live. 
+           -->
         <property name="forceAllMailTo" value="Ross.Nicoll@ed.ac.uk"/>
         <property name="mailSender" ref="mailSender"/>
         <property name="templateMessage" ref="templateMessage"/>
@@ -127,12 +133,20 @@
         <property name="synchronisationRunDao" ref="synchronisationRunDao"/>
         <property name="stagingDataSource" ref="stagingDataSource"/>
         <property name="velocityEngine" ref="velocityEngine"/>
+        <!-- List of addresses to which notifications are sent in case of an error
+           - outcome for the entire synchronisation process. This may be empty,
+           - in which case no notification will be sent.
+           -->
         <property name="sendErrorMessageTo">
             <list>
                 <!-- value>apps-tels@mlists.is.ed.ac.uk</value -->
                 <value>Ross.Nicoll@ed.ac.uk</value>
             </list>
         </property>
+        <!-- List of addresses to which notifications are sent after a success
+           - outcome for the entire synchronisation process. This may be empty,
+           - in which case no notification will be sent.
+           -->
         <property name="sendSuccessMessageTo">
             <list>
                 <!-- value>apps-tels@mlists.is.ed.ac.uk</value -->
