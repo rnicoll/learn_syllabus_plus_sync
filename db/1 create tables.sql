@@ -1,6 +1,6 @@
 CREATE TABLE yes_no (
     yn_code CHAR(1) NOT NULL,
-    constraint yes_no_code PRIMARY KEY(yn_code)
+    constraint yes_no_code PRIMARY KEY(yn_code) using index tablespace SATVLE_INDEX
 ) tablespace "SATVLE_DATA";
 comment on column yes_no.yn_code is 'Y/N, used to constrain fields which are yes/no indicators.';
 
@@ -9,7 +9,7 @@ CREATE TABLE activity_template (
   tt_template_name NVARCHAR2(255) DEFAULT NULL,
   tt_user_text_5 NVARCHAR2(255) DEFAULT NULL,
   learn_group_set_id VARCHAR2(80) DEFAULT NULL,
-  constraint "ACTIVITY_TEMPLATE_PK" PRIMARY KEY (tt_template_id)
+  constraint "ACTIVITY_TEMPLATE_PK" PRIMARY KEY (tt_template_id) using index tablespace SATVLE_INDEX
 ) tablespace "SATVLE_DATA";
 
 comment on column activity_template.tt_template_id is 'ID for the activity template, copied from Timetabling RDB.';
@@ -20,7 +20,7 @@ comment on column activity_template.learn_group_set_id is 'ID of the group set i
 CREATE TABLE activity_type (
   tt_type_id VARCHAR2(32) NOT NULL,
   tt_type_name VARCHAR2(255) DEFAULT NULL,
-  PRIMARY KEY (tt_type_id)
+  constraint "ACTIVITY_TYPE_PK" PRIMARY KEY (tt_type_id) using index tablespace SATVLE_INDEX
 ) tablespace "SATVLE_DATA";
 comment on column activity_type.tt_type_id is 'ID for the activity type, copied from Timetabling RDB.';
 comment on column activity_type.tt_type_name is 'Human readable name for the activity type, copied from Timetabling RDB.';
@@ -37,7 +37,7 @@ CREATE TABLE module (
   learn_course_code VARCHAR2(40) DEFAULT NULL,
   webct_active CHAR(1) DEFAULT NULL,
   constraint module_webct_active FOREIGN KEY (webct_active) REFERENCES yes_no(yn_code),
-  constraint "MODULE_PK" PRIMARY KEY (tt_module_id)
+  constraint "MODULE_PK" PRIMARY KEY (tt_module_id) using index tablespace SATVLE_INDEX
 ) tablespace "SATVLE_DATA";
 comment on column module.tt_module_id is 'ID for the module, copied from Timetabling RDB.';
 comment on column module.tt_course_code is 'Course code, copied from the "HOST_KEY" field in the Timetabling RDB. Typically reflects EUCLID course code, occurrence and semester.';
@@ -59,7 +59,7 @@ CREATE TABLE module_course (
   learn_course_available CHAR(1) DEFAULT NULL,
   constraint module_course_merged FOREIGN KEY (merged_course) REFERENCES yes_no(yn_code),
   constraint module_course_available FOREIGN KEY (learn_course_available) REFERENCES yes_no(yn_code),
-  constraint "MODULE_COURSE_PK" PRIMARY KEY (module_course_id)
+  constraint "MODULE_COURSE_PK" PRIMARY KEY (module_course_id) using index tablespace SATVLE_INDEX
 ) tablespace "SATVLE_DATA";
 comment on column module_course.module_course_id is 'Automatically generated ID for this relationship, based on the MODULE_COURSE_SEQ sequence.';
 comment on column module_course.tt_module_id is 'ID for the module, copied from Timetabling RDB.';
@@ -85,7 +85,7 @@ CREATE TABLE activity (
   tt_scheduling_method NUMBER(10,0) DEFAULT NULL,
   learn_group_name NVARCHAR2(255) DEFAULT NULL,
   description NVARCHAR2(2000) DEFAULT NULL,
-  constraint "ACTIVITY_PK" PRIMARY KEY (tt_activity_id)
+  constraint "ACTIVITY_PK" PRIMARY KEY (tt_activity_id) using index tablespace SATVLE_INDEX
 ) tablespace "SATVLE_DATA";
 comment on column activity.tt_activity_id is 'ID for the activity, copied from Timetabling RDB.';
 comment on column activity.tt_activity_name is 'Human readable name for the activity, copied from Timetabling RDB.';
@@ -102,7 +102,7 @@ CREATE TABLE activity_group (
   module_course_id INTEGER NOT NULL,
   learn_group_id VARCHAR2(40) DEFAULT NULL,
   learn_group_created DATE DEFAULT NULL,
-  constraint ACTIVITY_GROUP_PK PRIMARY KEY(activity_group_id),
+  constraint ACTIVITY_GROUP_PK PRIMARY KEY(activity_group_id) using index tablespace SATVLE_INDEX,
   constraint ACTIVITY_GROUP_COURSE FOREIGN KEY (module_course_id) REFERENCES module_course(module_course_id),
   constraint LEARN_GROUP_ACTIVITY FOREIGN KEY (tt_activity_id) REFERENCES activity(tt_activity_id)
 );
@@ -120,7 +120,7 @@ CREATE TABLE activity_parents (
     tt_parent_activity_id VARCHAR2(32) NOT NULL,
     tt_obsolete_from INTEGER DEFAULT NULL,
     tt_latest_transaction INTEGER DEFAULT NULL,
-    constraint "ACTIVITY_PARENT_PK" PRIMARY KEY (tt_activity_id, tt_parent_activity_id)
+    constraint "ACTIVITY_PARENT_PK" PRIMARY KEY (tt_activity_id, tt_parent_activity_id) using index tablespace SATVLE_INDEX
 ) tablespace "SATVLE_DATA";
 comment on column activity_parents.tt_activity_id is 'ID for the child activity, copied from Timetabling RDB.';
 comment on column activity_parents.tt_parent_activity_id is 'ID for the parent activity, copied from Timetabling RDB.';
@@ -128,12 +128,13 @@ comment on column activity_parents.tt_obsolete_from is 'Indicator for when this 
 comment on column activity_parents.tt_latest_transaction is 'ID for the latest transaction on this record, copied from Timetabling RDB. Currently unused.';
 
 CREATE TABLE variantjtaacts (
-    tt_activity_id VARCHAR2(32) NOT NULL CONSTRAINT variant_activity REFERENCES activity (tt_activity_id),
+    tt_activity_id VARCHAR2(32) NOT NULL,
     tt_is_jta_parent NUMBER(3,0) NOT NULL,
     tt_is_jta_child NUMBER(3,0) NOT NULL,
     tt_is_variant_parent NUMBER(3,0) NOT NULL,
     tt_is_variant_child NUMBER(3,0) NOT NULL,
-    tt_latest_transaction INTEGER DEFAULT NULL
+    tt_latest_transaction INTEGER DEFAULT NULL,
+    constraint "variantjtaacts_activity" FOREIGN KEY (tt_activity_id) REFERENCES activity(tt_activity_id)
 ) tablespace "SATVLE_DATA";
 comment on column variantjtaacts.tt_activity_id is 'ID for the activity the record relates to, copied from Timetabling RDB.';
 comment on column variantjtaacts.tt_is_jta_parent is 'Indicates whether the activity is a joint taught activity parent, copied from Timetabling RDB.';
@@ -144,7 +145,7 @@ comment on column variantjtaacts.tt_is_variant_child is 'Indicates whether the a
 CREATE TABLE run_result (
   result_code VARCHAR2(20) NOT NULL,
   result_label NVARCHAR2(80) NOT NULL,
-  constraint "RUN_RESULT_PK" PRIMARY KEY (result_code)
+  constraint "RUN_RESULT_PK" PRIMARY KEY (result_code) using index tablespace SATVLE_INDEX
 ) tablespace "SATVLE_DATA";
 comment on column run_result.result_code is 'ID for a possible result from a synchronisation run.';
 comment on column run_result.result_label is 'Human readable label for this result from a synchronisation run.';
@@ -155,8 +156,9 @@ CREATE TABLE synchronisation_run (
   cache_copy_completed DATE DEFAULT NULL,
   diff_completed DATE DEFAULT NULL,
   end_time DATE DEFAULT NULL,
-  result_code VARCHAR2(20) DEFAULT NULL REFERENCES run_result(result_code),
-  constraint "SYNCHRONISATION_RUN_PK" PRIMARY KEY (run_id)
+  result_code VARCHAR2(20) DEFAULT NULL,
+  constraint "SYNCHRONISATION_RUN_RESULT" FOREIGN KEY (result_code) REFERENCES module_course(module_course_id),
+  constraint "SYNCHRONISATION_RUN_PK" PRIMARY KEY (run_id) using index tablespace SATVLE_INDEX
 ) tablespace "SATVLE_DATA";
 comment on column synchronisation_run.run_id is 'Automatically generated ID for this run, based on the SYNCHRONISATION_RUN_SEQ sequence.';
 comment on column synchronisation_run.start_time is 'Timestamp when the synchronisation process started.';
@@ -166,19 +168,23 @@ comment on column synchronisation_run.end_time is 'Timestamp when the synchronis
 comment on column synchronisation_run.result_code is 'ID for the result of the synchronisation run (as in success, failure, timeout, etc.).';
 
 CREATE TABLE synchronisation_run_prev (
-  run_id INTEGER NOT NULL REFERENCES synchronisation_run(run_id),
-  previous_run_id INTEGER NULL REFERENCES synchronisation_run(run_id),
-  constraint "SYNC_RUN_PREV_PK" PRIMARY KEY(run_id),
-  constraint "SYNC_RUN_PREV_UNIQ" UNIQUE(previous_run_id)
+  run_id INTEGER NOT NULL,
+  previous_run_id INTEGER NULL,
+  constraint "SYNC_RUN_PREV_RUN" FOREIGN KEY (run_id) REFERENCES synchronisation_run(run_id),
+  constraint "SYNC_RUN_PREV_PREV" FOREIGN KEY (previous_run_id) REFERENCES synchronisation_run(run_id),
+  constraint "SYNC_RUN_PREV_PK" PRIMARY KEY(run_id) using index tablespace SATVLE_INDEX,
+  constraint "SYNC_RUN_PREV_UNIQ" UNIQUE(previous_run_id) using index tablespace SATVLE_INDEX
 ) tablespace "SATVLE_DATA";
 comment on column synchronisation_run_prev.run_id is 'ID for the synchronisation run.';
 comment on column synchronisation_run_prev.previous_run_id is 'ID for the synchronisation run against which a difference is to be generated.';
 
 CREATE TABLE cache_enrolment (
-  run_id INTEGER NOT NULL CONSTRAINT cache_run REFERENCES synchronisation_run(run_id),
+  run_id INTEGER NOT NULL,
   tt_student_set_id VARCHAR2(32) NOT NULL,
-  tt_activity_id VARCHAR2(32) NOT NULL CONSTRAINT cache_activ REFERENCES activity (tt_activity_id),
-  constraint "CACHE_ENROLMENT_PK" PRIMARY KEY (run_id,tt_student_set_id,tt_activity_id)
+  tt_activity_id VARCHAR2(32) NOT NULL,
+  constraint "CACHE_ENROLMENT_RUN" FOREIGN KEY (run_id) REFERENCES synchronisation_run(run_id),
+  constraint "CACHE_ENROLMENT_ACTIV" FOREIGN KEY (tt_activity_id) REFERENCES activity (tt_activity_id),
+  constraint "CACHE_ENROLMENT_PK" PRIMARY KEY (run_id,tt_student_set_id,tt_activity_id) using index tablespace SATVLE_INDEX
 ) tablespace "SATVLE_DATA";
 comment on column cache_enrolment.run_id is 'ID for the synchronisation run this data set belongs to.';
 comment on column cache_enrolment.tt_student_set_id is 'ID for the student set the enrolment is for, copied from Timetabling RDB.';
@@ -188,7 +194,7 @@ CREATE TABLE change_result (
   result_code VARCHAR2(20) NOT NULL,
   label NVARCHAR2(80) NOT NULL,
   retry NUMBER(1) DEFAULT '0' NOT NULL,
-  constraint "CHANGE_RESULT_PK" PRIMARY KEY (result_code)
+  constraint "CHANGE_RESULT_PK" PRIMARY KEY (result_code) using index tablespace SATVLE_INDEX
 ) tablespace "SATVLE_DATA";
 comment on column change_result.result_code is 'ID for a possible result from an enrolment change.';
 comment on column change_result.label is 'Human readable label for this result from an enrolment change.';
@@ -196,7 +202,7 @@ comment on column change_result.retry is 'Indicates whether changes with this re
 
 CREATE TABLE change_type (
   change_type VARCHAR2(12) NOT NULL,
-  constraint "CHANGE_TYPE_PK" PRIMARY KEY (change_type)
+  constraint "CHANGE_TYPE_PK" PRIMARY KEY (change_type) using index tablespace SATVLE_INDEX
 ) tablespace "SATVLE_DATA";
 comment on column change_type.change_type is 'ID for the type of change, determines how it should be applied to Learn.';
 
@@ -204,7 +210,7 @@ CREATE TABLE student_set (
   tt_student_set_id VARCHAR2(32) NOT NULL,
   tt_host_key VARCHAR2(32) NOT NULL,
   learn_user_id VARCHAR2(40) DEFAULT NULL,
-  constraint "STUDENT_SET_PK" PRIMARY KEY (tt_student_set_id)
+  constraint "STUDENT_SET_PK" PRIMARY KEY (tt_student_set_id) using index tablespace SATVLE_INDEX
 ) tablespace "SATVLE_DATA";
 comment on column student_set.tt_student_set_id is 'ID for the student set, copied from Timetabling RDB.';
 comment on column student_set.tt_host_key is 'Host key for the student set, copied from Timetabling RDB. Typically this is their username.';
@@ -216,11 +222,11 @@ CREATE TABLE enrolment_change (
   tt_activity_id VARCHAR2(32) NOT NULL,
   tt_student_set_id VARCHAR2(32) NOT NULL,
   change_type VARCHAR2(12) NOT NULL,
-  constraint "ENROLMENT_CHANGE_PK" PRIMARY KEY (change_id),
   CONSTRAINT enrolment_change_activ FOREIGN KEY (tt_activity_id) REFERENCES activity (tt_activity_id),
   CONSTRAINT enrolment_change_run FOREIGN KEY (run_id) REFERENCES synchronisation_run (run_id),
   CONSTRAINT enrolment_change_stu FOREIGN KEY (tt_student_set_id) REFERENCES student_set (tt_student_set_id),
-  CONSTRAINT enrolment_change_type FOREIGN KEY (change_type) REFERENCES change_type (change_type)
+  CONSTRAINT enrolment_change_type FOREIGN KEY (change_type) REFERENCES change_type (change_type),
+  constraint "ENROLMENT_CHANGE_PK" PRIMARY KEY (change_id) using index tablespace SATVLE_INDEX
 ) tablespace "SATVLE_DATA";
 comment on column enrolment_change.change_id is 'Automatically generated ID for this change, based on the ENROLMENT_CHANGE_SEQ sequence.';
 comment on column enrolment_change.run_id is 'ID for the synchronisation run this change belongs to.';
@@ -234,7 +240,7 @@ CREATE TABLE enrolment_change_part (
   module_course_id INTEGER NOT NULL,
   result_code VARCHAR2(20) DEFAULT NULL,
   update_completed DATE DEFAULT NULL,
-  constraint "ENROLMENT_CHANGE_PART_PK" PRIMARY KEY (part_id),
+  constraint "ENROLMENT_CHANGE_PART_PK" PRIMARY KEY (part_id) using index tablespace SATVLE_INDEX,
   CONSTRAINT enrol_chg_part_change FOREIGN KEY (change_id) REFERENCES enrolment_change(change_id),
   CONSTRAINT enrol_chg_part_module FOREIGN KEY (module_course_id) REFERENCES module_course(module_course_id),
   constraint enrol_chg_part_res FOREIGN KEY (result_code) REFERENCES change_result (result_code)
