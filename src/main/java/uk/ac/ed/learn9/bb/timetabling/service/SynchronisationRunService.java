@@ -30,6 +30,7 @@ import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
  */
 @Service
 public class SynchronisationRunService {
+    /** Standard e-mail signature for automatically generated mail. */
     public static final String EMAIL_SIGNATURE = "This is a system generated email. "
         + "Any replies to this email will be discarded. If you require assistance, "
         + "please contact the IS Helpline (is.helpline@ed.ac.uk).\r\n";
@@ -366,11 +367,13 @@ public class SynchronisationRunService {
      * @param cause the cause of the error.
      * @return whether the change was written out successfully. Failure typically
      * indicates the session has already finished.
+     * @throws MailException if there was a problem notifying administrators
+     * of the outcome.
      * @throws SQLException if there was a problem communicating with the staging
      * database.
      */
     public boolean handleErrorOutcome(final SynchronisationRun run, final Throwable cause)
-        throws SQLException {
+        throws MailException, SQLException {
         final Connection stagingDatabase = this.getStagingDataSource().getConnection();
         try {
             return this.handleErrorOutcome(stagingDatabase, run, cause, new Timestamp(System.currentTimeMillis()));
@@ -388,12 +391,14 @@ public class SynchronisationRunService {
      * @param now the current time.
      * @return whether the change was written out successfully. Failure typically
      * indicates the session has already finished.
+     * @throws MailException if there was a problem notifying administrators
+     * of the outcome.
      * @throws SQLException if there was a problem communicating with the staging
      * database.
      */
     public boolean handleErrorOutcome(final Connection stagingDatabase, final SynchronisationRun run,
             final Throwable cause, final Timestamp now)
-            throws SQLException {
+            throws MailException, SQLException {
         // XXX: Should log the error in the database.
         
         final PreparedStatement statement = stagingDatabase.prepareStatement(
@@ -427,6 +432,8 @@ public class SynchronisationRunService {
      * @param run the session to mark as having succeeded.
      * @return whether the change was written out successfully. Failure typically
      * indicates the session has already finished.
+     * @throws MailException if there was a problem notifying administrators
+     * of the outcome.
      * @throws SQLException if there was a problem communicating with the staging
      * database.
      */
@@ -448,6 +455,8 @@ public class SynchronisationRunService {
      * @param run the session to mark as having succeeded.
      * @return whether the change was written out successfully. Failure typically
      * indicates the session has already finished.
+     * @throws MailException if there was a problem notifying administrators
+     * of the outcome.
      * @throws SQLException if there was a problem communicating with the staging
      * database.
      */
@@ -484,7 +493,7 @@ public class SynchronisationRunService {
      *
      * @return the ID for the new synchronisation run.
      * @throws SQLException if there was a problem inserting the record.
-     * @throws ConcurrencyService.SynchronisationAlreadyInProgressException if
+     * @throws SynchronisationAlreadyInProgressException if
      * there's already a synchronisation run in progress.
      */
     public SynchronisationRun startNewRun()

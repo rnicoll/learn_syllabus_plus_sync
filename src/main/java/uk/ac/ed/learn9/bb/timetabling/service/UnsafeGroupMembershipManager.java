@@ -28,6 +28,7 @@ import blackboard.persist.user.UserDbLoader;
  * cases.
  */
 class UnsafeGroupMembershipManager {
+    /** Standard e-mail signature for automatically generated mail. */
     public static final String EMAIL_SIGNATURE = SynchronisationRunService.EMAIL_SIGNATURE;
     
     private final Map<Course, Collection<GroupMembership>> unsafeMemberships
