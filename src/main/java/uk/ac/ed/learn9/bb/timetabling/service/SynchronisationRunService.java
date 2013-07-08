@@ -45,6 +45,8 @@ public class SynchronisationRunService {
      */
     public static final int DAYS_KEEP_ABANDONED_RUNS = 1;
     
+    public static final String EMAIL_SUBJECT_TASK_DETAILS = "Learn/Timetabling group synchronisation";
+    
     private Logger log = Logger.getLogger(SynchronisationRunService.class);
     
     @Autowired
@@ -58,6 +60,9 @@ public class SynchronisationRunService {
     
     @Autowired
     private SimpleMailMessage templateMessage;
+    
+    // This needs to be set in the Spring context
+    private String environmentName = "UNDEF";
     
     private List<String> sendErrorMessageTo = new ArrayList<String>();
     private List<String> sendSuccessMessageTo = new ArrayList<String>();
@@ -710,12 +715,21 @@ public class SynchronisationRunService {
             return;
         }
         
-        SimpleMailMessage msg = new SimpleMailMessage(this.getTemplateMessage());
+        final StringBuilder body = new StringBuilder();
+        
+        body.append(this.getClass().getCanonicalName()).append("\r\n\r\n"
+            + "The Learn/Timetabling synchronisation process failed due to a serious error:\r\n");
+        for (StackTraceElement element: cause.getStackTrace()) {
+            body.append(element.toString()).append("\r\n");
+        }
+        body.append("\r\n\r\n").append(EMAIL_SIGNATURE);
+        
+        final SimpleMailMessage msg = new SimpleMailMessage(this.getTemplateMessage());
+        
         msg.setTo(this.getSendErrorMessageTo().toArray(new String[0]));
-        msg.setSubject("Learn/Timetabling synchronisation process failed!");
-        msg.setText("The Learn/Timetabling synchronisation process failed due to a serious error "
-            + new Date() + ".\r\n\r\n"
-            + EMAIL_SIGNATURE);
+        msg.setSubject(this.getEnvironmentName() + " FAILURE "
+            + EMAIL_SUBJECT_TASK_DETAILS);
+        msg.setText(body.toString());
 
         this.mailSender.send(msg);
     }
@@ -731,13 +745,29 @@ public class SynchronisationRunService {
         }
         
         SimpleMailMessage msg = new SimpleMailMessage(this.getTemplateMessage());
+        msg.setSubject(this.getEnvironmentName() + " SUCCESS "
+            + EMAIL_SUBJECT_TASK_DETAILS);
         msg.setTo(this.getSendSuccessMessageTo().toArray(new String[0]));
-        msg.setSubject("Learn/Timetabling synchronisation process completed successfully.");
-        msg.setText("The Learn/Timetabling synchronisation process completed successfully at "
+        msg.setText(this.getClass().getCanonicalName() + "\r\n\r\n"
+            + "The Learn/Timetabling synchronisation process completed successfully at "
             + new Date() + ".\r\n\r\n"
             + EMAIL_SIGNATURE);
 
         this.mailSender.send(msg);
+    }
+
+    /**
+     * @return the environmentName
+     */
+    public String getEnvironmentName() {
+        return environmentName;
+    }
+
+    /**
+     * @param environmentName the environmentName to set
+     */
+    public void setEnvironmentName(String environmentName) {
+        this.environmentName = environmentName;
     }
 
     /**

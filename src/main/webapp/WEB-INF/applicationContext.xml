@@ -133,6 +133,13 @@
         <property name="synchronisationRunDao" ref="synchronisationRunDao"/>
         <property name="stagingDataSource" ref="stagingDataSource"/>
         <property name="velocityEngine" ref="velocityEngine"/>
+        <!-- Name of the environment the software is running in, used for
+           - subject of email reports. See
+           - https://www.wiki.ed.ac.uk/display/insite/Standard+for+automated+emails
+           - for definition of names to use.
+          -->
+        <property name="environmentName" value="DEV"/>
+        
         <!-- List of addresses to which notifications are sent in case of an error
            - outcome for the entire synchronisation process. This may be empty,
            - in which case no notification will be sent.
