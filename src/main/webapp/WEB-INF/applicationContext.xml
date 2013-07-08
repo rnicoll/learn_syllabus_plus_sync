@@ -87,8 +87,7 @@
       <!--<property name="host" value="bulkmailrelay.ucs.ed.ac.uk"/>-->
     </bean>
     <bean id="templateMessage" class="org.springframework.mail.SimpleMailMessage">
-      <property name="from" value="Ross.Nicoll@ed.ac.uk"/>
-      <property name="to" value="Ross.Nicoll@ed.ac.uk"/>
+      <property name="from" value="discard@ed.ac.uk"/>
     </bean>
     
     <tx:annotation-driven transaction-manager="transactionManager" />
@@ -117,6 +116,7 @@
     </bean>
     
     <bean id="blackboardService" class="uk.ac.ed.learn9.bb.timetabling.service.BlackboardService">
+        <property name="forceAllMailTo" value="Ross.Nicoll@ed.ac.uk"/>
         <property name="mailSender" ref="mailSender"/>
         <property name="templateMessage" ref="templateMessage"/>
         <property name="velocityEngine" ref="velocityEngine"/>

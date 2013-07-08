@@ -5,7 +5,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -51,9 +50,12 @@ public class BlackboardService {
     private MailSender mailSender;
     @Autowired
     private VelocityEngine velocityEngine;
-    
     @Autowired
     private SimpleMailMessage templateMessage;
+    
+    // Optional property for overriding where notification mails are sent
+    @Autowired
+    private String forceAllMailTo = null;
 
     /**
      * Applies pending changes to Learn. Normally this would be called by
@@ -155,6 +157,10 @@ public class BlackboardService {
         final UnsafeGroupMembershipManager unsafeGroups
                 = new UnsafeGroupMembershipManager(courseMembershipDbLoader, this.getUserDbLoader(),
                 this.getVelocityEngine(), this.getMailSender(), this.getTemplateMessage());
+        
+        if (null != this.getForceAllMailTo()) {
+            unsafeGroups.setMailToOverride(this.forceAllMailTo);
+        }
 
         final ChangeOutcomeUpdateStatement outcome = new ChangeOutcomeUpdateStatement(connection);
 
@@ -673,6 +679,20 @@ public class BlackboardService {
      */
     protected UserDbLoader getUserDbLoader() throws PersistenceException {
         return UserDbLoader.Default.getInstance();
+    }
+
+    /**
+     * @return the forceAllMailTo
+     */
+    public String getForceAllMailTo() {
+        return forceAllMailTo;
+    }
+
+    /**
+     * @param forceAllMailTo the forceAllMailTo to set
+     */
+    public void setForceAllMailTo(String forceAllMailTo) {
+        this.forceAllMailTo = forceAllMailTo;
     }
 
     /**

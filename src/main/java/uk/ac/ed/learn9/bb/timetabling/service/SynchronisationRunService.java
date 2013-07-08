@@ -30,6 +30,10 @@ import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
  */
 @Service
 public class SynchronisationRunService {
+    public static final String EMAIL_SIGNATURE = "This is a system generated email. "
+        + "Any replies to this email will be discarded. If you require assistance, "
+        + "please contact the IS Helpline (is.helpline@ed.ac.uk).\r\n";
+    
     /**
      * How long to wait before assuming a synchronisation run has failed, and
      * mark it as timed out.
@@ -701,7 +705,8 @@ public class SynchronisationRunService {
         msg.setTo(this.getSendErrorMessageTo().toArray(new String[0]));
         msg.setSubject("Learn/Timetabling synchronisation process failed!");
         msg.setText("The Learn/Timetabling synchronisation process failed due to a serious error "
-            + new Date() + ".");
+            + new Date() + ".\r\n\r\n"
+            + EMAIL_SIGNATURE);
 
         this.mailSender.send(msg);
     }
@@ -720,7 +725,8 @@ public class SynchronisationRunService {
         msg.setTo(this.getSendSuccessMessageTo().toArray(new String[0]));
         msg.setSubject("Learn/Timetabling synchronisation process completed successfully.");
         msg.setText("The Learn/Timetabling synchronisation process completed successfully at "
-            + new Date() + ".");
+            + new Date() + ".\r\n\r\n"
+            + EMAIL_SIGNATURE);
 
         this.mailSender.send(msg);
     }

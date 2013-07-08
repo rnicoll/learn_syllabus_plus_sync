@@ -8,10 +8,10 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.apache.velocity.app.VelocityEngine;
 import org.springframework.mail.MailException;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
-import org.apache.velocity.app.VelocityEngine;
 
 import blackboard.data.course.Course;
 import blackboard.data.course.CourseMembership;
@@ -24,15 +24,19 @@ import blackboard.persist.user.UserDbLoader;
 
 /**
  * Helper class to track group memberships which could not be applied as they
- * are unsafe.
+ * are unsafe, and send an e-mail to instructors to notify them of these problem
+ * cases.
  */
 class UnsafeGroupMembershipManager {
+    public static final String EMAIL_SIGNATURE = SynchronisationRunService.EMAIL_SIGNATURE;
+    
     private final Map<Course, Collection<GroupMembership>> unsafeMemberships
         = new HashMap<Course, Collection<GroupMembership>>();
     private final UserDbLoader userLoader;
     private final VelocityEngine velocityEngine;
     private final CourseMembershipDbLoader courseMembershipLoader;
     private final MailSender mailSender;
+    private String mailToOverride = null;
     private final SimpleMailMessage messageTemplate;
     
     private Logger log = Logger.getLogger(UnsafeGroupMembershipManager.class);
@@ -74,33 +78,52 @@ class UnsafeGroupMembershipManager {
         }
     }
 
-    private SimpleMailMessage buildMessage(final Course course, final Collection<GroupMembership> memberships)
+    protected SimpleMailMessage buildMessage(final Course course, final Collection<GroupMembership> memberships)
             throws KeyNotFoundException, PersistenceException {
         final Collection<String> to = getInstructorAddresses(course);
         
         if (to.isEmpty()) {
             return null;
         }
+        final StringBuilder body = new StringBuilder();
+        
+        body.append("Students on ").append(course.getCourseId())
+            .append(" have moved groups within the Timetabling system. ")
+            .append("These students have been added to their new groups in Learn, but have not ")
+            .append("been removed from their existing groups because group tools have been ")
+            .append("enabled and there may be important content that would be lost if they ")
+            .append("were removed automatically. A list of affected students is provided below:\r\n");
+
+        for (GroupMembership membership: memberships) {
+            final CourseMembership courseMembership = this.courseMembershipLoader.loadById(membership.getCourseMembershipId());
+            final User student = this.userLoader.loadById(courseMembership.getUserId());
+            
+            body.append(student.getGivenName()).append(" ")
+                    .append(student.getFamilyName()).append(" <")
+                    .append(student.getEmailAddress()).append(">\r\n");
+        }
+        
+        body.append("\r\n")
+            .append("You can also review the list of students affected by logging into Learn ")
+            .append("and selecting Timetabling Sync from the Course Tools menu.\r\n");
+        
+        body.append("You can then choose whether to remove the student from their existing ")
+            .append("groups or not, and whether any information needs to be copied before ")
+            .append("this happens.\r\n\r\n")
+            .append(EMAIL_SIGNATURE);
         
         final SimpleMailMessage message = new SimpleMailMessage(this.messageTemplate);
         
-        log.debug("Instructors: "
-            + to.toString());
-        // For live:
-        // message.setTo(to.toArray(new String[to.size()]));
-        message.setTo("Ross.Nicoll@ed.ac.uk");
-        message.setSubject("Learn Timetabling sync requires manual intervention");
-        message.setText("Students on "
-            + course.getCourseId() + " have moved groups within the Timetabling system. "
-            + "The students have been added to their new groups in Learn, but have not "
-            + "been removed from their existing groups because group tools have been "
-            + "enabled and there may be important content that would be lost if they "
-            + "were removed automatically.\r\n\r\n"
-            + "You should review the list of students affected by logging into Learn "
-            + "and selecting Timetabling Sync from the Course Tools menu."
-            + "You can then choose whether to remove the student from their existing "
-            + "groups or not, and whether any information needs to be copied before "
-            + "this happens.");
+        if (null != this.getMailToOverride()) {
+            log.debug("Instructors: "
+                + to.toString());
+            message.setTo(this.getMailToOverride());
+        } else {
+            message.setTo(to.toArray(new String[to.size()]));
+        }
+        message.setSubject("Student groups on Learn Course "
+            + course.getCourseId() + " - Instructor action required");
+        message.setText(body.toString());
         
         return message;
     }
@@ -120,5 +143,24 @@ class UnsafeGroupMembershipManager {
         }
         
         return emailAddresses;
+    }
+
+    /**
+     * Gets the address that all mail is sent to, where defined. Normally this
+     * function is not used, and returns null, however this is supported for
+     * test cases.
+     * 
+     * @return the address that all mail is sent to, or null if unset (the
+     * common case).
+     */
+    public String getMailToOverride() {
+        return mailToOverride;
+    }
+
+    /**
+     * @param mailToOverride the mailToOverride to set
+     */
+    public void setMailToOverride(String mailToOverride) {
+        this.mailToOverride = mailToOverride;
     }
 }
