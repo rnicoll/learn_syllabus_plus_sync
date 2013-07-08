@@ -233,6 +233,11 @@
             <artifactId>mail</artifactId>
             <version>1.4.7</version>
         </dependency>
+        <dependency>
+            <groupId>com.microsoft.sqlserver</groupId>
+            <artifactId>sqlserver-jdbc</artifactId>
+            <version>4.0</version>
+        </dependency>
     </dependencies>
 
     <build>
