@@ -54,7 +54,6 @@ public class BlackboardService {
     private SimpleMailMessage templateMessage;
     
     // Optional property for overriding where notification mails are sent
-    @Autowired
     private String forceAllMailTo = null;
 
     /**
