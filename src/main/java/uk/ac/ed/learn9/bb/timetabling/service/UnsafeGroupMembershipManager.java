@@ -100,8 +100,8 @@ class UnsafeGroupMembershipManager {
             final User student = this.userLoader.loadById(courseMembership.getUserId());
             
             body.append(student.getGivenName()).append(" ")
-                    .append(student.getFamilyName()).append(" <")
-                    .append(student.getEmailAddress()).append(">\r\n");
+                    .append(student.getFamilyName()).append(" (")
+                    .append(student.getUserName()).append(")\r\n");
         }
         
         body.append("\r\n")
