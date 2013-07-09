@@ -26,7 +26,7 @@ public class GroupMockLoader implements GroupDbLoader {
     private final Map<Id, List<Group>> groupByCourseId = new HashMap<Id, List<Group>>();
     private MockPersistenceManager persistenceManager;
     
-    public                  GroupMockLoader(final MockPersistenceManager setPersistenceManager) {
+                            GroupMockLoader(final MockPersistenceManager setPersistenceManager) {
         this.persistenceManager = setPersistenceManager;
     }
     
@@ -35,7 +35,7 @@ public class GroupMockLoader implements GroupDbLoader {
      * 
      * @param group group to be stored ready for loading.
      */
-    public void addGroup(final Group group) {
+    protected void addGroup(final Group group) {
         assert null != group;
         assert null != group.getId();
         assert null != group.getCourseId();
@@ -49,6 +49,13 @@ public class GroupMockLoader implements GroupDbLoader {
         }
         
         groupsInCourse.add(group);
+    }
+
+    protected void removeGroupById(Id id) throws KeyNotFoundException, PersistenceException {
+        final Group group = this.loadById(id);
+        
+        this.groupById.remove(id);
+        this.groupByCourseId.remove(group.getCourseId());
     }
 
     @Override
@@ -118,6 +125,5 @@ public class GroupMockLoader implements GroupDbLoader {
     @Override
     public AppVersion getAppVersion() {
         return this.appVersion;
-    }
-    
+    }    
 }

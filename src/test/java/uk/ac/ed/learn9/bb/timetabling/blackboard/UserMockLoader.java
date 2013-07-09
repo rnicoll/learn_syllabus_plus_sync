@@ -27,7 +27,7 @@ public class UserMockLoader implements UserDbLoader {
     private User guestUser;
     private MockPersistenceManager persistenceManager;
     
-    public                  UserMockLoader(final MockPersistenceManager setPersistenceManager) {
+                            UserMockLoader(final MockPersistenceManager setPersistenceManager) {
         this.persistenceManager = setPersistenceManager;
     }
     
@@ -36,7 +36,7 @@ public class UserMockLoader implements UserDbLoader {
      * 
      * @param user user to be stored ready for loading.
      */
-    public void addUser(final User user) {
+    protected void addUser(final User user) {
         assert null != user;
         assert null != user.getId();
         assert null != user.getUserName();

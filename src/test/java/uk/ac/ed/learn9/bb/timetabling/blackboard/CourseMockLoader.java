@@ -27,7 +27,7 @@ public class CourseMockLoader implements CourseDbLoader {
     private Course systemCourse = null;
     private MockPersistenceManager persistenceManager;
     
-    public                  CourseMockLoader(final MockPersistenceManager setPersistenceManager) {
+                            CourseMockLoader(final MockPersistenceManager setPersistenceManager) {
         this.persistenceManager = setPersistenceManager;
     }
     
@@ -36,13 +36,20 @@ public class CourseMockLoader implements CourseDbLoader {
      * 
      * @param course course to be stored ready for loading.
      */
-    public void addCourse(final Course course) {
+    protected void addCourse(final Course course) {
         assert null != course;
         assert null != course.getId();
         assert null != course.getCourseId();
         
         this.courseById.put(course.getId(), course);
         this.courseByCourseId.put(course.getCourseId(), course);
+    }
+
+    protected void removeCourseById(Id id) throws KeyNotFoundException, PersistenceException {
+        final Course course = this.loadById(id);
+        
+        this.courseById.remove(id);
+        this.courseByCourseId.remove(course.getCourseId());
     }
     
     public void setSystemCourse(final Course newSystemCourse) {
