@@ -25,7 +25,11 @@ public class UserMockLoader implements UserDbLoader {
     private final Map<Id, User> userById = new HashMap<Id, User>();
     private final Map<String, User> userByUsername = new HashMap<String, User>();
     private User guestUser;
-    private BbPersistenceManager persistenceManager;
+    private MockPersistenceManager persistenceManager;
+    
+    public                  UserMockLoader(final MockPersistenceManager setPersistenceManager) {
+        this.persistenceManager = setPersistenceManager;
+    }
     
     /**
      * Add a user to the mock loader.
@@ -231,7 +235,6 @@ public class UserMockLoader implements UserDbLoader {
 
     @Override
     public void init(BbPersistenceManager bpm, AppVersion av) {
-        this.persistenceManager = bpm;
         this.appVersion = av;
     }
 

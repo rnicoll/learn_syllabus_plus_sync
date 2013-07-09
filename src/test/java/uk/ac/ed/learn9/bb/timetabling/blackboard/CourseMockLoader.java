@@ -25,6 +25,11 @@ public class CourseMockLoader implements CourseDbLoader {
     private final Map<Id, Course> courseById = new HashMap<Id, Course>();
     private final Map<String, Course> courseByCourseId = new HashMap<String, Course>();
     private Course systemCourse = null;
+    private MockPersistenceManager persistenceManager;
+    
+    public                  CourseMockLoader(final MockPersistenceManager setPersistenceManager) {
+        this.persistenceManager = setPersistenceManager;
+    }
     
     /**
      * Add a course to the mock loader.
@@ -270,7 +275,6 @@ public class CourseMockLoader implements CourseDbLoader {
 
     @Override
     public void init(BbPersistenceManager bpm, final AppVersion av) {
-        this.persistenceManager = bpm;
         this.appVersion = av;
     }
 
