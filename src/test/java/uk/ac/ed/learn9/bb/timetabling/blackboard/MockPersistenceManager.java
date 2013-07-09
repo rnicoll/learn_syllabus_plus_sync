@@ -1,5 +1,7 @@
 package uk.ac.ed.learn9.bb.timetabling.blackboard;
 
+import blackboard.data.course.CourseMembership;
+
 /**
  * This object plays loosely the same role as the BbPersistenceManager,
  * in that it tracks the various persisters and loaders.
@@ -8,6 +10,8 @@ public class MockPersistenceManager {
     private CourseMockLoader courseLoader;
     private GroupMockLoader groupLoader;
     private UserMockLoader userLoader;
+    private CourseMembershipMockLoader courseMembershipLoader;
+    private GroupMembershipMockLoader groupMembershipLoader;
     
     private             MockPersistenceManager() {
         
@@ -22,8 +26,11 @@ public class MockPersistenceManager {
     }
 
     private void initialiseLoaders() {
-        this.userLoader = new UserMockLoader(this);
         this.courseLoader = new CourseMockLoader(this);
+        this.courseMembershipLoader = new CourseMembershipMockLoader(this);
+        this.groupLoader = new GroupMockLoader(this);
+        this.groupMembershipLoader = new GroupMembershipMockLoader(this);
+        this.userLoader = new UserMockLoader(this);
     }
 
     /**
@@ -31,6 +38,10 @@ public class MockPersistenceManager {
      */
     public CourseMockLoader getCourseLoader() {
         return courseLoader;
+    }
+
+    public CourseMembershipMockLoader getCourseMembershipLoader() {
+        return this.courseMembershipLoader;
     }
 
     /**
@@ -45,5 +56,12 @@ public class MockPersistenceManager {
      */
     public UserMockLoader getUserLoader() {
         return userLoader;
+    }
+
+    /**
+     * @return the groupMembershipLoader
+     */
+    public GroupMembershipMockLoader getGroupMembershipLoader() {
+        return groupMembershipLoader;
     }
 }
