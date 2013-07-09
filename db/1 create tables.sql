@@ -157,7 +157,7 @@ CREATE TABLE synchronisation_run (
   diff_completed DATE DEFAULT NULL,
   end_time DATE DEFAULT NULL,
   result_code VARCHAR2(20) DEFAULT NULL,
-  constraint "SYNCHRONISATION_RUN_RESULT" FOREIGN KEY (result_code) REFERENCES module_course(module_course_id),
+  constraint "SYNCHRONISATION_RUN_RESULT" FOREIGN KEY (result_code) REFERENCES run_result(result_code),
   constraint "SYNCHRONISATION_RUN_PK" PRIMARY KEY (run_id) using index tablespace SATVLE_INDEX
 ) tablespace "SATVLE_DATA";
 comment on column synchronisation_run.run_id is 'Automatically generated ID for this run, based on the SYNCHRONISATION_RUN_SEQ sequence.';
