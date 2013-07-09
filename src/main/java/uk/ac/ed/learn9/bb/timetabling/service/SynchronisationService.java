@@ -50,8 +50,6 @@ public class SynchronisationService extends Object {
     
     @Autowired
     private DataSource stagingDataSource;
-    @Autowired
-    private DataSource rdbDataSource;
     
     @Autowired
     private BlackboardService blackboardService;
@@ -181,19 +179,13 @@ public class SynchronisationService extends Object {
      */
     public void generateDiff(final SynchronisationRun run)
             throws SQLException {
-        final Connection source = this.getRdbDataSource().getConnection();
+        final Connection destination = this.getStagingDataSource().getConnection();
 
-        try {
-            final Connection destination = this.getStagingDataSource().getConnection();
-
-            try {                
-                this.copyStudentSetActivities(run, source, destination);
-                this.doGenerateDiff(run, destination);
-            } finally {
-                destination.close();
-            }
+        try {                
+            this.getTimetablingSynchroniseService().copyStudentSetActivities(run, destination);
+            this.doGenerateDiff(run, destination);
         } finally {
-            source.close();
+            destination.close();
         }
     }
 
@@ -493,68 +485,12 @@ public class SynchronisationService extends Object {
      */
     public void synchroniseTimetablingData()
             throws SQLException {
-        final Connection source = this.getRdbDataSource().getConnection();
+        final Connection destination = this.getStagingDataSource().getConnection();
 
         try {
-            final Connection destination = this.getStagingDataSource().getConnection();
-
-            try {
-                this.timetablingSynchroniseService.cloneModules(source, destination);
-                this.timetablingSynchroniseService.cloneActivityTypes(source, destination);
-                this.timetablingSynchroniseService.cloneActivityTemplates(source, destination);
-                this.timetablingSynchroniseService.cloneActivities(source, destination);
-                this.timetablingSynchroniseService.cloneActivityParents(source, destination);
-                this.timetablingSynchroniseService.cloneVariantJointTaughtActivities(source, destination);
-                this.timetablingSynchroniseService.cloneStudentSets(source, destination);
-            } finally {
-                destination.close();
-            }
+            this.getTimetablingSynchroniseService().synchroniseTimetablingData(destination);
         } finally {
-            source.close();
-        }
-    }
-
-    /**
-     * Copies student set/activity relationships to be synchronised to Learn,
-     * from the reporting database. This filters out variant activities as
-     * well as whole-course student sets, but does not provide filtering on
-     * courses to be mapped to Learn (from SITS).
-     */
-    private void copyStudentSetActivities(final SynchronisationRun run,
-        final Connection source, final Connection destination)
-        throws SQLException {
-        // Check the condition on this, I haven't had an opportunity to check
-        // it with real data.
-        final PreparedStatement sourceStatement = source.prepareStatement(
-            "SELECT DISTINCT A.ID ACTIVITY_ID, S.ID STUDENT_SET_ID "
-            + "FROM ACTIVITY A "
-                + "JOIN ACTIVITIES_STUDENTSET REL ON REL.ID=A.ID "
-                + "JOIN STUDENT_SET S ON REL.STUDENT_SET=S.ID "
-                + "LEFT JOIN VARIANTJTAACTS V ON V.ID=A.ID "
-            + "WHERE (V.ISVARIANTCHILD IS NULL OR V.ISVARIANTCHILD='0')"  // BRD requirement #1.3
-        );
-        try {
-            final PreparedStatement destinationStatement = destination.prepareStatement("INSERT INTO cache_enrolment "
-                + "(run_id, tt_student_set_id, tt_activity_id) "
-                + "VALUES (?, ?, ?)");
-            try {
-                
-                final ResultSet rs = sourceStatement.executeQuery();
-                try {
-                    while (rs.next()) {
-                        destinationStatement.setInt(1, run.getRunId());
-                        destinationStatement.setString(2, rs.getString("STUDENT_SET_ID"));
-                        destinationStatement.setString(3, rs.getString("ACTIVITY_ID"));
-                        destinationStatement.executeUpdate();
-                    }
-                } finally {
-                    rs.close();
-                }
-            } finally {
-                destinationStatement.close();
-            }
-        } finally {
-            sourceStatement.close();
+            destination.close();
         }
     }
 
@@ -722,7 +658,7 @@ public class SynchronisationService extends Object {
      * @return the reporting database data source.
      */
     public DataSource getRdbDataSource() {
-        return rdbDataSource;
+        return this.getTimetablingSynchroniseService().getRdbDataSource();
     }
 
     /**
@@ -753,15 +689,6 @@ public class SynchronisationService extends Object {
      */
     public void setEugexSynchroniseService(final EugexSynchroniseService newEugexSynchroniseService) {
         this.eugexSynchroniseService = newEugexSynchroniseService;
-    }
-
-    /**
-     * Sets the reporting database data source.
-     * 
-     * @param rdbDataSource the reporting database data source to set.
-     */
-    public void setRdbDataSource(DataSource rdbDataSource) {
-        this.rdbDataSource = rdbDataSource;
     }
 
     /**

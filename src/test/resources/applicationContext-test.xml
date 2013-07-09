@@ -150,14 +150,16 @@
         <property name="eugexDataSource" ref="eugexDataSource"/>
     </bean>
     
-    <bean id="timetablingSynchroniseService" class="uk.ac.ed.learn9.bb.timetabling.service.TimetablingSynchroniseService" />
+    <bean id="timetablingSynchroniseService" class="uk.ac.ed.learn9.bb.timetabling.service.TimetablingSynchroniseService">
+        <property name="rdbTablePrefix" value="" />
+        <property name="rdbDataSource" ref="rdbDataSource"/>
+    </bean>
     
     <bean id="mergedCoursesService" class="uk.ac.ed.learn9.bb.timetabling.service.MergedCoursesService" />
     
     <bean id="synchronisationService" class="uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService">
         <property name="blackboardService" ref="blackboardService"/>
         <property name="eugexSynchroniseService" ref="eugexSynchroniseService"/>
-        <property name="rdbDataSource" ref="rdbDataSource"/>
         <property name="stagingDataSource" ref="stagingDataSource"/>
         <property name="timetablingSynchroniseService" ref="timetablingSynchroniseService"/>
     </bean>

@@ -8,10 +8,11 @@ jdbc_bblfeeds.url=jdbc:oracle:thin:@dirleton.mis.ed.ac.uk:1786:bbldev
 jdbc_bblfeeds.username=bblfeeds
 jdbc_bblfeeds.password=topsecret
 
-jdbc_rdb.driverClassName=oracle.jdbc.driver.OracleDriver
-jdbc_rdb.url=jdbc:oracle:thin:@dirleton.mis.ed.ac.uk:1762:appsdev
-jdbc_rdb.username=satrdb2
+jdbc_rdb.driverClassName=com.microsoft.sqlserver.jdbc.SQLServerDriver
+jdbc_rdb.url=jdbc:sqlserver://SAT-DB-DEV:1433;databaseName=DEV1213_RDB;applicationName=LearnSync
+jdbc_rdb.username=learnuser
 jdbc_rdb.password=topsecret
+jdbc_rdb.table_prefix=RDOWNER.
 
 jdbc_eugex.driverClassName=oracle.jdbc.driver.OracleDriver
 jdbc_eugex.url=jdbc:oracle:thin:@winton.mis.ed.ac.uk:1778:hubdev

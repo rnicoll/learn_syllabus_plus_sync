@@ -12,13 +12,13 @@ import java.util.List;
 import java.util.Set;
 
 import org.junit.After;
+import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
-import static org.junit.Assert.*;
 import org.springframework.beans.BeansException;
-
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
+
 import uk.ac.ed.learn9.bb.timetabling.RdbIdSource;
 import uk.ac.ed.learn9.bb.timetabling.SequentialRdbIdSource;
 import uk.ac.ed.learn9.bb.timetabling.dao.ActivityDao;

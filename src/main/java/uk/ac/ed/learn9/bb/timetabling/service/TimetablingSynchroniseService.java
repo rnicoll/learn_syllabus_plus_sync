@@ -1,13 +1,20 @@
 package uk.ac.ed.learn9.bb.timetabling.service;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import javax.sql.DataSource;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 
 /**
  * Service for cloning data from the Timetabling reporting database (RDB)
@@ -151,6 +158,15 @@ public class TimetablingSynchroniseService extends AbstractSynchroniseService {
         {"ISVARIANTCHILD", "tt_is_variant_child"},
         {"LATESTTRANSACTION", "tt_latest_transaction"}
     };
+    
+    @Autowired
+    private DataSource rdbDataSource;
+    
+    /**
+     * String to be prefixed to RDB table names. Handles difference between
+     * references in the HSQL test database, and real databases.
+     */
+    private String rdbTablePrefix = "";
 
     /**
      * Clone activities from reporting to the local database. This copies all
@@ -172,7 +188,7 @@ public class TimetablingSynchroniseService extends AbstractSynchroniseService {
         }
 
         cloneTable(source, destination,
-                REPORTING_ACTIVITY_TABLE, STAGING_ACTIVITY_TABLE,
+                this.getRdbTablePrefix() + REPORTING_ACTIVITY_TABLE, STAGING_ACTIVITY_TABLE,
                 PRIMARY_KEY_TIMETABLING_TABLES,
                 fieldMappings);
     }
@@ -202,7 +218,7 @@ public class TimetablingSynchroniseService extends AbstractSynchroniseService {
         }
 
         cloneTable(source, destination,
-                REPORTING_ACTIVITY_PARENTS_TABLE, STAGING_ACTIVITY_PARENTS_TABLE,
+                this.getRdbTablePrefix() + REPORTING_ACTIVITY_PARENTS_TABLE, STAGING_ACTIVITY_PARENTS_TABLE,
                 primaryKeys, fieldMappings);
     }
 
@@ -225,7 +241,7 @@ public class TimetablingSynchroniseService extends AbstractSynchroniseService {
         }
 
         cloneTable(source, destination,
-                REPORTING_ACTIVITY_TEMPLATE_TABLE, STAGING_ACTIVITY_TEMPLATE_TABLE,
+                this.getRdbTablePrefix() + REPORTING_ACTIVITY_TEMPLATE_TABLE, STAGING_ACTIVITY_TEMPLATE_TABLE,
                 PRIMARY_KEY_TIMETABLING_TABLES,
                 fieldMappings);
     }
@@ -248,7 +264,7 @@ public class TimetablingSynchroniseService extends AbstractSynchroniseService {
         }
 
         cloneTable(source, destination,
-                REPORTING_ACTIVITY_TYPE_TABLE, STAGING_ACTIVITY_TYPE_TABLE,
+                this.getRdbTablePrefix() + REPORTING_ACTIVITY_TYPE_TABLE, STAGING_ACTIVITY_TYPE_TABLE,
                 PRIMARY_KEY_TIMETABLING_TABLES,
                 fieldMappings);
     }
@@ -272,7 +288,7 @@ public class TimetablingSynchroniseService extends AbstractSynchroniseService {
         }
 
         cloneTable(source, destination,
-                REPORTING_VARIANT_JTA_TABLE, STAGING_VARIANT_JTA_TABLE,
+                this.getRdbTablePrefix() + REPORTING_VARIANT_JTA_TABLE, STAGING_VARIANT_JTA_TABLE,
                 PRIMARY_KEY_TIMETABLING_TABLES,
                 fieldMappings);
     }
@@ -295,7 +311,7 @@ public class TimetablingSynchroniseService extends AbstractSynchroniseService {
         }
 
         cloneTable(source, destination,
-                REPORTING_MODULE_TABLE, STAGING_MODULE_TABLE,
+                this.getRdbTablePrefix() + REPORTING_MODULE_TABLE, STAGING_MODULE_TABLE,
                 PRIMARY_KEY_TIMETABLING_TABLES,
                 fieldMappings);
     }
@@ -319,8 +335,117 @@ public class TimetablingSynchroniseService extends AbstractSynchroniseService {
         }
 
         cloneTable(source, destination,
-                REPORTING_STUDENT_SET_TABLE, STAGING_STUDENT_SET_TABLE,
+                this.getRdbTablePrefix() + REPORTING_STUDENT_SET_TABLE, STAGING_STUDENT_SET_TABLE,
                 PRIMARY_KEY_TIMETABLING_TABLES,
                 fieldMappings);
+    }
+
+    /**
+     * Copies student set/activity relationships to be synchronised to Learn,
+     * from the reporting database. This filters out variant activities as
+     * well as whole-course student sets.
+     */
+    public void copyStudentSetActivities(final SynchronisationRun run,
+        final Connection destination)
+        throws SQLException {
+        final Connection source = this.getRdbDataSource().getConnection();
+
+        try {
+            // Check the condition on this, I haven't had an opportunity to check
+            // it with real data.
+            final PreparedStatement sourceStatement = source.prepareStatement(
+                "SELECT DISTINCT A.ID ACTIVITY_ID, S.ID STUDENT_SET_ID "
+                + "FROM " + this.getRdbTablePrefix() + "ACTIVITY A "
+                    + "JOIN " + this.getRdbTablePrefix() + "ACTIVITIES_STUDENTSET REL ON REL.ID=A.ID "
+                    + "JOIN " + this.getRdbTablePrefix() + "STUDENT_SET S ON REL.STUDENT_SET=S.ID "
+                    + "LEFT JOIN " + this.getRdbTablePrefix() + "VARIANTJTAACTS V ON V.ID=A.ID "
+                + "WHERE (V.ISVARIANTCHILD IS NULL OR V.ISVARIANTCHILD='0')"  // BRD requirement #1.3
+            );
+            try {
+                final PreparedStatement destinationStatement = destination.prepareStatement("INSERT INTO cache_enrolment "
+                    + "(run_id, tt_student_set_id, tt_activity_id) "
+                    + "VALUES (?, ?, ?)");
+                try {
+
+                    final ResultSet rs = sourceStatement.executeQuery();
+                    try {
+                        while (rs.next()) {
+                            destinationStatement.setInt(1, run.getRunId());
+                            destinationStatement.setString(2, rs.getString("STUDENT_SET_ID"));
+                            destinationStatement.setString(3, rs.getString("ACTIVITY_ID"));
+                            destinationStatement.executeUpdate();
+                        }
+                    } finally {
+                        rs.close();
+                    }
+                } finally {
+                    destinationStatement.close();
+                }
+            } finally {
+                sourceStatement.close();
+            }
+        } finally {
+            source.close();
+        }
+    }
+    
+    /**
+     * Clones data from Timetabling into the staging database. These provide a
+     * cached copy of the data to use without resorting to trying to perform
+     * in-memory joins across two distinct databases.
+     * 
+     * @throws SQLException if there was a problem accessing one of the databases.
+     */
+    public void synchroniseTimetablingData(final Connection destination)
+            throws SQLException {
+        final Connection source = this.getRdbDataSource().getConnection();
+
+        try {
+            this.cloneModules(source, destination);
+            this.cloneActivityTypes(source, destination);
+            this.cloneActivityTemplates(source, destination);
+            this.cloneActivities(source, destination);
+            this.cloneActivityParents(source, destination);
+            this.cloneVariantJointTaughtActivities(source, destination);
+        } finally {
+            source.close();
+        }
+    }
+    
+    /**
+     * Returns the reporting database data source.
+     *
+     * @return the reporting database data source.
+     */
+    public DataSource getRdbDataSource() {
+        return rdbDataSource;
+    }
+
+    /**
+     * Sets the reporting database data source.
+     * 
+     * @param rdbDataSource the reporting database data source to set.
+     */
+    public void setRdbDataSource(DataSource rdbDataSource) {
+        this.rdbDataSource = rdbDataSource;
+    }
+
+    /**
+     * Get the prefix for RDB table names. Used to handle difference between
+     * references in the HSQL test database, and real databases.
+     * 
+     * @return the prefix for RDB table names. Can be empty, but never null.
+     */
+    public String getRdbTablePrefix() {
+        return rdbTablePrefix;
+    }
+
+    /**
+     * Set the prefix for RDB table names.
+     * 
+     * @param newTablePrefix the prefix for RDB table names. Can be empty, but never null.
+     */
+    public void setRdbTablePrefix(final String newTablePrefix) {
+        this.rdbTablePrefix = newTablePrefix;
     }
 }
