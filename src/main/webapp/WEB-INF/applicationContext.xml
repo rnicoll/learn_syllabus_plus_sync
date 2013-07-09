@@ -83,6 +83,7 @@
     </bean>
     
     <bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+      <!-- Server to send mail through. -->
       <property name="host" value="mailrelay.ed.ac.uk"/>
       <!--<property name="host" value="bulkmailrelay.ucs.ed.ac.uk"/>-->
     </bean>
@@ -146,8 +147,9 @@
            -->
         <property name="sendErrorMessageTo">
             <list>
-                <!-- value>apps-tels@mlists.is.ed.ac.uk</value -->
-                <value>Ross.Nicoll@ed.ac.uk</value>
+                <!-- <value>apps-tels@mlists.is.ed.ac.uk</value> -->
+                <value>apps-deverror@lists.ed.ac.uk</value>
+                <!-- <value>apps-appsupp@mlist.is.ed.ac.uk</value> -->
             </list>
         </property>
         <!-- List of addresses to which notifications are sent after a success
@@ -156,8 +158,9 @@
            -->
         <property name="sendSuccessMessageTo">
             <list>
-                <!-- value>apps-tels@mlists.is.ed.ac.uk</value -->
-                <value>Ross.Nicoll@ed.ac.uk</value>
+                <!-- <value>apps-tels@mlists.is.ed.ac.uk</value> -->
+                <value>apps-deverror@lists.ed.ac.uk</value>
+                <!-- <value>apps-appsupp@mlist.is.ed.ac.uk</value> -->
             </list>
         </property>
     </bean>
