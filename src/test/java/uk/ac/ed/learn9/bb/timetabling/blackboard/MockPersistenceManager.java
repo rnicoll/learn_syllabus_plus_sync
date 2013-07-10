@@ -14,6 +14,13 @@ public class MockPersistenceManager {
     private GroupMembershipMockLoader groupMembershipLoader;
     private UserMockLoader userLoader;
     
+    private CourseMockPersister coursePersister;
+    private CourseCourseMockPersister courseCoursePersister;
+    private CourseMembershipMockPersister courseMembershipPersister;
+    private GroupMockPersister groupPersister;
+    private GroupMembershipMockPersister groupMembershipPersister;
+    private UserMockPersister userPersister;
+    
     private             MockPersistenceManager() {
         
     }
@@ -21,18 +28,25 @@ public class MockPersistenceManager {
     public static MockPersistenceManager getInstance() {
         final MockPersistenceManager manager = new MockPersistenceManager();
         
-        manager.initialiseLoaders();
+        manager.initialise();
         
         return manager;
     }
 
-    private void initialiseLoaders() {
+    private void initialise() {
         this.courseLoader = new CourseMockLoader(this);
         this.courseCourseLoader = new CourseCourseMockLoader(this);
         this.courseMembershipLoader = new CourseMembershipMockLoader(this);
         this.groupLoader = new GroupMockLoader(this);
         this.groupMembershipLoader = new GroupMembershipMockLoader(this);
         this.userLoader = new UserMockLoader(this);
+        
+        this.coursePersister = new CourseMockPersister(this);
+        this.courseCoursePersister = new CourseCourseMockPersister(this);
+        this.courseMembershipPersister = new CourseMembershipMockPersister(this);
+        this.groupPersister = new GroupMockPersister(this);
+        this.groupMembershipPersister = new GroupMembershipMockPersister(this);
+        this.userPersister = new UserMockPersister(this);
     }
 
     /**
@@ -69,5 +83,47 @@ public class MockPersistenceManager {
      */
     public UserMockLoader getUserLoader() {
         return userLoader;
+    }
+
+    /**
+     * @return the coursePersister
+     */
+    public CourseMockPersister getCoursePersister() {
+        return coursePersister;
+    }
+
+    /**
+     * @return the courseCoursePersister
+     */
+    public CourseCourseMockPersister getCourseCoursePersister() {
+        return courseCoursePersister;
+    }
+
+    /**
+     * @return the courseMembershipPersister
+     */
+    public CourseMembershipMockPersister getCourseMembershipPersister() {
+        return courseMembershipPersister;
+    }
+
+    /**
+     * @return the groupPersister
+     */
+    public GroupMockPersister getGroupPersister() {
+        return groupPersister;
+    }
+
+    /**
+     * @return the groupMembershipPersister
+     */
+    public GroupMembershipMockPersister getGroupMembershipPersister() {
+        return groupMembershipPersister;
+    }
+
+    /**
+     * @return the userPersister
+     */
+    public UserMockPersister getUserPersister() {
+        return userPersister;
     }
 }

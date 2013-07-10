@@ -44,6 +44,18 @@ public class CourseMembershipMockLoader implements CourseMembershipDbLoader {
         courseMemberships.add(membership);
     }
 
+    protected void removeCourseMembershipById(Id id) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    protected void removeCourseMembershipByBatchUid(String batchUid) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    protected void removeCourseMembershipByCourseId(Id id) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
     @Override
     public CourseMembership loadById(Id id) throws KeyNotFoundException, PersistenceException {
         final CourseMembership membership = this.courseMembershipsById.get(id);

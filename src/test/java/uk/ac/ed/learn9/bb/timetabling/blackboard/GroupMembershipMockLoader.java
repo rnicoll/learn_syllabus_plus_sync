@@ -56,6 +56,10 @@ public class GroupMembershipMockLoader implements GroupMembershipDbLoader {
         groupMemberships.add(membership);
     }
 
+    protected void removeGroupMembershipById(Id id) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
     @Override
     public GroupMembership loadById(Id id) throws KeyNotFoundException, PersistenceException {
         final GroupMembership membership = this.groupMembershipsById.get(id);

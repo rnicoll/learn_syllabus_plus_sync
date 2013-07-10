@@ -44,6 +44,17 @@ public class UserMockLoader implements UserDbLoader {
         this.userById.put(user.getId(), user);
         this.userByUsername.put(user.getUserName(), user);
     }
+
+    protected void removeUserById(Id id) {
+        final User user = this.userById.get(id);
+        
+        if (null == user) {
+            return;
+        }
+        
+        this.userById.remove(id);
+        this.userByUsername.remove(user.getUserName());
+    }
     
     public void setGuestUser(final User user) {
         this.guestUser = user;
