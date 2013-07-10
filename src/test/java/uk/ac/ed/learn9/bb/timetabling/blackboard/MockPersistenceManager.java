@@ -8,10 +8,11 @@ import blackboard.data.course.CourseMembership;
  */
 public class MockPersistenceManager {
     private CourseMockLoader courseLoader;
-    private GroupMockLoader groupLoader;
-    private UserMockLoader userLoader;
+    private CourseCourseMockLoader courseCourseLoader;
     private CourseMembershipMockLoader courseMembershipLoader;
+    private GroupMockLoader groupLoader;
     private GroupMembershipMockLoader groupMembershipLoader;
+    private UserMockLoader userLoader;
     
     private             MockPersistenceManager() {
         
@@ -27,6 +28,7 @@ public class MockPersistenceManager {
 
     private void initialiseLoaders() {
         this.courseLoader = new CourseMockLoader(this);
+        this.courseCourseLoader = new CourseCourseMockLoader(this);
         this.courseMembershipLoader = new CourseMembershipMockLoader(this);
         this.groupLoader = new GroupMockLoader(this);
         this.groupMembershipLoader = new GroupMembershipMockLoader(this);
@@ -40,8 +42,19 @@ public class MockPersistenceManager {
         return courseLoader;
     }
 
+    public CourseCourseMockLoader getCourseCourseLoader() {
+        return this.courseCourseLoader;
+    }
+
     public CourseMembershipMockLoader getCourseMembershipLoader() {
         return this.courseMembershipLoader;
+    }
+
+    /**
+     * @return the groupMembershipLoader
+     */
+    public GroupMembershipMockLoader getGroupMembershipLoader() {
+        return groupMembershipLoader;
     }
 
     /**
@@ -56,12 +69,5 @@ public class MockPersistenceManager {
      */
     public UserMockLoader getUserLoader() {
         return userLoader;
-    }
-
-    /**
-     * @return the groupMembershipLoader
-     */
-    public GroupMembershipMockLoader getGroupMembershipLoader() {
-        return groupMembershipLoader;
     }
 }
