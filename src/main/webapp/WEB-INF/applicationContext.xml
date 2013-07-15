@@ -88,7 +88,7 @@
       <!--<property name="host" value="bulkmailrelay.ucs.ed.ac.uk"/>-->
     </bean>
     <bean id="templateMessage" class="org.springframework.mail.SimpleMailMessage">
-      <property name="from" value="discard@ed.ac.uk"/>
+      <property name="from" value="misig@ed.ac.uk"/>
     </bean>
     
     <tx:annotation-driven transaction-manager="transactionManager" />
