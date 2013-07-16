@@ -13,7 +13,7 @@ public class Configuration extends Object implements Serializable {
     public static final int DEFAULT_CONFIGURATION_ID = 1;
     
     private int recordId;
-    private float removeThresholdPercent;
+    private Float removeThresholdPercent;
 
     public          Configuration() {
         
@@ -46,7 +46,7 @@ public class Configuration extends Object implements Serializable {
      * of the number of enrolment records in the previous run.
      */
     @Column(name="REMOVE_THRESHOLD_PERCENT", nullable=true)
-    public float getRemoveThresholdPercent() {
+    public Float getRemoveThresholdPercent() {
         return removeThresholdPercent;
     }
 
@@ -62,7 +62,7 @@ public class Configuration extends Object implements Serializable {
     /**
      * @param removeThresholdPercent the removeThresholdPercent to set
      */
-    public void setRemoveThresholdPercent(float removeThresholdPercent) {
+    public void setRemoveThresholdPercent(Float removeThresholdPercent) {
         this.removeThresholdPercent = removeThresholdPercent;
     }
 }

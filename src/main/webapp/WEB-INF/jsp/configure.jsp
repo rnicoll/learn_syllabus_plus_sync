@@ -9,6 +9,10 @@
 
 <bbNG:genericPage title="Timetabling Groups" authentication="Y" entitlement="course.content.VIEW">
 
+  <bbNG:breadcrumbBar environment="sys_admin" navItem="admin_plugin_manage">
+      <bbNG:breadcrumb><c:out value="${pageTitle}"/></bbNG:breadcrumb>
+  </bbNG:breadcrumbBar>
+
     <bbNG:pageHeader instructions="Timetabling Groups Configuration">
         <bbNG:pageTitleBar title="Timetabling Groups"/>
         <bbNG:breadcrumbBar>
@@ -19,6 +23,17 @@
     <bbNG:actionControlBar>
         <bbNG:actionButton id="run_sync" title="Run Synchronisation" primary="true" url="${runSynchronisation}" />
     </bbNG:actionControlBar>
+
+    <form method="post" action="./configure">
+      <bbNG:dataCollection>
+        <bbNG:step title="Change Threshold">
+          <bbNG:dataElement label="Max. Enrolment Removal %" isRequired="false">
+              <bbNG:textElement title="Max. Enrolment Removal %" size="100" name="removeThresholdPercent" id="removeThresholdPercent" value="${configuration.removeThresholdPercent}" isRequired="false"/>
+          </bbNG:dataElement>
+        </bbNG:step>
+        <bbNG:stepSubmit title="Save Settings" cancelUrl="/webapps/blackboard/admin/manage_plugins.jsp"/>
+      </bbNG:dataCollection>
+    </form>
     
     <bbNG:inventoryList emptyMsg="There are no synchronisation runs to display."
                         className="uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun"

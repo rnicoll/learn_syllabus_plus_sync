@@ -1,5 +1,6 @@
 package uk.ac.ed.learn9.bb.timetabling.controller;
 
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -7,10 +8,14 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.Valid;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.ModelAndView;
@@ -64,6 +69,32 @@ public class ConfigureController extends AbstractController {
         modelAndView.addObject("runs", runs);
         
         return modelAndView;
+    }
+    
+    /**
+     * Displays an audit log of when students were added/removed to/from groups
+     * for a single course.
+     * 
+     * @param request the request from the remote client.
+     * @param response the response to be returned to the remote client.
+     * @return the data model and view of it to be rendered.
+     */
+    @RequestMapping(value="/configure", method=RequestMethod.POST)
+    public ModelAndView postConfigure(final HttpServletRequest request, final HttpServletResponse response,
+        @Valid ConfigurationForm configurationForm, final BindingResult result) {
+        final Configuration configuration = this.getConfigurationDao().getDefault();
+        
+        if (result.hasErrors()) {
+            // XXX: Report errors
+        } else {
+            if (null != configurationForm.getRemoveThresholdPercent()) {
+                configuration.setRemoveThresholdPercent(configurationForm.getRemoveThresholdPercent().floatValue());
+            } else {
+                configuration.setRemoveThresholdPercent(null);
+            }
+        }
+        
+        return this.getConfigure(request, response);
     }
 
     /**
@@ -180,5 +211,29 @@ public class ConfigureController extends AbstractController {
      */
     public void setSynchronisationRunService(SynchronisationRunService synchronisationRunService) {
         this.synchronisationRunService = synchronisationRunService;
+    }
+    
+    public static class ConfigurationForm extends Object {
+        @DecimalMax("100.00")
+        @DecimalMin("0.00")
+        private BigDecimal removeThresholdPercent;
+
+        /**
+         * Get the threshold percentage of remove operations in comparison to number
+         * of records in the previous run.
+         * 
+         * @return the the threshold percentage of remove operations in comparison to
+         * number of records in the previous run.
+         */
+        public BigDecimal getRemoveThresholdPercent() {
+            return removeThresholdPercent;
+        }
+
+        /**
+         * @param removeThresholdPercent the removeThresholdPercent to set
+         */
+        public void setRemoveThresholdPercent(final BigDecimal removeThresholdPercent) {
+            this.removeThresholdPercent = removeThresholdPercent;
+        }
     }
 }

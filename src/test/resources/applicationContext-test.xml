@@ -52,6 +52,7 @@
                 <value>uk.ac.ed.learn9.bb.timetabling.data.Activity</value>
                 <value>uk.ac.ed.learn9.bb.timetabling.data.ActivityGroup</value>
                 <value>uk.ac.ed.learn9.bb.timetabling.data.ChangeResult</value>
+                <value>uk.ac.ed.learn9.bb.timetabling.data.Configuration</value>
                 <value>uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange</value>
                 <value>uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChangePart</value>
                 <value>uk.ac.ed.learn9.bb.timetabling.data.Module</value>
@@ -105,6 +106,9 @@
         <property name="sessionFactory" ref="sessionFactory"/>
     </bean>
     <bean id="activityTypeDao" class="uk.ac.ed.learn9.bb.timetabling.dao.impl.ActivityTypeDaoImpl">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+    <bean id="configurationDao" class="uk.ac.ed.learn9.bb.timetabling.dao.impl.ConfigurationDaoImpl">
         <property name="sessionFactory" ref="sessionFactory"/>
     </bean>
     <bean id="enrolmentChangeDao" class="uk.ac.ed.learn9.bb.timetabling.dao.impl.EnrolmentChangeDaoImpl">
