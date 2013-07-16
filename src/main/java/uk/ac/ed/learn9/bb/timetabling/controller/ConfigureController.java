@@ -18,8 +18,9 @@ import org.springframework.web.servlet.ModelAndView;
 import blackboard.data.ValidationException;
 import blackboard.persist.PersistenceException;
 import blackboard.platform.plugin.PlugInUtil;
-
+import uk.ac.ed.learn9.bb.timetabling.dao.ConfigurationDao;
 import uk.ac.ed.learn9.bb.timetabling.dao.SynchronisationRunDao;
+import uk.ac.ed.learn9.bb.timetabling.data.Configuration;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationRunService;
 import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService;
@@ -29,6 +30,8 @@ import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService;
  */
 @Controller
 public class ConfigureController extends AbstractController {
+    @Autowired
+    private ConfigurationDao configurationDao;
     @Autowired
     private SynchronisationRunService synchronisationRunService;
     @Autowired
@@ -49,12 +52,13 @@ public class ConfigureController extends AbstractController {
     @RequestMapping(value="/configure", method=RequestMethod.GET)
     public ModelAndView getConfigure(final HttpServletRequest request, final HttpServletResponse response) {
         final ModelAndView modelAndView = new ModelAndView("configure");
-        
+        final Configuration configuration = this.getConfigurationDao().getDefault();
         final List<SynchronisationRun> runs = new ArrayList<SynchronisationRun>();
         
         runs.addAll(this.getSynchronisationRunDao().getAll());
         Collections.sort(runs);
         
+        modelAndView.addObject("configuration", configuration);
         modelAndView.addObject("runSynchronisation", PlugInUtil.getUri(PLUGIN_VENDOR_ID,
                 PLUGIN_ID, "run"));
         modelAndView.addObject("runs", runs);
@@ -122,12 +126,10 @@ public class ConfigureController extends AbstractController {
     }
 
     /**
-     * Set the synchronisation run data access object.
-     * 
-     * @param synchronisationRunDao the synchronisation run data access object to set.
+     * @return the configurationDao
      */
-    public void setSynchronisationRunDao(SynchronisationRunDao synchronisationRunDao) {
-        this.synchronisationRunDao = synchronisationRunDao;
+    public ConfigurationDao getConfigurationDao() {
+        return configurationDao;
     }
 
     /**
@@ -155,6 +157,22 @@ public class ConfigureController extends AbstractController {
      */
     public SynchronisationRunService getSynchronisationRunService() {
         return synchronisationRunService;
+    }
+
+    /**
+     * @param configurationDao the configurationDao to set
+     */
+    public void setConfigurationDao(ConfigurationDao configurationDao) {
+        this.configurationDao = configurationDao;
+    }
+
+    /**
+     * Set the synchronisation run data access object.
+     * 
+     * @param synchronisationRunDao the synchronisation run data access object to set.
+     */
+    public void setSynchronisationRunDao(SynchronisationRunDao synchronisationRunDao) {
+        this.synchronisationRunDao = synchronisationRunDao;
     }
 
     /**

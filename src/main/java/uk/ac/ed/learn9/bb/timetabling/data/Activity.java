@@ -2,6 +2,7 @@ package uk.ac.ed.learn9.bb.timetabling.data;
 
 import java.io.Serializable;
 import java.util.List;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;

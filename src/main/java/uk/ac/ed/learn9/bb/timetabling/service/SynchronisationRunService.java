@@ -21,6 +21,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.stereotype.Service;
 
 import uk.ac.ed.learn9.bb.timetabling.dao.SynchronisationRunDao;
+import uk.ac.ed.learn9.bb.timetabling.data.Configuration;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationResult;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 
