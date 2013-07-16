@@ -32,5 +32,6 @@ DROP TABLE activity_template;
 DROP TABLE activity_type;
 DROP TABLE student_set;
 DROP TABLE yes_no;
+DROP TABLE configuration;
 
 DROP SEQUENCE SYNCHRONISATION_RUN_SEQ;

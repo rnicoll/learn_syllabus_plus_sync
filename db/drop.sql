@@ -32,6 +32,7 @@ DROP TABLE change_result;
 DROP TABLE change_type;
 DROP TABLE run_result;
 DROP TABLE yes_no;
+DROP TABLE configuration;
 
 DROP SEQUENCE activity_group_seq;
 DROP SEQUENCE enrolment_change_part_seq;

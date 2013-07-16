@@ -250,3 +250,9 @@ comment on column enrolment_change_part.change_id is 'ID for the change this is 
 comment on column enrolment_change_part.module_course_id is 'Module-course relationship that this part applies to.';
 comment on column enrolment_change_part.result_code is 'Change result code for this part.';
 comment on column enrolment_change_part.update_completed is 'Timestamp for when the change was completed, where relevant.';
+
+CREATE TABLE configuration (
+    record_id INTEGER NOT NULL,
+    remove_threshold_percent NUMBER(3,2) DEFAULT NULL,
+    CONSTRAINT "CONFIGURATION_PK" PRIMARY KEY(record_id) USING INDEX TABLESPACE SATVLE_INDEX
+) tablespace "SATVLE_DATA";
