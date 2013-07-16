@@ -24,6 +24,10 @@
         <bbNG:actionButton id="run_sync" title="Run Synchronisation" primary="true" url="${runSynchronisation}" />
     </bbNG:actionControlBar>
 
+    <c:if test="${removeThresholdError} not empty">
+    <p>${fn:escapeXml(removeThresholdError)}</p>
+    </c:if>
+    
     <form method="post" action="./configure">
       <bbNG:dataCollection>
         <bbNG:step title="Change Threshold">
@@ -34,6 +38,8 @@
         <bbNG:stepSubmit title="Save Settings" cancelUrl="/webapps/blackboard/admin/manage_plugins.jsp"/>
       </bbNG:dataCollection>
     </form>
+    
+    <hr />
     
     <bbNG:inventoryList emptyMsg="There are no synchronisation runs to display."
                         className="uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun"

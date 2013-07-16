@@ -1,5 +1,7 @@
 package uk.ac.ed.learn9.bb.timetabling.service;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -21,6 +23,8 @@ import blackboard.data.course.Group;
 import blackboard.persist.Id;
 import blackboard.persist.KeyNotFoundException;
 import blackboard.persist.PersistenceException;
+import uk.ac.ed.learn9.bb.timetabling.dao.ConfigurationDao;
+import uk.ac.ed.learn9.bb.timetabling.data.Configuration;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationResult;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 
@@ -47,6 +51,9 @@ public class SynchronisationService extends Object {
     public static final int DAYS_KEEP_ENROLMENT_CACHE = 3;
     
     private Logger log = Logger.getLogger(SynchronisationService.class);
+    
+    @Autowired
+    private ConfigurationDao configurationDao;
     
     @Autowired
     private DataSource stagingDataSource;
@@ -176,16 +183,26 @@ public class SynchronisationService extends Object {
      * for.
      * 
      * @throws SQLException if there was a problem accessing one of the databases.
+     * @throws ThesholdException if the number of changes exceeds the safety
+     * threshold values.
      */
     public void generateDiff(final SynchronisationRun run)
-            throws SQLException {
-        final Connection destination = this.getStagingDataSource().getConnection();
+            throws SQLException, ThresholdException {
+        final Connection stagingDatabase = this.getStagingDataSource().getConnection();
 
-        try {                
-            this.getTimetablingSynchroniseService().copyStudentSetActivities(run, destination);
-            this.doGenerateDiff(run, destination);
+        try {        
+            this.getTimetablingSynchroniseService().copyStudentSetActivities(run, stagingDatabase);
+            
+            stagingDatabase.setAutoCommit(false);
+            try {
+                this.doGenerateDiff(run, stagingDatabase);
+                stagingDatabase.commit();
+            } finally {
+                stagingDatabase.rollback();
+                stagingDatabase.setAutoCommit(true);
+            }
         } finally {
-            destination.close();
+            stagingDatabase.close();
         }
     }
 
@@ -370,6 +387,44 @@ public class SynchronisationService extends Object {
             stagingDatabase.close();
         }
     }
+
+    /**
+     * Get the number of enrolments from a synchronisation run.
+     * 
+     * @param stagingDatabase a connection to the staging database.
+     * @param runId the ID of the run to get a count for. Null is allowed here,
+     * in which case 0 is always returned.
+     * @return the number of enrolments.
+     * @throws SQLException
+     */
+    private int getEnrolmentCount(final Connection stagingDatabase,
+            final Integer runId)
+        throws SQLException {
+        // Handle the null case (first run)
+        if (null == runId) {
+            return 0;
+        }
+        
+        final PreparedStatement statement = stagingDatabase.prepareStatement(
+            "SELECT COUNT(C.CHANGE_ID) CHANGES FROM ENROLMENT_CHANGE C WHERE C.RUN_ID=?"
+        );
+        try {
+            statement.setInt(1, runId);
+            
+            final ResultSet rs = statement.executeQuery();
+            try {
+                if (rs.next()) {
+                    return rs.getInt("CHANGES");
+                } else {
+                    return 0;
+                }
+            } finally {
+                rs.close();
+            }
+        } finally {
+            statement.close();
+        }
+    }
     
     /**
      * Executes a synchronisation run.
@@ -383,7 +438,7 @@ public class SynchronisationService extends Object {
      * written into Learn.
      */
     public void runSynchronisation(final SynchronisationRun run)
-            throws SQLException, PersistenceException, ValidationException {
+            throws SQLException, PersistenceException, ThresholdException, ValidationException {
         assert null != this.getMergedCoursesService();
         
         this.synchroniseTimetablingData();
@@ -502,24 +557,54 @@ public class SynchronisationService extends Object {
      * @param stagingDatabase a connection to the staging database.
      * 
      * @throws SQLException if there was a problem accessing the database.
+     * @throws ThesholdException if the number of changes exceeds the safety
+     * threshold values.
      */
     protected void doGenerateDiff(final SynchronisationRun run, final Connection stagingDatabase)
-        throws SQLException {
-        // Two views exist in the database to determine added and removed enrolments,
-        // we only have to insert a copy into the relevant table so we can track
-        // outcomes.
+        throws SQLException, ThresholdException {
+        final Configuration configuration = this.getConfigurationDao().getDefault();
+        final Integer changeThreshold;
+
+        if (null != configuration.getRemoveThresholdPercent()) {
+            final double existingEnrolmentCount
+                = this.getEnrolmentCount(stagingDatabase, run.getPreviousRunId());
+            double temp = existingEnrolmentCount * configuration.getRemoveThresholdPercent() / 100.0;
+
+            changeThreshold = (int)Math.round(temp);
+            assert changeThreshold >= 0;
+        } else {
+            changeThreshold = null;
+        }
         
-        PreparedStatement insertStatement = stagingDatabase.prepareStatement(
+        PreparedStatement insertStatement;
+        final int removeChanges;
+        
+        insertStatement = stagingDatabase.prepareStatement(
             "INSERT INTO enrolment_change "
                 + "(run_id, change_type, tt_student_set_id, tt_activity_id) "
-                + "(SELECT a.run_id, a.change_type, a.tt_student_set_id, a.tt_activity_id "
-                    + "FROM added_enrolment_vw a WHERE a.run_id=?) "
-                + "UNION (SELECT r.run_id, r.tt_student_set_id, r.tt_activity_id, r.change_type "
-		+ "FROM removed_enrolment_vw r  WHERE r.run_id=?)"
+                + "(SELECT r.run_id, r.tt_student_set_id, r.tt_activity_id, r.change_type "
+                    + "FROM removed_enrolment_vw r  WHERE r.run_id=?)"
         );
         try {
             insertStatement.setInt(1, run.getRunId());
-            insertStatement.setInt(2, run.getRunId());
+            removeChanges = insertStatement.executeUpdate();
+        } finally {
+            insertStatement.close();
+        }
+
+        if (null != changeThreshold
+            && removeChanges > changeThreshold) {
+            throw new ThresholdException("Threshold for number of removed enrolments exceeded.");
+        }
+
+        insertStatement = stagingDatabase.prepareStatement(
+            "INSERT INTO enrolment_change "
+                + "(run_id, change_type, tt_student_set_id, tt_activity_id) "
+                + "(SELECT a.run_id, a.change_type, a.tt_student_set_id, a.tt_activity_id "
+                    + "FROM added_enrolment_vw a WHERE a.run_id=?)"
+        );
+        try {
+            insertStatement.setInt(1, run.getRunId());
             insertStatement.executeUpdate();
         } finally {
             insertStatement.close();
@@ -626,6 +711,13 @@ public class SynchronisationService extends Object {
     }
 
     /**
+     * @return the configurationDao
+     */
+    public ConfigurationDao getConfigurationDao() {
+        return configurationDao;
+    }
+
+    /**
      * Get the concurrency management service.
      * 
      * @return the concurrency management service.
@@ -675,6 +767,13 @@ public class SynchronisationService extends Object {
      */
     public void setTimetablingSynchroniseService(TimetablingSynchroniseService cloneService) {
         this.timetablingSynchroniseService = cloneService;
+    }
+
+    /**
+     * @param configurationDao the configurationDao to set
+     */
+    public void setConfigurationDao(ConfigurationDao configurationDao) {
+        this.configurationDao = configurationDao;
     }
 
     /**

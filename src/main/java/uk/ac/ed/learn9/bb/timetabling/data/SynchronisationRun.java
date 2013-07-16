@@ -8,6 +8,9 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Id;
+import javax.persistence.PrimaryKeyJoinColumn;
+import javax.persistence.SecondaryTables;
+import javax.persistence.SecondaryTable;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
@@ -17,9 +20,14 @@ import javax.persistence.TemporalType;
  */
 @Entity
 @Table(name="synchronisation_run")
+@SecondaryTables({
+    @SecondaryTable(name="synchronisation_run_prev", pkJoinColumns={
+        @PrimaryKeyJoinColumn(name="run_id", referencedColumnName="run_id") })
+})
 public class SynchronisationRun extends Object implements Comparable<SynchronisationRun>, Serializable {
     
     private int runId;
+    private Integer previousRunId;
     private Date startTime;
     private Date cacheCopyCompleted;
     private Date diffCompleted;
@@ -115,6 +123,14 @@ public class SynchronisationRun extends Object implements Comparable<Synchronisa
     }
 
     /**
+     * @return the previousRunId
+     */
+    @Column(name="previous_run_id", table="synchronisation_run_prev", nullable=true)
+    public Integer getPreviousRunId() {
+        return previousRunId;
+    }
+
+    /**
      * @return the result
      */
     @Column(name="result_code")
@@ -142,6 +158,13 @@ public class SynchronisationRun extends Object implements Comparable<Synchronisa
      */
     public void setEndTime(Date endTime) {
         this.endTime = endTime;
+    }
+
+    /**
+     * @param previousRunId the previousRunId to set
+     */
+    public void setPreviousRunId(final Integer previousRunId) {
+        this.previousRunId = previousRunId;
     }
 
     /**

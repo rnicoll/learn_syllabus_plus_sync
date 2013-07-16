@@ -8,8 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ed.learn9.bb.timetabling.dao.ConfigurationDao;
 import uk.ac.ed.learn9.bb.timetabling.data.Configuration;
 
-
-@Transactional
 @Scope("singleton")
 @Component("configurationDao")
 public class ConfigurationDaoImpl extends HibernateDaoSupport implements ConfigurationDao {

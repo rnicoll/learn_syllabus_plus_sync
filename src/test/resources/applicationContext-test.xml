@@ -163,6 +163,7 @@
     
     <bean id="synchronisationService" class="uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService">
         <property name="blackboardService" ref="blackboardService"/>
+        <property name="configurationDao" ref="configurationDao"/>
         <property name="eugexSynchroniseService" ref="eugexSynchroniseService"/>
         <property name="stagingDataSource" ref="stagingDataSource"/>
         <property name="timetablingSynchroniseService" ref="timetablingSynchroniseService"/>

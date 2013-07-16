@@ -8,13 +8,14 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import javax.validation.constraints.DecimalMax;
 import javax.validation.constraints.DecimalMin;
-import javax.validation.Valid;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -57,17 +58,7 @@ public class ConfigureController extends AbstractController {
     @RequestMapping(value="/configure", method=RequestMethod.GET)
     public ModelAndView getConfigure(final HttpServletRequest request, final HttpServletResponse response) {
         final ModelAndView modelAndView = new ModelAndView("configure");
-        final Configuration configuration = this.getConfigurationDao().getDefault();
-        final List<SynchronisationRun> runs = new ArrayList<SynchronisationRun>();
-        
-        runs.addAll(this.getSynchronisationRunDao().getAll());
-        Collections.sort(runs);
-        
-        modelAndView.addObject("configuration", configuration);
-        modelAndView.addObject("runSynchronisation", PlugInUtil.getUri(PLUGIN_VENDOR_ID,
-                PLUGIN_ID, "run"));
-        modelAndView.addObject("runs", runs);
-        
+        this.doGetConfigure(modelAndView);
         return modelAndView;
     }
     
@@ -80,13 +71,21 @@ public class ConfigureController extends AbstractController {
      * @return the data model and view of it to be rendered.
      */
     @RequestMapping(value="/configure", method=RequestMethod.POST)
+    @Transactional
     public ModelAndView postConfigure(final HttpServletRequest request, final HttpServletResponse response,
         @Valid ConfigurationForm configurationForm, final BindingResult result) {
+        final ModelAndView modelAndView = new ModelAndView("configure");
         final Configuration configuration = this.getConfigurationDao().getDefault();
         
+        log.debug("postConfigure() called");
+        
         if (result.hasErrors()) {
-            // XXX: Report errors
+            log.debug("Result has errors");
+            modelAndView.addObject("removeThresholdError",
+                result.getFieldError("removeThresholdPercent").getDefaultMessage());
         } else {
+            log.debug("Setting percentage on configuration to "
+                + configurationForm.getRemoveThresholdPercent());
             if (null != configurationForm.getRemoveThresholdPercent()) {
                 configuration.setRemoveThresholdPercent(configurationForm.getRemoveThresholdPercent().floatValue());
             } else {
@@ -94,7 +93,9 @@ public class ConfigureController extends AbstractController {
             }
         }
         
-        return this.getConfigure(request, response);
+        this.doGetConfigure(modelAndView);
+        
+        return modelAndView;
     }
 
     /**
@@ -211,6 +212,19 @@ public class ConfigureController extends AbstractController {
      */
     public void setSynchronisationRunService(SynchronisationRunService synchronisationRunService) {
         this.synchronisationRunService = synchronisationRunService;
+    }
+
+    private void doGetConfigure(final ModelAndView modelAndView) {
+        final Configuration configuration = this.getConfigurationDao().getDefault();
+        final List<SynchronisationRun> runs = new ArrayList<SynchronisationRun>();
+        
+        runs.addAll(this.getSynchronisationRunDao().getAll());
+        Collections.sort(runs);
+        
+        modelAndView.addObject("configuration", configuration);
+        modelAndView.addObject("runSynchronisation", PlugInUtil.getUri(PLUGIN_VENDOR_ID,
+                PLUGIN_ID, "run"));
+        modelAndView.addObject("runs", runs);
     }
     
     public static class ConfigurationForm extends Object {

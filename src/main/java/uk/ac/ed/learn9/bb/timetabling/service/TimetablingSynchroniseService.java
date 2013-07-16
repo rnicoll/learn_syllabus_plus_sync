@@ -344,10 +344,12 @@ public class TimetablingSynchroniseService extends AbstractSynchroniseService {
      * Copies student set/activity relationships to be synchronised to Learn,
      * from the reporting database. This filters out variant activities as
      * well as whole-course student sets.
+     * 
+     * @throws SQLException if there was a problem accessing one of the databases.
      */
     public void copyStudentSetActivities(final SynchronisationRun run,
         final Connection destination)
-        throws SQLException {
+        throws SQLException, ThresholdException {
         final Connection source = this.getRdbDataSource().getConnection();
 
         try {

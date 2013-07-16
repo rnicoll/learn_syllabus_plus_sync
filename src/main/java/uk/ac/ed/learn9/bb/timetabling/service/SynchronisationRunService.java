@@ -100,6 +100,22 @@ public class SynchronisationRunService {
      */
     public boolean handleAbandonedOutcome(final Connection stagingDatabase, final SynchronisationRun run, final Timestamp now)
             throws SQLException {
+        return this.handleAbandonedOutcome(stagingDatabase, run.getRunId(), now);
+    }
+    
+    /**
+     * Marks a session as abandoned.
+     * 
+     * @param stagingDatabase a connection to the staging database.
+     * @param now the current time.
+     * @param runId the ID of the session to mark abandoned.
+     * @return whether the change was written out successfully. Failure typically
+     * indicates the session has already finished.
+     * @throws SQLException if there was a problem communicating with the staging
+     * database.
+     */
+    private boolean handleAbandonedOutcome(final Connection stagingDatabase, final int runId, final Timestamp now)
+            throws SQLException {
         final PreparedStatement statement = stagingDatabase.prepareStatement(
             "UPDATE synchronisation_run "
                 + "SET end_time=?, result_code=? "
@@ -110,7 +126,7 @@ public class SynchronisationRunService {
             
             statement.setTimestamp(paramIdx++, now);
             statement.setString(paramIdx++, SynchronisationResult.ABANDONED.name());
-            statement.setInt(paramIdx++, run.getRunId());
+            statement.setInt(paramIdx++, runId);
             return statement.executeUpdate() > 0;
         } finally {
             statement.close();
@@ -506,22 +522,21 @@ public class SynchronisationRunService {
             throws SynchronisationAlreadyInProgressException, SQLException {
         final int runId;
         final Timestamp now = new Timestamp(System.currentTimeMillis());
-        final SynchronisationRun run;
         final Connection stagingDatabase = this.getStagingDataSource().getConnection();
         
         try {
             runId = this.getNextId(stagingDatabase);
             
             insertRunRecord(stagingDatabase, runId, now);
-            run = this.getSynchronisationRunDao().getRun(runId);
             
             stagingDatabase.setAutoCommit(false);
             try {
                 assignPreviousRun(stagingDatabase, runId);
+                stagingDatabase.commit();
             } catch(SynchronisationAlreadyInProgressException already) {
                 // Roll back the assignment of a previous run.
                 stagingDatabase.rollback();
-                this.handleAbandonedOutcome(stagingDatabase, run, now);
+                this.handleAbandonedOutcome(stagingDatabase, runId, now);
                 throw already;
             } finally {
                 // Rollback any uncomitted changes in case of a serious
@@ -532,7 +547,7 @@ public class SynchronisationRunService {
             stagingDatabase.close();
         }
         
-        return run;
+        return this.getSynchronisationRunDao().getRun(runId);
     }
     
     /**

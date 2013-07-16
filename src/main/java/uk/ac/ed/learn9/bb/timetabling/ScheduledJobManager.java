@@ -18,6 +18,7 @@ import blackboard.persist.PersistenceException;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationRunService;
 import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService;
+import uk.ac.ed.learn9.bb.timetabling.service.ThresholdException;
 
 /**
  * Application life-cycle listener used to start the scheduled synchronisation
@@ -208,6 +209,11 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
                 } catch(SQLException e) {
                     concurrencyService.handleErrorOutcome(run, e);
                     log.error("Database error while synchronising groups from Timetabling.", e);
+                } catch(ThresholdException e) {
+                    // XXX: E-mail TEL
+                    
+                    concurrencyService.handleErrorOutcome(run, e);
+                    log.error("Enrolment change threshold exceeded.", e);
                 } catch(ValidationException e) {
                     concurrencyService.handleErrorOutcome(run, e);
                     log.error("Error validating entities to be persisted in Learn.", e);
