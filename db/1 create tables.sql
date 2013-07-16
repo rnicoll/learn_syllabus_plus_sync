@@ -256,3 +256,5 @@ CREATE TABLE configuration (
     remove_threshold_percent NUMBER(3,2) DEFAULT NULL,
     CONSTRAINT "CONFIGURATION_PK" PRIMARY KEY(record_id) USING INDEX TABLESPACE SATVLE_INDEX
 ) tablespace "SATVLE_DATA";
+comment on column configuration.record_id is 'Primary key for configuration data.';
+comment on column configuration.remove_threshold_percent is 'Maximum number of removals to perform in a single update, as a percentage of records that were present in the previous day';
