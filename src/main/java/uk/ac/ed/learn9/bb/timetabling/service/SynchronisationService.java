@@ -576,21 +576,10 @@ public class SynchronisationService extends Object {
             changeThresholdFromPercent = null;
         }
         
-        PreparedStatement insertStatement;
-        final int removeChanges;
+        final int removeChanges = doGenerateDiffRemove(stagingDatabase, run);
         
-        insertStatement = stagingDatabase.prepareStatement(
-            "INSERT INTO enrolment_change "
-                + "(run_id, change_type, tt_student_set_id, tt_activity_id) "
-                + "(SELECT r.run_id, r.tt_student_set_id, r.tt_activity_id, r.change_type "
-                    + "FROM removed_enrolment_vw r  WHERE r.run_id=?)"
-        );
-        try {
-            insertStatement.setInt(1, run.getRunId());
-            removeChanges = insertStatement.executeUpdate();
-        } finally {
-            insertStatement.close();
-        }
+        log.info("Remove count: "
+            + removeChanges);
         
         if (null != configuration.getRemoveThresholdCount()
             && removeChanges > configuration.getRemoveThresholdCount()) {
@@ -601,22 +590,13 @@ public class SynchronisationService extends Object {
             && removeChanges > changeThresholdFromPercent) {
             throw new ThresholdException("Threshold for number of removed enrolments (by percentage) exceeded.");
         }
-
-        insertStatement = stagingDatabase.prepareStatement(
-            "INSERT INTO enrolment_change "
-                + "(run_id, change_type, tt_student_set_id, tt_activity_id) "
-                + "(SELECT a.run_id, a.change_type, a.tt_student_set_id, a.tt_activity_id "
-                    + "FROM added_enrolment_vw a WHERE a.run_id=?)"
-        );
-        try {
-            insertStatement.setInt(1, run.getRunId());
-            insertStatement.executeUpdate();
-        } finally {
-            insertStatement.close();
-        }
+        
+        final int addChanges = doGenerateDiffAdd(stagingDatabase, run);
+        log.info("Add count: "
+            + addChanges);
         
         // Generate the individual change parts
-        insertStatement = stagingDatabase.prepareStatement(
+        final PreparedStatement insertStatement = stagingDatabase.prepareStatement(
             "INSERT INTO enrolment_change_part "
                 + "(change_id, module_course_id) "
                 + "(SELECT c.change_id, mc.module_course_id "
@@ -629,6 +609,38 @@ public class SynchronisationService extends Object {
         try {
             insertStatement.setInt(1, run.getRunId());
             insertStatement.executeUpdate();
+        } finally {
+            insertStatement.close();
+        }
+    }
+
+    private int doGenerateDiffAdd(final Connection stagingDatabase, final SynchronisationRun run)
+            throws SQLException {
+        final PreparedStatement insertStatement = stagingDatabase.prepareStatement(
+            "INSERT INTO enrolment_change "
+                + "(run_id, change_type, tt_student_set_id, tt_activity_id) "
+                + "(SELECT a.run_id, a.change_type, a.tt_student_set_id, a.tt_activity_id "
+                    + "FROM added_enrolment_vw a WHERE a.run_id=?)"
+        );
+        try {
+            insertStatement.setInt(1, run.getRunId());
+            return insertStatement.executeUpdate();
+        } finally {
+            insertStatement.close();
+        }
+    }
+
+    private int doGenerateDiffRemove(final Connection stagingDatabase, final SynchronisationRun run)
+        throws SQLException {
+        final PreparedStatement insertStatement = stagingDatabase.prepareStatement(
+            "INSERT INTO enrolment_change "
+                + "(run_id, change_type, tt_student_set_id, tt_activity_id) "
+                + "(SELECT r.run_id, r.tt_student_set_id, r.tt_activity_id, r.change_type "
+                    + "FROM removed_enrolment_vw r  WHERE r.run_id=?)"
+        );
+        try {
+            insertStatement.setInt(1, run.getRunId());
+            return insertStatement.executeUpdate();
         } finally {
             insertStatement.close();
         }
