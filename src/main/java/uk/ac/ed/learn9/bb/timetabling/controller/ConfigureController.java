@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import javax.validation.constraints.DecimalMax;
 import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.Min;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,20 +78,18 @@ public class ConfigureController extends AbstractController {
         final ModelAndView modelAndView = new ModelAndView("configure");
         final Configuration configuration = this.getConfigurationDao().getDefault();
         
-        log.debug("postConfigure() called");
+        /* Important: Note that currently only the threshold count can be set.
+         * This is intentional, and the percentage code is present for future
+         * expansion.
+         */
         
         if (result.hasErrors()) {
             log.debug("Result has errors");
             modelAndView.addObject("removeThresholdError",
-                result.getFieldError("removeThresholdPercent").getDefaultMessage());
+                result.getFieldError("removeThresholdCount").getDefaultMessage());
         } else {
-            log.debug("Setting percentage on configuration to "
-                + configurationForm.getRemoveThresholdPercent());
-            if (null != configurationForm.getRemoveThresholdPercent()) {
-                configuration.setRemoveThresholdPercent(configurationForm.getRemoveThresholdPercent().floatValue());
-            } else {
-                configuration.setRemoveThresholdPercent(null);
-            }
+            configuration.setRemoveThresholdPercent(configurationForm.getRemoveThresholdPercent());
+            configuration.setRemoveThresholdCount(configurationForm.getRemoveThresholdCount());
         }
         
         this.doGetConfigure(modelAndView);
@@ -231,6 +230,18 @@ public class ConfigureController extends AbstractController {
         @DecimalMax("100.00")
         @DecimalMin("0.00")
         private BigDecimal removeThresholdPercent;
+        
+        @Min(0)
+        private Integer removeThresholdCount;
+
+        /**
+         * Get the threshold for remove operations in a single run.
+         * 
+         * @return the threshold for remove operations in a single run.
+         */
+        public Integer getRemoveThresholdCount() {
+            return removeThresholdCount;
+        }
 
         /**
          * Get the threshold percentage of remove operations in comparison to number
@@ -244,7 +255,21 @@ public class ConfigureController extends AbstractController {
         }
 
         /**
-         * @param removeThresholdPercent the removeThresholdPercent to set
+         * Set the threshold for remove operations in a single run.
+         * 
+         * @param removeThresholdCount the threshold for remove operations in a
+         * single run.
+         */
+        public void setRemoveThresholdCount(Integer removeThresholdCount) {
+            this.removeThresholdCount = removeThresholdCount;
+        }
+
+        /**
+         * Set the threshold percentage of remove operations in comparison to number
+         * of records in the previous run.
+         * 
+         * @param removeThresholdPercent the the threshold percentage of remove
+         * operations in comparison to number of records in the previous run.
          */
         public void setRemoveThresholdPercent(final BigDecimal removeThresholdPercent) {
             this.removeThresholdPercent = removeThresholdPercent;

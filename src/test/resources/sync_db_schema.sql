@@ -177,10 +177,9 @@ CREATE TABLE enrolment_change_part (
 CREATE TABLE configuration (
     record_id INTEGER NOT NULL,
     remove_threshold_percent DECIMAL(3,2) DEFAULT NULL,
+    remove_threshold_count INTEGER DEFAULT NULL,
     CONSTRAINT "CONFIGURATION_PK" PRIMARY KEY(record_id)
 );
-
-
 
 CREATE VIEW template_set_size_vw AS
     (SELECT t.tt_template_id, COUNT(b.tt_activity_id) AS set_size
@@ -337,4 +336,4 @@ INSERT INTO run_result (result_code, result_label)
 INSERT INTO run_result (result_code, result_label)
   VALUES ('ABANDONED', 'Synchronisation abadoned due to concurrent process.');
 
-INSERT INTO CONFIGURATION (RECORD_ID, REMOVE_THRESHOLD_PERCENT) VALUES ('1', '1.5');
+INSERT INTO CONFIGURATION (RECORD_ID, REMOVE_THRESHOLD_COUNT) VALUES ('1', '2000');

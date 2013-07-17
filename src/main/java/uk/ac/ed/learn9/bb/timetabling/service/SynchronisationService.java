@@ -563,17 +563,17 @@ public class SynchronisationService extends Object {
     protected void doGenerateDiff(final SynchronisationRun run, final Connection stagingDatabase)
         throws SQLException, ThresholdException {
         final Configuration configuration = this.getConfigurationDao().getDefault();
-        final Integer changeThreshold;
+        final Integer changeThresholdFromPercent;
 
         if (null != configuration.getRemoveThresholdPercent()) {
             final double existingEnrolmentCount
                 = this.getEnrolmentCount(stagingDatabase, run.getPreviousRunId());
             double temp = existingEnrolmentCount * configuration.getRemoveThresholdPercent() / 100.0;
 
-            changeThreshold = (int)Math.round(temp);
-            assert changeThreshold >= 0;
+            changeThresholdFromPercent = (int)Math.round(temp);
+            assert changeThresholdFromPercent >= 0;
         } else {
-            changeThreshold = null;
+            changeThresholdFromPercent = null;
         }
         
         PreparedStatement insertStatement;
@@ -591,10 +591,15 @@ public class SynchronisationService extends Object {
         } finally {
             insertStatement.close();
         }
+        
+        if (null != configuration.getRemoveThresholdCount()
+            && removeChanges > configuration.getRemoveThresholdCount()) {
+            throw new ThresholdException("Threshold for number of removed enrolments (as an absolute number) exceeded.");
+        }
 
-        if (null != changeThreshold
-            && removeChanges > changeThreshold) {
-            throw new ThresholdException("Threshold for number of removed enrolments exceeded.");
+        if (null != changeThresholdFromPercent
+            && removeChanges > changeThresholdFromPercent) {
+            throw new ThresholdException("Threshold for number of removed enrolments (by percentage) exceeded.");
         }
 
         insertStatement = stagingDatabase.prepareStatement(

@@ -31,8 +31,11 @@
     <form method="post" action="./configure">
       <bbNG:dataCollection>
         <bbNG:step title="Change Threshold">
-          <bbNG:dataElement label="Max. Enrolment Removal %" isRequired="false">
-              <bbNG:textElement title="Max. Enrolment Removal %" size="100" name="removeThresholdPercent" id="removeThresholdPercent" value="${configuration.removeThresholdPercent}" isRequired="false"/>
+          <%-- Note that we intentionally do not allow setting of percentage
+                threshold currently. This functionality is present for future
+                expansion. --%>
+          <bbNG:dataElement label="Max. Enrolment Removal" isRequired="false">
+              <bbNG:textElement title="Max. Enrolment Removal" size="100" name="removeThresholdCount" id="removeThresholdCount" value="${configuration.removeThresholdCount}" isRequired="false"/>
           </bbNG:dataElement>
         </bbNG:step>
         <bbNG:stepSubmit title="Save Settings" cancelUrl="/webapps/blackboard/admin/manage_plugins.jsp"/>
