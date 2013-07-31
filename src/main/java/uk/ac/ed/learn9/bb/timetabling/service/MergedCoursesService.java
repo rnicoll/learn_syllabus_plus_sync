@@ -24,7 +24,7 @@ import uk.ac.ed.learn9.bb.timetabling.data.LearnCourseCode;
  * Service for communicating with the "merged courses" database.
  */
 @Service
-public class MergedCoursesService extends AbstractSynchroniseService {
+public class MergedCoursesService {
     private static final Logger logger = Logger.getLogger(BlackboardService.class);
     
     @Autowired
@@ -111,40 +111,43 @@ public class MergedCoursesService extends AbstractSynchroniseService {
      */
     private void synchroniseMergedCourses(final Connection stagingDatabase, final Connection bblFeedsDatabase)
             throws SQLException {
-        final SortedMap<String, String> fieldMappings = new TreeMap<String, String>(){{
-            put("source_course_code", "learn_source_course_code");
-            put("target_course_code", "learn_target_course_code");
-        }};
-        final SortedSet<String> primaryKeyFields = new TreeSet<String>(){{
-            addAll(fieldMappings.keySet());
-        }};
+        // For simplicity we empty the table then re-insert all of the data.
         
         stagingDatabase.setAutoCommit(false);
         try {
+            final PreparedStatement deleteStatement = stagingDatabase.prepareStatement("DELETE FROM learn_merged_course");
+            
+            // Clear the databse out
+            try {
+                deleteStatement.executeUpdate();
+            } finally {
+                deleteStatement.close();
+            }
             final PreparedStatement sourceStatement = bblFeedsDatabase.prepareStatement(
                 "SELECT SOURCECOURSEID || SOURCEINSTANCE source_course_code, "
                     + "TARGETCOURSEID || TARGETINSTANCE target_course_code "
                     + "FROM WDF_SHAREDCOURSEINSTANCE "
                     + "WHERE ISERROR='0' "
+                        + "AND SOURCEINSTANCE IS NOT NULL "
+                        + "AND TARGETINSTANCE IS NOT NULL "
                         + "AND COURSESOURCEID='EUCLID' "
                         + "AND TARGETSOURCEID='SYSTEM' "
                     + "ORDER BY SOURCECOURSEID || SOURCEINSTANCE"
             );
             try {
                 final PreparedStatement destinationStatement = stagingDatabase.prepareStatement(
-                    "SELECT learn_source_course_code, learn_target_course_code "
-                        + "FROM learn_merged_course "
-                        + "ORDER BY learn_source_course_code, learn_target_course_code"
+                    "INSERT INTO learn_merged_course (learn_source_course_code, learn_target_course_code) "
+                        + "VALUES (?, ?)"
                 );
                 try {
                     final ResultSet sourceRs = sourceStatement.executeQuery();
                     try {
-                        final ResultSet destinationRs = destinationStatement.executeQuery();
-                        try {
-                            this.cloneResultSet("learn_merged_course", sourceRs, destinationRs,
-                                primaryKeyFields, fieldMappings, Mode.INSERT_UPDATE);
-                        } finally {
-                            destinationRs.close();
+                        while (sourceRs.next()) {
+                            int paramIdx = 1;
+                            
+                            destinationStatement.setString(paramIdx++, sourceRs.getString("source_course_code"));
+                            destinationStatement.setString(paramIdx++, sourceRs.getString("target_course_code"));
+                            destinationStatement.executeUpdate();
                         }
                     } finally {
                         sourceRs.close();
@@ -155,6 +158,7 @@ public class MergedCoursesService extends AbstractSynchroniseService {
             } finally {
                 sourceStatement.close();
             }
+            
             stagingDatabase.commit();
         } finally {
             // Roll back any uncommitted changes, then set autocommit on again.
