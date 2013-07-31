@@ -71,8 +71,7 @@ CREATE TABLE activity_group (
 
 CREATE TABLE learn_merged_course (
   learn_source_course_code VARCHAR(40) NOT NULL,
-  learn_target_course_code VARCHAR(40) NOT NULL,
-  PRIMARY KEY (learn_source_course_code, learn_target_course_code)
+  learn_target_course_code VARCHAR(40) NOT NULL
 );
 
 CREATE TABLE activity_parents (

@@ -70,8 +70,7 @@ comment on column module_course.learn_course_available is 'Yes/No indicator for 
 
 CREATE TABLE learn_merged_course (
   learn_source_course_code VARCHAR2(40) NOT NULL,
-  learn_target_course_code VARCHAR2(40) NOT NULL,
-  constraint "LEARN_MERGED_COURSE_PK" PRIMARY KEY (learn_source_course_code, learn_target_course_code) using index tablespace SATVLE_INDEX
+  learn_target_course_code VARCHAR2(40) NOT NULL
 ) tablespace "SATVLE_DATA";
 comment on column learn_merged_course.learn_source_course_code is 'Course code for the source course in Learn that enrolments are merged from.';
 comment on column learn_merged_course.learn_target_course_code is 'Course code for the target course in Learn that enrolments are merged into.';
