@@ -8,13 +8,22 @@ public enum SynchronisationResult {
     /** Indicates at the synchronisation run was abandoned without any
      * changes made, typically because another run was already in progress.
      */
-    ABANDONED, /**
+    ABANDONED,
+    /**
      * Indicates there was an unrecoverable error while performing the
      * synchronisation process, such as a database link failure.
-     */ FATAL, /**
+     */
+    FATAL,
+    /**
      * Indicates that the synchronisation run completed successfully.
-     */ SUCCESS, /**
-     * Indicates that the synchronisation run appears to have timed out.
-     */ TIMEOUT
-    
+     */
+    SUCCESS,
+    /**
+     * Indicates that the safety threshold on changes was exceeded.
+     */
+    THRESHOLD_EXCEEDED,
+     /**
+      * Indicates that the synchronisation run appears to have timed out.
+      */
+    TIMEOUT
 }

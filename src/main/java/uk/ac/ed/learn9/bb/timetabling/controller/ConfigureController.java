@@ -31,6 +31,7 @@ import uk.ac.ed.learn9.bb.timetabling.data.Configuration;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationRunService;
 import uk.ac.ed.learn9.bb.timetabling.service.SynchronisationService;
+import uk.ac.ed.learn9.bb.timetabling.service.ThresholdException;
 
 /**
  * Unused controller that could be used for a settings page if needed later.
@@ -132,6 +133,13 @@ public class ConfigureController extends AbstractController {
             public void run() {
                 try {
                     service.runSynchronisation(run);
+                } catch(ThresholdException e) {
+                    try {
+                        synchronisationRunService.handleThresholdExceededOutcome(run, e);
+                    } catch(SQLException logError) {
+                        // Give up
+                    }
+                    log.warn("Enrolment change threshold exceeded.", e);
                 } catch(Exception e) {
                     try {
                         synchronisationRunService.handleErrorOutcome(run, e);

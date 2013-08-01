@@ -189,33 +189,32 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
             log.info("Running Learn/Timetabling synchronisation.");
             
             try {
-                final SynchronisationRunService concurrencyService = ScheduledJobManager.this.getConcurrencyService();
+                final SynchronisationRunService synchronisationRunService
+                        = ScheduledJobManager.this.getConcurrencyService();
                 
-                if (null == concurrencyService) {
+                if (null == synchronisationRunService) {
                     throw new IllegalStateException("Concurrency service has not been wired in.");
                 }
             
-                final SynchronisationRun run = concurrencyService.startNewRun();
+                final SynchronisationRun run = synchronisationRunService.startNewRun();
                 final SynchronisationService synchronisationService = ScheduledJobManager.this.getSynchronisationService();
                 
                 try {
                     synchronisationService.runSynchronisation(run);
                 } catch(PersistenceException e) {
-                    concurrencyService.handleErrorOutcome(run, e);
+                    synchronisationRunService.handleErrorOutcome(run, e);
                     log.error("Error while persisting/loading entities in Learn.", e);
                 } catch(RuntimeException e) {
-                    concurrencyService.handleErrorOutcome(run, e);
+                    synchronisationRunService.handleErrorOutcome(run, e);
                     log.error("Error while persisting/loading entities in Learn.", e);
                 } catch(SQLException e) {
-                    concurrencyService.handleErrorOutcome(run, e);
+                    synchronisationRunService.handleErrorOutcome(run, e);
                     log.error("Database error while synchronising groups from Timetabling.", e);
                 } catch(ThresholdException e) {
-                    // XXX: E-mail TEL
-                    
-                    concurrencyService.handleErrorOutcome(run, e);
-                    log.error("Enrolment change threshold exceeded.", e);
+                    synchronisationRunService.handleThresholdExceededOutcome(run, e);
+                    log.warn("Enrolment change threshold exceeded.", e);
                 } catch(ValidationException e) {
-                    concurrencyService.handleErrorOutcome(run, e);
+                    synchronisationRunService.handleErrorOutcome(run, e);
                     log.error("Error validating entities to be persisted in Learn.", e);
                 }
             }  catch (SynchronisationRunService.SynchronisationAlreadyInProgressException ex) {

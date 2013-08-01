@@ -167,6 +167,17 @@
                 <!-- <value>apps-appsupp@mlist.is.ed.ac.uk</value> -->
             </list>
         </property>
+        <!-- List of addresses to which notifications are sent if removals from
+           - courses was stopped due to the threshold being exceeded. This may
+           - be empty, in which case no notification will be sent.
+           -->
+        <property name="sendThresholdExceededMessageTo">
+            <list>
+                <value>apps-tels@mlists.is.ed.ac.uk</value>
+                <value>apps-deverror@lists.ed.ac.uk</value>
+                <!-- <value>apps-appsupp@mlist.is.ed.ac.uk</value> -->
+            </list>
+        </property>
     </bean>
     <bean id="eugexSynchroniseService" class="uk.ac.ed.learn9.bb.timetabling.service.EugexSynchroniseService">
         <property name="stagingDataSource" ref="stagingDataSource"/>

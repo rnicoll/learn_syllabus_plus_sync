@@ -67,6 +67,7 @@ public class SynchronisationRunService {
     
     private List<String> sendErrorMessageTo = new ArrayList<String>();
     private List<String> sendSuccessMessageTo = new ArrayList<String>();
+    private List<String> sendThresholdExceededMessageTo = new ArrayList<String>();
     
     /**
      * Marks a session as abandoned.
@@ -131,6 +132,45 @@ public class SynchronisationRunService {
         } finally {
             statement.close();
         }
+    }
+
+    public boolean handleThresholdExceededOutcome(final SynchronisationRun run, final ThresholdException cause)
+        throws SQLException {
+        final Connection stagingDatabase = this.getStagingDataSource().getConnection();
+        try {
+            return this.handleThresholdExceededOutcome(stagingDatabase, run, cause,
+                    new Timestamp(System.currentTimeMillis()));
+        } finally {
+            stagingDatabase.close();
+        }
+    }
+
+    private boolean handleThresholdExceededOutcome(final Connection stagingDatabase,
+            final SynchronisationRun run, final ThresholdException cause, final Timestamp now)
+        throws SQLException {
+        final PreparedStatement statement = stagingDatabase.prepareStatement(
+            "UPDATE synchronisation_run "
+                + "SET end_time=?, result_code=? "
+                + "WHERE run_id=? AND end_time IS NULL"
+            );
+        try {
+            int paramIdx = 1;
+            
+            statement.setTimestamp(paramIdx++, now);
+            statement.setString(paramIdx++, SynchronisationResult.THRESHOLD_EXCEEDED.name());
+            statement.setInt(paramIdx++, run.getRunId());
+            if (statement.executeUpdate() > 0) {
+                this.getSynchronisationRunDao().refresh(run);
+
+                sendThresholdExceededOutcomeMail();
+                
+                return true;
+            }
+        } finally {
+            statement.close();
+        }
+        
+        return false;
     }
 
     /**
@@ -605,6 +645,16 @@ public class SynchronisationRunService {
     }
 
     /**
+     * Get the name of the environment the Building Block is being run in
+     * (dev, test, live, etc.)
+     * 
+     * @return the name of the environment.
+     */
+    public String getEnvironmentName() {
+        return environmentName;
+    }
+
+    /**
      * Get the mail sender used to send success/error messages.
      * 
      * @return the mail sender.
@@ -616,7 +666,7 @@ public class SynchronisationRunService {
     /**
      * Get the addresses to send error messages to.
      * 
-     * @return the sendErrorMessageTo
+     * @return the addresses to send error messages to.
      */
     public List<String> getSendErrorMessageTo() {
         return sendErrorMessageTo;
@@ -625,10 +675,20 @@ public class SynchronisationRunService {
     /**
      * Get the addresses to send success messages to.
      * 
-     * @return the sendSuccessMessageTo
+     * @return the addresses to send success messages to.
      */
     public List<String> getSendSuccessMessageTo() {
         return sendSuccessMessageTo;
+    }
+
+    /**
+     * Get the address(es) to send e-mails to if the threshold for removals is
+     * exceeded.
+     * 
+     * @return the addresses to send threshold exceeded messages to.
+     */
+    public List<String> getSendThresholdExceededMessageTo() {
+        return sendThresholdExceededMessageTo;
     }
     
     /**
@@ -666,6 +726,13 @@ public class SynchronisationRunService {
     }
 
     /**
+     * @param environmentName the environmentName to set
+     */
+    public void setEnvironmentName(String environmentName) {
+        this.environmentName = environmentName;
+    }
+
+    /**
      * @param mailSender the mailSender to set
      */
     public void setMailSender(MailSender mailSender) {
@@ -680,10 +747,22 @@ public class SynchronisationRunService {
     }
 
     /**
-     * @param sendSuccessMessageTo the sendSuccessMessageTo to set
+     * Set the addresses to send success messages to.
+     * 
+     * @param sendSuccessMessageTo the addresses to send success messages to.
      */
     public void setSendSuccessMessageTo(final List<String> sendSuccessMessageTo) {
         this.sendSuccessMessageTo = sendSuccessMessageTo;
+    }
+
+    /**
+     * Set the addresses to send threshold exceeded messages to.
+     * 
+     * @param sendSuccessMessageTo the addresses to send threshold exceeded
+     * messages to.
+     */
+    public void setSendThresholdExceededMessageTo(List<String> sendThresholdExceededMessageTo) {
+        this.sendThresholdExceededMessageTo = sendThresholdExceededMessageTo;
     }
 
     /**
@@ -752,6 +831,8 @@ public class SynchronisationRunService {
 
     /**
      * Send e-mail notification of the synchronisation process ending in success.
+     * This message is generated in the form expected by the application
+     * management team.
      * 
      * @throws MailException if there was an error sending the message.
      */
@@ -773,17 +854,26 @@ public class SynchronisationRunService {
     }
 
     /**
-     * @return the environmentName
+     * Send e-mail notification of the synchronisation process being aborted due
+     * to safety threshold being exceeded. This message is generated in the form
+     * expected by the application management team.
      */
-    public String getEnvironmentName() {
-        return environmentName;
-    }
+    private void sendThresholdExceededOutcomeMail() {
+        if (this.getSendThresholdExceededMessageTo().isEmpty()) {
+            return;
+        }
+        
+        SimpleMailMessage msg = new SimpleMailMessage(this.getTemplateMessage());
+        msg.setSubject(this.getEnvironmentName() + " ERROR "
+            + EMAIL_SUBJECT_TASK_DETAILS);
+        msg.setTo(this.getSendThresholdExceededMessageTo().toArray(new String[0]));
+        msg.setText(this.getClass().getCanonicalName() + "\r\n\r\n"
+            + "The Learn/Timetabling synchronisation process aborted at "
+            + new Date() + " due to the safety threshold for removals of students "
+            + "from courses being exceeded.\r\n\r\n"
+            + EMAIL_SIGNATURE);
 
-    /**
-     * @param environmentName the environmentName to set
-     */
-    public void setEnvironmentName(String environmentName) {
-        this.environmentName = environmentName;
+        this.mailSender.send(msg);
     }
 
     /**

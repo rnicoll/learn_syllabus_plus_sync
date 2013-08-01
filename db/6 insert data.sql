@@ -21,5 +21,7 @@ INSERT INTO run_result (result_code, result_label)
   VALUES ('TIMEOUT', 'Synchronisation timed out.');
 INSERT INTO run_result (result_code, result_label)
   VALUES ('ABANDONED', 'Synchronisation abadoned due to concurrent process.');
+INSERT INTO run_result (result_code, result_label)
+  VALUES ('THRESHOLD_EXCEEDED', 'Synchronisation aborted as number of removal operations exceeds threshold.');
 
 INSERT INTO CONFIGURATION (RECORD_ID, REMOVE_THRESHOLD_COUNT) VALUES ('1', '2000');
