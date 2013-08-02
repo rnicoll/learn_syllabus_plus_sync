@@ -409,6 +409,7 @@ public class TimetablingSynchroniseService extends AbstractSynchroniseService {
             this.cloneActivities(source, destination);
             this.cloneActivityParents(source, destination);
             this.cloneVariantJointTaughtActivities(source, destination);
+            this.cloneStudentSets(source, destination);
         } finally {
             source.close();
         }
