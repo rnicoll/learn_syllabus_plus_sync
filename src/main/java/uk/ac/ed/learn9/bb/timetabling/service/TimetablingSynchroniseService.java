@@ -267,6 +267,14 @@ public class TimetablingSynchroniseService extends AbstractSynchroniseService {
                 this.getRdbTablePrefix() + REPORTING_ACTIVITY_TYPE_TABLE, STAGING_ACTIVITY_TYPE_TABLE,
                 PRIMARY_KEY_TIMETABLING_TABLES,
                 fieldMappings);
+        
+        final PreparedStatement removeWhitespace = destination.prepareStatement(
+                "UPDATE ACTIVITY_TEMPLATE SET TT_USER_TEXT_5=TRIM(TT_USER_TEXT_5)");
+        try {
+            removeWhitespace.executeUpdate();
+        } finally {
+            removeWhitespace.close();
+        }
     }
 
     /**
@@ -388,6 +396,29 @@ public class TimetablingSynchroniseService extends AbstractSynchroniseService {
             }
         } finally {
             source.close();
+        }
+        
+        /**
+         * Ensure any references to student sets or activities we haven't successfully
+         * copied into the local database are not kept, as they cannot be written
+         * out as part of the update.
+         */
+        final PreparedStatement deleteUnknownStudentSetData
+            = destination.prepareStatement("DELETE FROM CACHE_ENROLMENT"
+                + "WHERE TT_STUDENT_SET_ID NOT IN (SELECT TT_STUDENT_SET_ID FROM STUDENT_SET)");
+        try {
+            deleteUnknownStudentSetData.executeUpdate();
+        } finally {
+            deleteUnknownStudentSetData.close();
+        }
+        
+        final PreparedStatement deleteUnknownActivityData
+            = destination.prepareStatement("DELETE FROM CACHE_ENROLMENT "
+                + "WHERE TT_ACTIVITY_ID NOT IN (SELECT TT_ACTIVITY_ID FROM ACTIVITY)");
+        try {
+            deleteUnknownActivityData.executeUpdate();
+        } finally {
+            deleteUnknownActivityData.close();
         }
     }
     
