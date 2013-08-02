@@ -404,7 +404,7 @@ public class TimetablingSynchroniseService extends AbstractSynchroniseService {
          * out as part of the update.
          */
         final PreparedStatement deleteUnknownStudentSetData
-            = destination.prepareStatement("DELETE FROM CACHE_ENROLMENT"
+            = destination.prepareStatement("DELETE FROM CACHE_ENROLMENT "
                 + "WHERE TT_STUDENT_SET_ID NOT IN (SELECT TT_STUDENT_SET_ID FROM STUDENT_SET)");
         try {
             deleteUnknownStudentSetData.executeUpdate();

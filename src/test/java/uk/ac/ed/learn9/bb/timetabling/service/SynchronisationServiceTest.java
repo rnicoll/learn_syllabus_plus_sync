@@ -75,7 +75,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
      * 
      * @return an instance of {@link ConcurrencyService}.
      */
-    public SynchronisationRunService getConcurrencyService() {
+    public SynchronisationRunService getSynchronisationRunService() {
         return this.applicationContext.getBean(SynchronisationRunService.class);
     }
     
@@ -338,14 +338,27 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     public void testDoGenerateDiff() throws Exception {
         System.out.println("doGenerateDiff");
         final SynchronisationService synchronisationService = this.getService();
-        final SynchronisationRunService concurrencyService = this.getConcurrencyService();
+        final SynchronisationRunService synchronisationRunService = this.getSynchronisationRunService();
         final Connection stagingConnection = synchronisationService.getStagingDataSource().getConnection();
         try {
-            final SynchronisationRun result = concurrencyService.startNewRun();
+            final SynchronisationRun result = synchronisationRunService.startNewRun();
             synchronisationService.doGenerateDiff(result, stagingConnection);
         } finally {
             stagingConnection.close();
         }
+    }
+    
+    /**
+     * Very simple test for enrolment import and difference generation code.
+     */
+    @Test
+    public void testGenerateDiff() throws Exception {
+        System.out.println("generateDiff");
+        final SynchronisationService synchronisationService = this.getService();
+        final SynchronisationRunService synchronisationRunService = this.getSynchronisationRunService();
+        
+        final SynchronisationRun run = synchronisationRunService.startNewRun();
+        synchronisationService.generateDiff(run);
     }
 
     /**
