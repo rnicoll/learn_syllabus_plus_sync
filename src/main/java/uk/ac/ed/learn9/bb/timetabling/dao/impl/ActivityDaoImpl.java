@@ -17,13 +17,18 @@ import uk.ac.ed.learn9.bb.timetabling.data.Activity;
 public class ActivityDaoImpl extends HibernateDaoSupport implements ActivityDao {
 
     @Override
-    public Activity getById(final int activityId) {
+    public Activity getById(final String activityId) {
         return (Activity)this.getSession().get(Activity.class, activityId);
     }
 
     @Override
     public List<Activity> getAll() {
         return this.getSession().createQuery("FROM uk.ac.ed.learn9.bb.timetabling.data.Activity").list();
+    }
+
+    @Override
+    public void refresh(final Activity activity) {
+        this.getSession().refresh(activity);
     }
     
 }

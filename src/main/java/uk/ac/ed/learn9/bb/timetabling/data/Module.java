@@ -17,7 +17,7 @@ import org.hibernate.annotations.Type;
 @Entity
 @Table(name="module")
 public class Module extends Object implements Serializable {
-    private String timetablingModuleId;
+    private String moduleId;
     private String timetablingCourseCode;
     private String timetablingModuleName;
     private String timetablingAcademicYear;
@@ -37,7 +37,7 @@ public class Module extends Object implements Serializable {
     @Id
     @Column(name="tt_module_id", nullable=false, length=32)
     public String getModuleId() {
-        return timetablingModuleId;
+        return moduleId;
     }
 
     /**
@@ -211,7 +211,7 @@ public class Module extends Object implements Serializable {
      * @param moduleId the moduleId to set
      */
     public void setModuleId(String moduleId) {
-        this.timetablingModuleId = moduleId;
+        this.moduleId = moduleId;
     }
 
     /**

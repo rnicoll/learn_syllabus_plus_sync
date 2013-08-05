@@ -313,7 +313,7 @@ public class RdbUtil {
      * @param entityId an S+ 32 character ID.
      * @return a host key.
      */
-    private static String generateHostKey(final String entityId) {
+    protected static String generateHostKey(final String entityId) {
         final String subpart = entityId.substring(entityId.length() - 6);
         return "#SPLUS" + subpart;
     }

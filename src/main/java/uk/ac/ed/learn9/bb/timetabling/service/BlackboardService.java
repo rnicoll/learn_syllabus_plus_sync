@@ -132,14 +132,15 @@ public class BlackboardService {
      *
      * @param queryStatement a prepared statement ready to be executed. Results
      * must be ordered by course ID first, then by change part ID.
-     * @param connection a connection to the staging database.
+     * @param stagingDatabase a connection to the staging database.
      * @throws PersistenceException if there was a problem loading or saving
      * data from/to Learn.
      * @throws SQLException if there was a problem with the staging database.
      * @throws ValidationException if a newly generated group enrolment was
      * invalid.
      */
-    private void applyEnrolmentChanges(final PreparedStatement queryStatement, final Connection connection)
+    private void applyEnrolmentChanges(final PreparedStatement queryStatement,
+            final Connection stagingDatabase)
             throws PersistenceException, SQLException, ValidationException {
         final CourseDbLoader courseDbLoader = this.getCourseDbLoader();
         final CourseMembershipDbLoader courseMembershipDbLoader = this.getCourseMembershipDbLoader();
@@ -161,7 +162,7 @@ public class BlackboardService {
             unsafeGroups.setMailToOverride(this.forceAllMailTo);
         }
 
-        final ChangeOutcomeUpdateStatement outcome = new ChangeOutcomeUpdateStatement(connection);
+        final ChangeOutcomeUpdateStatement outcome = new ChangeOutcomeUpdateStatement(stagingDatabase);
 
         try {
             final ResultSet rs = queryStatement.executeQuery();
@@ -273,18 +274,7 @@ public class BlackboardService {
         }
         
         if (!noLongerValidGroupIds.isEmpty()) {
-            final PreparedStatement updateStatement = queryStatement
-                    .getConnection()
-                    .prepareStatement("UPDATE activity_group SET learn_group_id=NULL, learn_group_created=? "
-                        + "WHERE learn_group_id=?");
-            try {
-                for (Id groupId: noLongerValidGroupIds) {
-                    updateStatement.setString(1, groupId.getExternalString());
-                    updateStatement.executeUpdate();
-                }
-            } finally {
-                updateStatement.close();
-            }
+            forgetCachedGroupIds(stagingDatabase, noLongerValidGroupIds);
         }
         
         unsafeGroups.emailMemberships();
@@ -526,6 +516,30 @@ public class BlackboardService {
         // groupMembership.setGroupRoleIdentifier(CourseMembership.Role.STUDENT.getIdentifier());
 
         return groupMembership;
+    }
+
+    /**
+     * Forget the Learn IDs that have been cached against the given groups. This
+     * is done so that groups which no longer exist can be re-created where
+     * needed.
+     * 
+     * @param stagingDatabase a connection to the staging database.
+     * @param noLongerValidGroupIds Learn IDs for the groups to "forget".
+     * @throws SQLException if there was a problem updating the database.
+     */
+    protected void forgetCachedGroupIds(final Connection stagingDatabase,
+            final Set<Id> noLongerValidGroupIds) throws SQLException {
+        final PreparedStatement updateStatement = stagingDatabase.prepareStatement(
+                "UPDATE activity_group SET learn_group_id=NULL, learn_group_created=NULL "
+                    + "WHERE learn_group_id=?");
+        try {
+            for (Id groupId: noLongerValidGroupIds) {
+                updateStatement.setString(1, groupId.getExternalString());
+                updateStatement.executeUpdate();
+            }
+        } finally {
+            updateStatement.close();
+        }
     }
 
     /**

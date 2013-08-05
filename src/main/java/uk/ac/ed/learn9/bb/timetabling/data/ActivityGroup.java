@@ -60,6 +60,7 @@ public class ActivityGroup {
      * 
      * @return the time at which the group was created in Learn.
      */
+    @Column(name="learn_group_created", nullable=true)
     public Timestamp getLearnGroupCreated() {
         return learnGroupCreated;
     }

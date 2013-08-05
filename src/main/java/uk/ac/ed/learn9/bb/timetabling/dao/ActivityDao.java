@@ -1,6 +1,7 @@
 package uk.ac.ed.learn9.bb.timetabling.dao;
 
 import java.util.List;
+
 import uk.ac.ed.learn9.bb.timetabling.data.Activity;
 
 /**
@@ -14,11 +15,18 @@ public interface ActivityDao {
      * @param activityId a timetabling ID (as in a 32 character unique identifier).
      * @return the activity.
      */
-    public Activity getById(final int activityId);
+    public Activity getById(final String activityId);
     
     /**
      * Retrieves all activities in the staging database.
      * @return a list of activities.
      */
     public List<Activity> getAll();
+    
+    /**
+     * Refreshes an activity from the database.
+     * 
+     * @param activity the activity to be refreshed
+     */
+    public void refresh(final Activity activity);
 }

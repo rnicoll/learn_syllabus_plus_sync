@@ -14,7 +14,7 @@ public interface ModuleDao {
      * @param moduleId a timetabling ID (as in a 32 character unique identifier).
      * @return the module.
      */
-    public Module getById(final int moduleId);
+    public Module getById(final String moduleId);
     
     /**
      * Retrieves all modules in the staging database.

@@ -17,8 +17,8 @@ import uk.ac.ed.learn9.bb.timetabling.data.Module;
 public class ModuleDaoImpl extends HibernateDaoSupport implements ModuleDao {
 
     @Override
-    public Module getById(final int changeId) {
-        return (Module)this.getSession().get(Module.class, changeId);
+    public Module getById(final String moduleId) {
+        return (Module)this.getSession().get(Module.class, moduleId);
     }
 
     @Override
