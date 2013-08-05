@@ -117,7 +117,7 @@ public class CourseCourseMockLoader extends Object implements CourseCourseDbLoad
         final List<CourseCourse> relationships = this.courseCoursesByParentId.get(id);
         
         if (null == relationships) {
-            // Verify the course ID
+            // Verify the course ID - if it's invalid this throws KeyNotFoundException
             this.persistenceManager.getCourseLoader().loadById(id);
             return Collections.EMPTY_LIST;
         } else {

@@ -229,9 +229,11 @@ public class BlackboardService {
                     switch (changeType) {
                         case ADD:
                             // final CourseMembership courseMembership = studentCourseMemberships.get(studentId);
-                            final CourseMembership courseMembership = courseMembershipDbLoader.loadByCourseAndUserId(courseId, userId);
-
-                            if (null == courseMembership) {
+                            final CourseMembership courseMembership;
+                            
+                            try {
+                                courseMembership = courseMembershipDbLoader.loadByCourseAndUserId(courseId, userId);
+                            } catch (KeyNotFoundException e) {
                                 // Student is not on this course - probably a delay
                                 // bringing in data from Learn, but we can ignore
                                 outcome.markNotOnCourse(partId);
