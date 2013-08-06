@@ -6,9 +6,15 @@ package uk.ac.ed.learn9.bb.timetabling.data;
  */
 public class LearnCourseCode extends AbstractCourseCode<LearnCourseCode> {
     /**
-     * A regular expression used to validate timetabling course codes.
+     * A regular expression used to validate Learn course codes.
      */
-    public static final String LEARN_COURSE_CODE_REGEXP = "[A-Z]+[0-9]{5,}-[0-9][A-Z0-9]+";
+    public static final String LEARN_COURSE_CODE_VALID_REGEXP = "[A-Za-z0-9_-]+";
+    
+    /**
+     * A regular expression used to identify course codes which can be parsed
+     * to extract meaningful elements (such as EUCLID course code).
+     */
+    private static final String LEARN_COURSE_CODE_PARSE_REGEXP = "[A-Z]+[0-9]{5,}-[0-9][A-Z0-9]+";
     
     /**
      * Constructs the Learn course code with the given value.
@@ -19,7 +25,7 @@ public class LearnCourseCode extends AbstractCourseCode<LearnCourseCode> {
     public              LearnCourseCode(final String setValue) {
         super(setValue);
         
-        if (!setValue.matches(LEARN_COURSE_CODE_REGEXP)) {
+        if (!setValue.matches(LEARN_COURSE_CODE_VALID_REGEXP)) {
             throw new IllegalArgumentException("Course code \""
                 + setValue + "\" is invalid; does not match expected format.");
         }
@@ -50,9 +56,14 @@ public class LearnCourseCode extends AbstractCourseCode<LearnCourseCode> {
     /**
      * Extract the EUCLID course code from a Learn course code.
      * 
-     * @return the EUCLID course code, for example "EDUA08064".
+     * @return the EUCLID course code, for example "EDUA08064", or null if the
+     * EUCLID course code could not be extracted from the Learn course code.
      */
     public String getEuclidCourseId() {
+        if (!this.toString().matches(LEARN_COURSE_CODE_PARSE_REGEXP)) {
+            return null;
+        }
+        
         // We know there's exactly one "-" character, because it's a requirement
         // of the regular expression used in the constructor
         final String[] parts = this.toString().split("-");
@@ -67,10 +78,16 @@ public class LearnCourseCode extends AbstractCourseCode<LearnCourseCode> {
      * differentiate it from other instances of the same EUCLID course.
      *
      * @return the instance identifier for the course in Learn, for example
-     * "2012-3SS1SEM1".
+     * "2012-3SS1SEM1", or null if instance details could not be extracted
+     * from the Learn course code.
      */
     public String getInstance() {
         final String euclidCourseId = this.getEuclidCourseId();
+        
+        if (null == euclidCourseId) {
+            return null;
+        }
+        
         return this.toString().substring(euclidCourseId.length());
     }
 }

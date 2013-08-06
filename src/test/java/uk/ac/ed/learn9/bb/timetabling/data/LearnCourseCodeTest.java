@@ -33,8 +33,19 @@ public class LearnCourseCodeTest {
     public void testInvalidCode() {
         System.out.println("invalidCode");
         
-        // Learn course code without a '-' character
-        LearnCourseCode instance = new LearnCourseCode("EDUA0806420123SS1SEM1");
+        // Learn course code with a '+' character in it
+        new LearnCourseCode("EDUA080642012+3SS1SEM1");
+    }
+
+    /**
+     * Test of LearnCourseCode constructor, in the case of an course code for a
+     * typical merged course.
+     */
+    @Test
+    public void testMergedCourseCode() {
+        System.out.println("mergedCourseCode");
+        
+        new LearnCourseCode("ls_arr7_c3");
     }
 
     /**
@@ -47,6 +58,19 @@ public class LearnCourseCodeTest {
         String expResult = "EDUA08064";
         String result = instance.getEuclidCourseId();
         assertEquals(expResult, result);
+    }
+
+    /**
+     * Test of getEuclidCourseId method, of class LearnCourseCode, which checks
+     * handling of Learn course codes which cannot be readily parsed to determine
+     * EUCLID course code.
+     */
+    @Test
+    public void testGetInvalidEuclidCourseId() {
+        System.out.println("getInvalidEuclidCourseId");
+        LearnCourseCode instance = new LearnCourseCode("EDUA0806420123SS1SEM1");
+        String result = instance.getEuclidCourseId();
+        assertNull(result);
     }
 
     /**
