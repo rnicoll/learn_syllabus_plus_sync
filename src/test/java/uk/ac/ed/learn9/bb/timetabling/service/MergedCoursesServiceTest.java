@@ -11,6 +11,7 @@ import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 
+import uk.ac.ed.learn9.bb.timetabling.data.LearnCourseCode;
 import uk.ac.ed.learn9.bb.timetabling.util.DbScriptUtil;
 
 @ContextConfiguration(locations={"classpath:applicationContext-test.xml"})
@@ -111,10 +112,27 @@ public class MergedCoursesServiceTest extends AbstractJUnit4SpringContextTests {
     }
 
     /**
-     * Test of synchroniseMergedCourses method, of class MergedCoursesService.
+     * Test of synchronisation of merged courses data from BBL feeds database
+     * into the staging database. Currently only an SQL test, does not actually
+     * confirm data has synchronised correctly.
+     */
+    @Test
+    public void testGetMergedCourses() throws Exception {
+        System.out.println("getMergedCourses");
+        final LearnCourseCode learnCourseCode = new LearnCourseCode("ELCH080072013-4SV1SEM2");
+        final MergedCoursesService service = this.getService();
+        
+        service.getMergedCourses(learnCourseCode);
+    }
+
+    /**
+     * Test of synchronisation of merged courses data from BBL feeds database
+     * into the staging database. Currently only an SQL test, does not actually
+     * confirm data has synchronised correctly.
      */
     @Test
     public void testSynchroniseMergedCourses() throws Exception {
+        System.out.println("synchroniseMergedCourses");
         final MergedCoursesService service = this.getService();
         
         service.synchroniseMergedCourses();

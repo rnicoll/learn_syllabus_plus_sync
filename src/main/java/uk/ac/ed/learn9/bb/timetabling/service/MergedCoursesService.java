@@ -7,10 +7,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.SortedMap;
-import java.util.SortedSet;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
 import javax.sql.DataSource;
 
@@ -31,6 +27,9 @@ public class MergedCoursesService {
     private DataSource bblFeedsDataSource;
     @Autowired
     private DataSource stagingDataSource;
+    
+    private static final String EUCLID_SOURCE_ID = "EUCLID";
+    private static final String SYSTEM_SOURCE_ID = "SYSTEM";
     
     /**
      * Fetches details of all courses that are merged together to form a
@@ -54,13 +53,16 @@ public class MergedCoursesService {
                 "SELECT SOURCECOURSEID || SOURCEINSTANCE source_course_code "
                     + "FROM WDF_SHAREDCOURSEINSTANCE "
                     + "WHERE ISERROR='0' "
-                        + "AND COURSESOURCEID='EUCLID' "
-                        + "AND TARGETSOURCEID='SYSTEM' "
+                        + "AND COURSESOURCEID=? "
+                        + "AND TARGETSOURCEID IN (?, ?) "
                         + "AND TARGETCOURSEID=? "
                         + "AND TARGETINSTANCE=? ");
             try {
                 int paramIdx = 1;
                 
+                statement.setString(paramIdx++, EUCLID_SOURCE_ID);
+                statement.setString(paramIdx++, EUCLID_SOURCE_ID);
+                statement.setString(paramIdx++, SYSTEM_SOURCE_ID);
                 statement.setString(paramIdx++, parentCourseCode.getEuclidCourseId());
                 statement.setString(paramIdx++, parentCourseCode.getInstance());
                 
@@ -128,13 +130,19 @@ public class MergedCoursesService {
                     + "TARGETCOURSEID || TARGETINSTANCE target_course_code "
                     + "FROM WDF_SHAREDCOURSEINSTANCE "
                     + "WHERE ISERROR='0' "
+                        + "AND COURSESOURCEID=? "
+                        + "AND TARGETSOURCEID IN (?, ?) "
                         + "AND SOURCEINSTANCE IS NOT NULL "
                         + "AND TARGETINSTANCE IS NOT NULL "
-                        + "AND COURSESOURCEID='EUCLID' "
-                        + "AND TARGETSOURCEID='SYSTEM' "
                     + "ORDER BY SOURCECOURSEID || SOURCEINSTANCE"
             );
             try {
+                int sourceParamIdx = 1;
+                
+                sourceStatement.setString(sourceParamIdx++, EUCLID_SOURCE_ID);
+                sourceStatement.setString(sourceParamIdx++, EUCLID_SOURCE_ID);
+                sourceStatement.setString(sourceParamIdx++, SYSTEM_SOURCE_ID);
+                
                 final PreparedStatement destinationStatement = stagingDatabase.prepareStatement(
                     "INSERT INTO learn_merged_course (learn_source_course_code, learn_target_course_code) "
                         + "VALUES (?, ?)"
