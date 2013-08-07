@@ -372,17 +372,23 @@ public class TimetablingSynchroniseService extends AbstractSynchroniseService {
                 + "WHERE (V.ISVARIANTCHILD IS NULL OR V.ISVARIANTCHILD='0')"  // BRD requirement #1.3
             );
             try {
-                final PreparedStatement destinationStatement = destination.prepareStatement("INSERT INTO cache_enrolment "
+                final PreparedStatement destinationStatement = destination.prepareStatement(
+                    "INSERT INTO cache_enrolment "
                     + "(run_id, tt_student_set_id, tt_activity_id) "
-                    + "VALUES (?, ?, ?)");
+                    + "(SELECT ? run_id, s.tt_student_set_id, a.tt_activity_id "
+                            + "FROM sync_activity_vw a, sync_student_set_vw s "
+                                + "WHERE a.tt_activity_id=? "
+                                    + "AND s.tt_student_set_id=?)");
                 try {
 
                     final ResultSet rs = sourceStatement.executeQuery();
                     try {
                         while (rs.next()) {
-                            destinationStatement.setInt(1, run.getRunId());
-                            destinationStatement.setString(2, rs.getString("STUDENT_SET_ID"));
-                            destinationStatement.setString(3, rs.getString("ACTIVITY_ID"));
+                            int paramIdx = 1;
+                            
+                            destinationStatement.setInt(paramIdx++, run.getRunId());
+                            destinationStatement.setString(paramIdx++, rs.getString("ACTIVITY_ID"));
+                            destinationStatement.setString(paramIdx++, rs.getString("STUDENT_SET_ID"));
                             destinationStatement.executeUpdate();
                         }
                     } finally {
