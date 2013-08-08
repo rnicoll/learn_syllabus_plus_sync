@@ -635,8 +635,8 @@ public class SynchronisationService extends Object {
         final PreparedStatement insertStatement = stagingDatabase.prepareStatement(
             "INSERT INTO enrolment_change "
                 + "(run_id, change_type, tt_student_set_id, tt_activity_id) "
-                + "(SELECT r.run_id, r.tt_student_set_id, r.tt_activity_id, r.change_type "
-                    + "FROM removed_enrolment_vw r  WHERE r.run_id=?)"
+                + "(SELECT r.run_id, r.change_type, r.tt_student_set_id, r.tt_activity_id "
+                    + "FROM removed_enrolment_vw r WHERE r.run_id=?)"
         );
         try {
             insertStatement.setInt(1, run.getRunId());
