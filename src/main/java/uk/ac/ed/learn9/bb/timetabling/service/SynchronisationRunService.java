@@ -541,6 +541,8 @@ public class SynchronisationRunService {
                 sendSuccessOutcomeMail();
                 
                 return true;
+            } else {
+                log.debug("Run already marked as having ended.");
             }
         } finally {
             statement.close();
@@ -838,6 +840,7 @@ public class SynchronisationRunService {
      */
     private void sendSuccessOutcomeMail() throws MailException {
         if (this.getSendSuccessMessageTo().isEmpty()) {
+            log.info("Success message not sent because there are no recipients; see application context configuration if this is incorrect.");
             return;
         }
         
@@ -849,6 +852,9 @@ public class SynchronisationRunService {
             + "The Learn/Timetabling synchronisation process completed successfully at "
             + new Date() + ".\r\n\r\n"
             + EMAIL_SIGNATURE);
+        
+        log.debug("Sending message "
+            + msg);
 
         this.mailSender.send(msg);
     }
