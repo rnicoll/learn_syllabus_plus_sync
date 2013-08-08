@@ -132,8 +132,6 @@ public class MergedCoursesService {
                     + "WHERE ISERROR='0' "
                         + "AND COURSESOURCEID=? "
                         + "AND TARGETSOURCEID IN (?, ?) "
-                        + "AND SOURCEINSTANCE IS NOT NULL "
-                        + "AND TARGETINSTANCE IS NOT NULL "
                     + "ORDER BY SOURCECOURSEID || SOURCEINSTANCE"
             );
             try {
