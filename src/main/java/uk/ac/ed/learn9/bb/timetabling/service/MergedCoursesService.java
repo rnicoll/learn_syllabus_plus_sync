@@ -126,8 +126,8 @@ public class MergedCoursesService {
                 deleteStatement.close();
             }
             final PreparedStatement sourceStatement = bblFeedsDatabase.prepareStatement(
-                "SELECT SOURCECOURSEID || SOURCEINSTANCE source_course_code, "
-                    + "TARGETCOURSEID || TARGETINSTANCE target_course_code "
+                "SELECT SOURCECOURSEID || COALESCE(SOURCEINSTANCE, '') source_course_code, "
+                    + "TARGETCOURSEID || COALESCE(TARGETINSTANCE, '') target_course_code "
                     + "FROM WDF_SHAREDCOURSEINSTANCE "
                     + "WHERE ISERROR='0' "
                         + "AND COURSESOURCEID=? "
