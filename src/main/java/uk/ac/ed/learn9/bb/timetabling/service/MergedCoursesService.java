@@ -50,21 +50,19 @@ public class MergedCoursesService {
         final Connection bblFeedsDatabase = this.getBblFeedsDataSource().getConnection();
         try {
             final PreparedStatement statement = bblFeedsDatabase.prepareStatement(
-                "SELECT SOURCECOURSEID || SOURCEINSTANCE source_course_code "
+                "SELECT SOURCECOURSEID || COALESCE(SOURCEINSTANCE, '') source_course_code "
                     + "FROM WDF_SHAREDCOURSEINSTANCE "
                     + "WHERE ISERROR='0' "
                         + "AND COURSESOURCEID=? "
                         + "AND TARGETSOURCEID IN (?, ?) "
-                        + "AND TARGETCOURSEID=? "
-                        + "AND TARGETINSTANCE=? ");
+                        + "AND (TARGETCOURSEID || COALESCE(TARGETINSTANCE, ''))=? ");
             try {
                 int paramIdx = 1;
                 
                 statement.setString(paramIdx++, EUCLID_SOURCE_ID);
                 statement.setString(paramIdx++, EUCLID_SOURCE_ID);
                 statement.setString(paramIdx++, SYSTEM_SOURCE_ID);
-                statement.setString(paramIdx++, parentCourseCode.getEuclidCourseId());
-                statement.setString(paramIdx++, parentCourseCode.getInstance());
+                statement.setString(paramIdx++, parentCourseCode.toString());
                 
                 final ResultSet rs = statement.executeQuery();
                 try {

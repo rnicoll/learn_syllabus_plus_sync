@@ -3,9 +3,14 @@ package uk.ac.ed.learn9.bb.timetabling.service;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
+import java.util.List;
 
 import org.junit.After;
+import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
@@ -113,16 +118,20 @@ public class MergedCoursesServiceTest extends AbstractJUnit4SpringContextTests {
 
     /**
      * Test of synchronisation of merged courses data from BBL feeds database
-     * into the staging database. Currently only an SQL test, does not actually
-     * confirm data has synchronised correctly.
+     * into the staging database.
      */
     @Test
     public void testGetMergedCourses() throws Exception {
         System.out.println("getMergedCourses");
-        final LearnCourseCode learnCourseCode = new LearnCourseCode("ELCH080072013-4SV1SEM2");
+        final LearnCourseCode childCourseCode = new LearnCourseCode("ELCH080072013-4SV1SEM2");
+        final LearnCourseCode parentCourseCode = new LearnCourseCode("ELCH080072013-4SV1YR");
         final MergedCoursesService service = this.getService();
         
-        service.getMergedCourses(learnCourseCode);
+        assertTrue(service.getMergedCourses(childCourseCode).isEmpty());
+        
+        final List<LearnCourseCode> expResult = Collections.singletonList(childCourseCode);
+        
+        assertEquals(expResult, service.getMergedCourses(parentCourseCode));
     }
 
     /**
@@ -140,5 +149,24 @@ public class MergedCoursesServiceTest extends AbstractJUnit4SpringContextTests {
         // Have seen a problem where this fails after first run, so doing it
         // twice.
         service.synchroniseMergedCourses();
+        
+        final PreparedStatement statement = service.getStagingDataSource().getConnection().prepareStatement(
+                "SELECT COUNT(LEARN_SOURCE_COURSE_CODE) FROM LEARN_MERGED_COURSE");
+        try {
+            final ResultSet rs = statement.executeQuery();
+            
+            try {
+                assertTrue (rs.next());
+                final int recordCount = rs.getInt(1);
+                
+                // It would be good to have a more specific test than just the
+                // number of rows of data.
+                assertEquals(78, recordCount);
+            } finally {
+                rs.close();
+            }
+        } finally {
+            statement.close();
+        }
     }
 }
