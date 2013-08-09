@@ -5,7 +5,7 @@
         <name value= "Timetabling Group Import"/>
         <handle value= "plgn-timetabling"/>
         <description value= "Creates course groups in Learn and assigns students based on timetabling data"/>
-        <version value= "1.1.11"/>
+        <version value= "1.1.12"/>
         <webapp-type value="javaext" />
         <requires>
             <bbversion value="9.1"/>
