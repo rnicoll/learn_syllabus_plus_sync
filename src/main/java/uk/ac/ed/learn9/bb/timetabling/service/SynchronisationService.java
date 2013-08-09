@@ -1,7 +1,5 @@
 package uk.ac.ed.learn9.bb.timetabling.service;
 
-import java.math.BigDecimal;
-import java.math.MathContext;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -114,12 +112,53 @@ public class SynchronisationService extends Object {
         throws PersistenceException, SQLException, ValidationException {
         this.getBlackboardService().applyPreviouslyFailedEnrolmentChanges(stagingDatabase);
         this.getBlackboardService().applyNewEnrolmentChanges(stagingDatabase, run);
+    }
 
-        // Rebuild any groups found to be damaged during the first run
-        this.getBlackboardService().createGroupsForActivities(stagingDatabase);
+    /**
+     * Asserts that the given number of remove changes does not exceed the configured
+     * maximum.
+     * 
+     * @param configuration the configuration, from which to take the threshold.
+     * @param removeChanges the number of remove changes waiting to be performed.
+     * @throws ThresholdException if the threshold is exceeded.
+     */
+    protected void assertBelowRemoveThreshold(final Configuration configuration,
+            final int removeChanges)
+            throws ThresholdException {
+        if (null != configuration.getRemoveThresholdCount()
+            && removeChanges > configuration.getRemoveThresholdCount()) {
+            throw new ThresholdException("Threshold for number of removed enrolments (as an absolute number) exceeded.");
+        }
+    }
 
-        // Re-attempt any pending changes
-        this.getBlackboardService().applyPreviouslyFailedEnrolmentChanges(stagingDatabase);
+    /**
+     * Asserts that the given number of remove changes as a percentage of the
+     * previous run does not exceed the configured maximum.
+     * 
+     * @param configuration the configuration, from which to take the threshold.
+     * @param removeChanges the number of remove changes waiting to be performed.
+     * @throws ThresholdException if the threshold is exceeded.
+     */
+    protected void assertBelowRemovePercentageThreshold(final SynchronisationRun run, 
+            final Connection stagingDatabase, final Configuration configuration,
+            final int removeChanges)
+            throws SQLException, ThresholdException {
+        final Integer changeThresholdFromPercent;
+
+        if (null != configuration.getRemoveThresholdPercent()) {
+            final double existingEnrolmentCount
+                = this.getEnrolmentCount(stagingDatabase, run.getPreviousRunId());
+            double temp = existingEnrolmentCount * configuration.getRemoveThresholdPercent() / 100.0;
+
+            changeThresholdFromPercent = (int)Math.round(temp);
+            assert changeThresholdFromPercent >= 0;
+        } else {
+            changeThresholdFromPercent = null;
+        }
+        if (null != changeThresholdFromPercent
+            && removeChanges > changeThresholdFromPercent) {
+            throw new ThresholdException("Threshold for number of removed enrolments (by percentage) exceeded.");
+        }
     }
     
     /**
@@ -460,7 +499,7 @@ public class SynchronisationService extends Object {
             this.updateGroupDescriptions(stagingDatabase);
         
             this.generateGroupNames(stagingDatabase);
-            bbService.createGroupsForActivities(stagingDatabase);
+            bbService.createGroupsForActivities(stagingDatabase, run);
             bbService.mapStudentSetsToUsers(stagingDatabase);
             this.applyEnrolmentChanges(run, stagingDatabase);
         } finally {
@@ -562,56 +601,18 @@ public class SynchronisationService extends Object {
      */
     protected void doGenerateDiff(final SynchronisationRun run, final Connection stagingDatabase)
         throws SQLException, ThresholdException {
-        final Configuration configuration = this.getConfigurationDao().getDefault();
-        final Integer changeThresholdFromPercent;
-
-        if (null != configuration.getRemoveThresholdPercent()) {
-            final double existingEnrolmentCount
-                = this.getEnrolmentCount(stagingDatabase, run.getPreviousRunId());
-            double temp = existingEnrolmentCount * configuration.getRemoveThresholdPercent() / 100.0;
-
-            changeThresholdFromPercent = (int)Math.round(temp);
-            assert changeThresholdFromPercent >= 0;
-        } else {
-            changeThresholdFromPercent = null;
-        }
-        
+        final Configuration configuration = this.getConfigurationDao().getDefault();        
         final int removeChanges = doGenerateDiffRemove(stagingDatabase, run);
         
         log.info("Remove count: "
             + removeChanges);
-        
-        if (null != configuration.getRemoveThresholdCount()
-            && removeChanges > configuration.getRemoveThresholdCount()) {
-            throw new ThresholdException("Threshold for number of removed enrolments (as an absolute number) exceeded.");
-        }
-
-        if (null != changeThresholdFromPercent
-            && removeChanges > changeThresholdFromPercent) {
-            throw new ThresholdException("Threshold for number of removed enrolments (by percentage) exceeded.");
-        }
+        assertBelowRemoveThreshold(configuration, removeChanges);
+        assertBelowRemovePercentageThreshold(run, stagingDatabase, configuration, removeChanges);
         
         final int addChanges = doGenerateDiffAdd(stagingDatabase, run);
         log.info("Add count: "
             + addChanges);
-        
-        // Generate the individual change parts
-        final PreparedStatement insertStatement = stagingDatabase.prepareStatement(
-            "INSERT INTO enrolment_change_part "
-                + "(change_id, module_course_id) "
-                + "(SELECT c.change_id, mc.module_course_id "
-                    + "FROM enrolment_change c "
-                        + "JOIN activity a ON a.tt_activity_id=c.tt_activity_id "
-                        + "JOIN module m ON m.tt_module_id=a.tt_module_id "
-                        + "JOIN module_course mc ON mc.tt_module_id=m.tt_module_id AND mc.learn_course_available='Y' "
-                    + "WHERE c.run_id=?) "
-        );
-        try {
-            insertStatement.setInt(1, run.getRunId());
-            insertStatement.executeUpdate();
-        } finally {
-            insertStatement.close();
-        }
+        doGenerateDiffParts(stagingDatabase, run);
     }
 
     private int doGenerateDiffAdd(final Connection stagingDatabase, final SynchronisationRun run)
@@ -835,5 +836,25 @@ public class SynchronisationService extends Object {
      */
     public void setBlackboardService(BlackboardService blackboardService) {
         this.blackboardService = blackboardService;
+    }
+
+    public void doGenerateDiffParts(final Connection stagingDatabase, final SynchronisationRun run) throws SQLException {
+        // Generate the individual change parts
+        final PreparedStatement insertStatement = stagingDatabase.prepareStatement(
+            "INSERT INTO enrolment_change_part "
+                + "(change_id, module_course_id) "
+                + "(SELECT c.change_id, mc.module_course_id "
+                    + "FROM enrolment_change c "
+                        + "JOIN activity a ON a.tt_activity_id=c.tt_activity_id "
+                        + "JOIN module m ON m.tt_module_id=a.tt_module_id "
+                        + "JOIN module_course mc ON mc.tt_module_id=m.tt_module_id AND mc.learn_course_available='Y' "
+                    + "WHERE c.run_id=?) "
+        );
+        try {
+            insertStatement.setInt(1, run.getRunId());
+            insertStatement.executeUpdate();
+        } finally {
+            insertStatement.close();
+        }
     }
 }

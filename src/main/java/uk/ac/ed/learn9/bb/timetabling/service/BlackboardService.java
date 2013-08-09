@@ -6,9 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.apache.velocity.app.VelocityEngine;
@@ -147,10 +145,6 @@ public class BlackboardService {
         final GroupDbLoader groupDbLoader = this.getGroupDbLoader();
         final GroupMembershipDbLoader groupMembershipDbLoader = this.getGroupMembershipDbLoader();
         final GroupMembershipDbPersister groupMembershipDbPersister = this.getGroupMembershipDbPersister();
-
-        // Stores group IDs that are no longer valid, and need to be purged from
-        // the database.
-        final Set<Id> noLongerValidGroupIds = new HashSet<Id>();
         
         // Stores group memberships that should have been removed, but are
         // unsafe to do so. These are then e-mailed out at the end of the process.
@@ -214,9 +208,9 @@ public class BlackboardService {
                     final Group group = courseGroups.get(groupId);
                     
                     if (null == group) {
-                        // Wipe the group ID recorded against this part
+                        // Shouldn't happen as we've just re-created these, but
+                        // handle anyway.
                         outcome.markGroupMissing(partId);
-                        noLongerValidGroupIds.add(groupId);
                         continue;
                     }
 
@@ -273,11 +267,38 @@ public class BlackboardService {
             outcome.close();
         }
         
-        if (!noLongerValidGroupIds.isEmpty()) {
-            forgetCachedGroupIds(stagingDatabase, noLongerValidGroupIds);
-        }
-        
         unsafeGroups.emailMemberships();
+    }
+
+    /**
+     * Force the synchronisation process to rebuild the entire set of students
+     * on the given activity.
+     * 
+     * @param stagingDatabase a connection to the staging database.
+     * @param run the synchronisation run to attach changes to.
+     * @param activityId the activity to be rebuilt.
+     */
+    protected void createFullDiffForStudentsOnActivity(final Connection stagingDatabase,
+            final SynchronisationRun run, final String activityId)
+            throws SQLException {
+        final PreparedStatement statement = stagingDatabase.prepareStatement(
+                "INSERT INTO ENROLMENT_CHANGE "
+                    + "(RUN_ID, TT_ACTIVITY_ID, TT_STUDENT_SET_ID, CHANGE_TYPE) "
+                    + "(SELECT C.RUN_ID, C.TT_ACTIVITY_ID, C.TT_STUDENT_SET_ID, ? "
+                        + "FROM CACHE_ENROLMENT C "
+                            + "LEFT OUTER JOIN ENROLMENT_CHANGE E ON E.RUN_ID=C.RUN_ID AND E.TT_ACTIVITY_ID=C.TT_ACTIVITY_ID AND E.TT_STUDENT_SET_ID=C.TT_STUDENT_SET_ID "
+                            + "WHERE C.RUN_ID=? AND C.TT_ACTIVITY_ID=? AND E.RUN_ID IS NULL)"
+            );
+        try {
+            int paramIdx = 1;
+            
+            statement.setString(paramIdx++, EnrolmentChange.Type.ADD.name());
+            statement.setInt(paramIdx++, run.getRunId());
+            statement.setString(paramIdx++, activityId);
+            statement.executeUpdate();
+        } finally {
+            statement.close();
+        }
     }
 
     /**
@@ -285,6 +306,8 @@ public class BlackboardService {
      * courses in Learn. Also re-creates any deleted groups.
      *
      * @param stagingDatabase a connection to the staging database.
+     * @param run the current synchronisation run, used for attaching any resulting
+     * changes (such as re-adding students to groups) to.
      * @throws PersistenceException if there was a problem loading or saving
      * data in Learn.
      * @throws SQLException if there was a problem accessing one of the
@@ -292,20 +315,21 @@ public class BlackboardService {
      * @throws ValidationException if a newly generated group fails validation
      * by Learn prior to persistence.
      */
-    public void createGroupsForActivities(final Connection stagingDatabase)
+    public void createGroupsForActivities(final Connection stagingDatabase,
+            final SynchronisationRun run)
             throws PersistenceException, SQLException, ValidationException {
         final GroupDbPersister groupDbPersister = this.getGroupDbPersister();
         final GroupDbLoader groupDbLoader = this.getGroupDbLoader();
-
         final ManagedLearnGroupIDStatement updateStatement = new ManagedLearnGroupIDStatement(stagingDatabase);
+        
         try {
             final PreparedStatement queryStatement = stagingDatabase.prepareStatement(
-                "(SELECT activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
+                "(SELECT tt_activity_id, activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
                     + "FROM non_jta_activity_group_vw "
                         + "WHERE learn_course_id IS NOT NULL"
                     + ")"
                     + " UNION "
-                    + "(SELECT activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
+                    + "(SELECT tt_activity_id, activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
                     + "FROM jta_activity_group_vw "
                         + "WHERE learn_course_id IS NOT NULL"
                     + ")");
@@ -335,11 +359,14 @@ public class BlackboardService {
                             try {
                                 group = groupDbLoader.loadById(groupId);
                             } catch(KeyNotFoundException e) {
+                                final String activityId = rs.getString("tt_activity_id");
                                 final String groupName = rs.getString("learn_group_name");
+                                
                                 logger.info("Rebuilding group \""
                                     + groupName + "\" as it appears to have been deleted.");
                                 group = buildCourseGroup(courseId, groupName, description);
                                 groupDbPersister.persist(group);
+                                this.createFullDiffForStudentsOnActivity(stagingDatabase, run, activityId);
                             }
                         } else {
                             group = buildCourseGroup(courseId, rs.getString("learn_group_name"), description);
@@ -535,30 +562,6 @@ public class BlackboardService {
         // groupMembership.setGroupRoleIdentifier(CourseMembership.Role.STUDENT.getIdentifier());
 
         return groupMembership;
-    }
-
-    /**
-     * Forget the Learn IDs that have been cached against the given groups. This
-     * is done so that groups which no longer exist can be re-created where
-     * needed.
-     * 
-     * @param stagingDatabase a connection to the staging database.
-     * @param noLongerValidGroupIds Learn IDs for the groups to "forget".
-     * @throws SQLException if there was a problem updating the database.
-     */
-    protected void forgetCachedGroupIds(final Connection stagingDatabase,
-            final Set<Id> noLongerValidGroupIds) throws SQLException {
-        final PreparedStatement updateStatement = stagingDatabase.prepareStatement(
-                "UPDATE activity_group SET learn_group_id=NULL, learn_group_created=NULL "
-                    + "WHERE learn_group_id=?");
-        try {
-            for (Id groupId: noLongerValidGroupIds) {
-                updateStatement.setString(1, groupId.getExternalString());
-                updateStatement.executeUpdate();
-            }
-        } finally {
-            updateStatement.close();
-        }
     }
 
     /**
