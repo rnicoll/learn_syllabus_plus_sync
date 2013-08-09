@@ -281,8 +281,8 @@ public class BlackboardService {
     }
 
     /**
-     * Generates groups for activities in timetabling that can be mapped to
-     * courses in Learn.
+     * Creates groups for activities in timetabling that can be mapped to
+     * courses in Learn. Also re-creates any deleted groups.
      *
      * @param stagingDatabase a connection to the staging database.
      * @throws PersistenceException if there was a problem loading or saving
@@ -292,29 +292,38 @@ public class BlackboardService {
      * @throws ValidationException if a newly generated group fails validation
      * by Learn prior to persistence.
      */
-    public void generateGroupsForActivities(final Connection stagingDatabase)
+    public void createGroupsForActivities(final Connection stagingDatabase)
             throws PersistenceException, SQLException, ValidationException {
         final GroupDbPersister groupDbPersister = this.getGroupDbPersister();
+        final GroupDbLoader groupDbLoader = this.getGroupDbLoader();
 
         final ManagedLearnGroupIDStatement updateStatement = new ManagedLearnGroupIDStatement(stagingDatabase);
         try {
             final PreparedStatement queryStatement = stagingDatabase.prepareStatement(
                 "(SELECT activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
                     + "FROM non_jta_activity_group_vw "
-                        + "WHERE learn_course_id IS NOT NULL AND learn_group_id IS NULL"
+                        + "WHERE learn_course_id IS NOT NULL"
                     + ")"
                     + " UNION "
                     + "(SELECT activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
                     + "FROM jta_activity_group_vw "
-                        + "WHERE learn_course_id IS NOT NULL AND learn_group_id IS NULL"
+                        + "WHERE learn_course_id IS NOT NULL"
                     + ")");
             try {
+                final Timestamp now = new Timestamp(System.currentTimeMillis());
                 final ResultSet rs = queryStatement.executeQuery();
                 try {
                     while (rs.next()) {
                         final Id courseId = Id.generateId(Course.DATA_TYPE, rs.getString("learn_course_id"));
+                        final Id groupId;
                         final String descriptionText = rs.getString("description");
                         final FormattedText description;
+                        Group group;
+                        
+                        final String groupIdStr = rs.getString("learn_group_id");
+                        groupId = groupIdStr == null
+                            ? null
+                            : Id.generateId(Group.DATA_TYPE, groupIdStr);
 
                         if (null == descriptionText) {
                             description = null;
@@ -322,11 +331,21 @@ public class BlackboardService {
                             description = new FormattedText(descriptionText, FormattedText.Type.PLAIN_TEXT);
                         }
 
-                        final Group group = buildCourseGroup(courseId, rs.getString("learn_group_name"), description);
+                        if (null != groupId) {
+                            try {
+                                group = groupDbLoader.loadById(groupId);
+                            } catch(KeyNotFoundException e) {
+                                final String groupName = rs.getString("learn_group_name");
+                                logger.info("Rebuilding group \""
+                                    + groupName + "\" as it appears to have been deleted.");
+                                group = buildCourseGroup(courseId, groupName, description);
+                                groupDbPersister.persist(group);
+                            }
+                        } else {
+                            group = buildCourseGroup(courseId, rs.getString("learn_group_name"), description);
+                            groupDbPersister.persist(group);
+                        }
 
-                        groupDbPersister.persist(group);
-
-                        final Timestamp now = new Timestamp(System.currentTimeMillis());
                         final int activityGroupId = rs.getInt("activity_group_id");
 
                         updateStatement.recordGroupId(now, activityGroupId, group.getId());
@@ -382,7 +401,7 @@ public class BlackboardService {
                 + "WHERE module_course_id=?");
         try {
             final PreparedStatement queryStatement = stagingDatabase.prepareStatement(
-                    "SELECT module_course_id, learn_course_code "
+                "SELECT module_course_id, learn_course_code "
                     + "FROM module_course "
                     + "WHERE learn_course_id IS NULL");
             try {

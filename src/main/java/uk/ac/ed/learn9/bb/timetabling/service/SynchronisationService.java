@@ -116,7 +116,7 @@ public class SynchronisationService extends Object {
         this.getBlackboardService().applyNewEnrolmentChanges(stagingDatabase, run);
 
         // Rebuild any groups found to be damaged during the first run
-        this.getBlackboardService().generateGroupsForActivities(stagingDatabase);
+        this.getBlackboardService().createGroupsForActivities(stagingDatabase);
 
         // Re-attempt any pending changes
         this.getBlackboardService().applyPreviouslyFailedEnrolmentChanges(stagingDatabase);
@@ -460,7 +460,7 @@ public class SynchronisationService extends Object {
             this.updateGroupDescriptions(stagingDatabase);
         
             this.generateGroupNames(stagingDatabase);
-            bbService.generateGroupsForActivities(stagingDatabase);
+            bbService.createGroupsForActivities(stagingDatabase);
             bbService.mapStudentSetsToUsers(stagingDatabase);
             this.applyEnrolmentChanges(run, stagingDatabase);
         } finally {
