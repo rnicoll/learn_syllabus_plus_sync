@@ -27,6 +27,7 @@ import uk.ac.ed.learn9.bb.timetabling.data.AcademicYearCode;
 import uk.ac.ed.learn9.bb.timetabling.data.Activity;
 import uk.ac.ed.learn9.bb.timetabling.data.ActivityTemplate;
 import uk.ac.ed.learn9.bb.timetabling.data.ActivityType;
+import uk.ac.ed.learn9.bb.timetabling.data.Configuration;
 import uk.ac.ed.learn9.bb.timetabling.data.Module;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 import uk.ac.ed.learn9.bb.timetabling.util.DbScriptUtil;
@@ -139,6 +140,54 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
         } finally {
             rdbConnection.close();
         }
+    }
+    
+    /**
+     * Tests that assertBelowRemoveThreshold() ignores the remove change count
+     * where no value is set in the database.
+     */
+    @Test
+    public void testAssertBelowRemoveThresholdNoConfiguration()
+        throws Exception {
+        System.out.println("assertBelowRemoveThresholdNoConfiguration");
+        
+        final SynchronisationService service = this.getService();
+        final Configuration configuration = new Configuration();
+        
+        configuration.setRemoveThresholdCount(null);
+        
+        service.assertBelowRemoveThreshold(configuration, Integer.MAX_VALUE);
+    }
+    
+    /**
+     * Tests that assertBelowRemoveThreshold() does not error when the threshold
+     * has not been exceeded.
+     */
+    @Test
+    public void testAssertBelowRemoveThresholdOkay()
+        throws Exception {
+        final SynchronisationService service = this.getService();
+        final Configuration configuration = new Configuration();
+        
+        configuration.setRemoveThresholdCount(2);
+        
+        service.assertBelowRemoveThreshold(configuration, 1);
+        service.assertBelowRemoveThreshold(configuration, 2);
+    }
+    
+    /**
+     * Tests that assertBelowRemoveThreshold() does error where the threshold
+     * has been exceeded.
+     */
+    @Test(expected=ThresholdException.class)
+    public void testAssertBelowRemoveThreshold()
+        throws Exception {
+        final SynchronisationService service = this.getService();
+        final Configuration configuration = new Configuration();
+        
+        configuration.setRemoveThresholdCount(1);
+        
+        service.assertBelowRemoveThreshold(configuration, 2);
     }
 
     /**
