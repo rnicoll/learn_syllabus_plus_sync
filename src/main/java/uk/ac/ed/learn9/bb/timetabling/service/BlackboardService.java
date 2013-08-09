@@ -596,7 +596,7 @@ public class BlackboardService {
      * @throws PersistenceException if there was a problem determining whether
      * the change is safe.
      */
-    private boolean isGroupMembershipRemovalUnsafe(final Group group, final GroupMembership groupMembership)
+    protected boolean isGroupMembershipRemovalUnsafe(final Group group, final GroupMembership groupMembership)
         throws PersistenceException {
         if (group.getIsAvailable()) {
             return group.hasGroupToolWithGradeableItem()

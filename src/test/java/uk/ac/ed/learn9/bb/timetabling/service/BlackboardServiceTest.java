@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Collections;
 import java.util.List;
 
 import javax.sql.DataSource;
@@ -20,8 +19,10 @@ import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 
+import blackboard.data.course.GroupMembership;
 import uk.ac.ed.learn9.bb.timetabling.RdbIdSource;
 import uk.ac.ed.learn9.bb.timetabling.SequentialRdbIdSource;
+import uk.ac.ed.learn9.bb.timetabling.blackboard.MockGroup;
 import uk.ac.ed.learn9.bb.timetabling.dao.ActivityDao;
 import uk.ac.ed.learn9.bb.timetabling.dao.ActivityGroupDao;
 import uk.ac.ed.learn9.bb.timetabling.dao.ModuleCourseDao;
@@ -209,6 +210,37 @@ public class BlackboardServiceTest extends AbstractJUnit4SpringContextTests {
         } finally {
             connection.close();
         }
+    }
+    
+    /**
+     * Validate code for testing if a student can safely be removed from a group
+     * without risk of loss of data.
+     */
+    @Test
+    public void testIsGroupMembershipRemovalUnsafe()
+        throws Exception {
+        final BlackboardService service = this.getService();
+        final MockGroup availableGroup = new MockGroup();
+        final Group unavailableGroup = new Group();
+        final GroupMembership groupMembership = new GroupMembership();
+        
+        availableGroup.setIsAvailable(true);
+        unavailableGroup.setIsAvailable(false);
+        
+        assertFalse(service.isGroupMembershipRemovalUnsafe(unavailableGroup, groupMembership));
+        
+        availableGroup.setIsDiscussionBoardAvailable(false);
+        availableGroup.setHasGroupToolWithGradeableItem(false);
+        assertFalse(service.isGroupMembershipRemovalUnsafe(availableGroup, groupMembership));
+        
+        availableGroup.setHasGroupToolWithGradeableItem(true);
+        assertTrue(service.isGroupMembershipRemovalUnsafe(availableGroup, groupMembership));
+        
+        availableGroup.setIsDiscussionBoardAvailable(true);
+        assertTrue(service.isGroupMembershipRemovalUnsafe(availableGroup, groupMembership));
+        
+        availableGroup.setHasGroupToolWithGradeableItem(false);
+        assertTrue(service.isGroupMembershipRemovalUnsafe(availableGroup, groupMembership));
     }
 
     /**
