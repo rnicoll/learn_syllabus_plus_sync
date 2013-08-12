@@ -320,71 +320,99 @@ public class BlackboardService {
             throws PersistenceException, SQLException, ValidationException {
         final GroupDbPersister groupDbPersister = this.getGroupDbPersister();
         final GroupDbLoader groupDbLoader = this.getGroupDbLoader();
+        final Timestamp now = new Timestamp(System.currentTimeMillis());
         final ManagedLearnGroupIDStatement updateStatement = new ManagedLearnGroupIDStatement(stagingDatabase);
+        
+        // JTA and other tricky cases should be resolved here.
         
         try {
             final PreparedStatement queryStatement = stagingDatabase.prepareStatement(
-                "(SELECT tt_activity_id, activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
+                "SELECT tt_activity_id, activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
                     + "FROM non_jta_activity_group_vw "
                         + "WHERE learn_course_id IS NOT NULL"
-                    + ")"
-                    + " UNION "
-                    + "(SELECT tt_activity_id, activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
-                    + "FROM jta_activity_group_vw "
-                        + "WHERE learn_course_id IS NOT NULL"
-                    + ")");
+                );
             try {
-                final Timestamp now = new Timestamp(System.currentTimeMillis());
-                final ResultSet rs = queryStatement.executeQuery();
-                try {
-                    while (rs.next()) {
-                        final Id courseId = Id.generateId(Course.DATA_TYPE, rs.getString("learn_course_id"));
-                        final Id groupId;
-                        final String descriptionText = rs.getString("description");
-                        final FormattedText description;
-                        Group group;
-                        
-                        final String groupIdStr = rs.getString("learn_group_id");
-                        groupId = groupIdStr == null
-                            ? null
-                            : Id.generateId(Group.DATA_TYPE, groupIdStr);
-
-                        if (null == descriptionText) {
-                            description = null;
-                        } else {
-                            description = new FormattedText(descriptionText, FormattedText.Type.PLAIN_TEXT);
-                        }
-
-                        if (null != groupId) {
-                            try {
-                                group = groupDbLoader.loadById(groupId);
-                            } catch(KeyNotFoundException e) {
-                                final String activityId = rs.getString("tt_activity_id");
-                                final String groupName = rs.getString("learn_group_name");
-                                
-                                logger.info("Rebuilding group \""
-                                    + groupName + "\" as it appears to have been deleted.");
-                                group = buildCourseGroup(courseId, groupName, description);
-                                groupDbPersister.persist(group);
-                                this.createFullDiffForStudentsOnActivity(stagingDatabase, run, activityId);
-                            }
-                        } else {
-                            group = buildCourseGroup(courseId, rs.getString("learn_group_name"), description);
-                            groupDbPersister.persist(group);
-                        }
-
-                        final int activityGroupId = rs.getInt("activity_group_id");
-
-                        updateStatement.recordGroupId(now, activityGroupId, group.getId());
-                    }
-                } finally {
-                    rs.close();
-                }
+                doCreateGroupsForActivities(stagingDatabase, run, queryStatement,
+                        groupDbLoader, groupDbPersister, updateStatement, now);
             } finally {
                 queryStatement.close();
             }
         } finally {
             updateStatement.close();
+        }
+    }
+
+    /**
+     * Creates groups for activities in timetabling that can be mapped to
+     * courses in Learn. This is intended only to be called from
+     * {@link BlackboardService#createGroupsForActivities(java.sql.Connection, uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun)}.
+     *
+     * @param stagingDatabase a connection to the staging database.
+     * @param run the current synchronisation run, used for attaching any resulting
+     * changes (such as re-adding students to groups) to.
+     * @param queryStatement the query from which to take the group details.
+     * @param groupDbLoader a loader for groups.
+     * @param groupDbPersiter a persister for newly created groups.
+     * @param updateStatement a managed statement for updating groups once they've
+     * been created in Learn.
+     * @param now the current time; provided as a parameter to ensure it's set
+     * consistently on all work done in a batch.
+     * @throws PersistenceException if there was a problem loading or saving
+     * data in Learn.
+     * @throws SQLException if there was a problem accessing one of the
+     * databases.
+     * @throws ValidationException if a newly generated group fails validation
+     * by Learn prior to persistence.
+     */
+    private void doCreateGroupsForActivities(final Connection stagingDatabase, final SynchronisationRun run,
+            final PreparedStatement queryStatement,
+            final GroupDbLoader groupDbLoader, final GroupDbPersister groupDbPersister,
+            final ManagedLearnGroupIDStatement updateStatement, final Timestamp now)
+            throws SQLException, PersistenceException, ValidationException {
+        final ResultSet rs = queryStatement.executeQuery();
+        try {
+            while (rs.next()) {
+                final Id courseId = Id.generateId(Course.DATA_TYPE, rs.getString("learn_course_id"));
+                final Id groupId;
+                final String descriptionText = rs.getString("description");
+                final FormattedText description;
+                Group group;
+                
+                final String groupIdStr = rs.getString("learn_group_id");
+                groupId = groupIdStr == null
+                    ? null
+                    : Id.generateId(Group.DATA_TYPE, groupIdStr);
+
+                if (null == descriptionText) {
+                    description = null;
+                } else {
+                    description = new FormattedText(descriptionText, FormattedText.Type.PLAIN_TEXT);
+                }
+
+                if (null != groupId) {
+                    try {
+                        group = groupDbLoader.loadById(groupId);
+                    } catch(KeyNotFoundException e) {
+                        final String activityId = rs.getString("tt_activity_id");
+                        final String groupName = rs.getString("learn_group_name");
+                        
+                        logger.info("Rebuilding group \""
+                            + groupName + "\" as it appears to have been deleted.");
+                        group = buildCourseGroup(courseId, groupName, description);
+                        groupDbPersister.persist(group);
+                        this.createFullDiffForStudentsOnActivity(stagingDatabase, run, activityId);
+                    }
+                } else {
+                    group = buildCourseGroup(courseId, rs.getString("learn_group_name"), description);
+                    groupDbPersister.persist(group);
+                }
+
+                final int activityGroupId = rs.getInt("activity_group_id");
+
+                updateStatement.recordGroupId(now, activityGroupId, group.getId());
+            }
+        } finally {
+            rs.close();
         }
     }
     
