@@ -201,13 +201,12 @@ public class SynchronisationRunService {
             statement.setInt(paramIdx++, runId);
             statement.setInt(paramIdx++, runId);
             statement.setString(paramIdx++, SynchronisationResult.SUCCESS.name());
-            // XXX: Handle constraint violation
             statement.executeUpdate();
         } finally {
             statement.close();
         }
         
-        statement = stagingDatabase.prepareStatement("SELECT r.run_id, r.end_time "
+        statement = stagingDatabase.prepareStatement("SELECT r.run_id, r.result_code "
             + "FROM synchronisation_run r "
                 + "JOIN synchronisation_run_prev p ON p.previous_run_id=r.run_id "
             + "WHERE p.run_id=?");
@@ -217,9 +216,9 @@ public class SynchronisationRunService {
             
             if (rs.next()) {
                 final int previousRunId = rs.getInt("run_id");
-                final Timestamp endTime = rs.getTimestamp("end_time");
+                final String resultCode = rs.getString("result_code");
                 
-                if (null == endTime) {
+                if (null == resultCode) {
                     throw new SynchronisationAlreadyInProgressException("The synchronisation run #"
                         + previousRunId + " is already in progress.");
                 }
