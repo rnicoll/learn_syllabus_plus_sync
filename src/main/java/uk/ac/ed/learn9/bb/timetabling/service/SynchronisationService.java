@@ -16,13 +16,18 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import blackboard.base.FormattedText;
 import blackboard.data.ValidationException;
+import blackboard.data.course.Course;
 import blackboard.data.course.Group;
 import blackboard.persist.Id;
 import blackboard.persist.KeyNotFoundException;
 import blackboard.persist.PersistenceException;
+import blackboard.persist.course.GroupDbLoader;
+import blackboard.persist.course.GroupDbPersister;
 import uk.ac.ed.learn9.bb.timetabling.dao.ConfigurationDao;
 import uk.ac.ed.learn9.bb.timetabling.data.Configuration;
+import uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationResult;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 
@@ -215,6 +220,183 @@ public class SynchronisationService extends Object {
     }
 
     /**
+     * Creates groups for activities in timetabling that can be mapped to
+     * courses in Learn. Also re-creates any deleted groups.
+     *
+     * @param stagingDatabase a connection to the staging database.
+     * @param run the current synchronisation run, used for attaching any resulting
+     * changes (such as re-adding students to groups) to.
+     * @throws PersistenceException if there was a problem loading or saving
+     * data in Learn.
+     * @throws SQLException if there was a problem accessing one of the
+     * databases.
+     * @throws ValidationException if a newly generated group fails validation
+     * by Learn prior to persistence.
+     */
+    public void createGroupsForActivities(final Connection stagingDatabase,
+            final SynchronisationRun run)
+            throws PersistenceException, SQLException, ValidationException {
+        final GroupDbPersister groupDbPersister = this.getBlackboardService().getGroupDbPersister();
+        final GroupDbLoader groupDbLoader = this.getBlackboardService().getGroupDbLoader();
+        final Timestamp now = new Timestamp(System.currentTimeMillis());
+        final ManagedLearnGroupIDStatement updateStatement = new ManagedLearnGroupIDStatement(stagingDatabase);
+        
+        // Create groups for JTA parents first
+        /* try {
+            final PreparedStatement queryStatement = stagingDatabase.prepareStatement(
+                "SELECT tt_activity_id, activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
+                    + "FROM jta_parent_activity_group_vw "
+                        + "WHERE learn_course_id IS NOT NULL"
+                );
+            try {
+                doCreateGroupsForActivities(stagingDatabase, run, queryStatement,
+                        groupDbLoader, groupDbPersister, updateStatement, now);
+            } finally {
+                queryStatement.close();
+            }
+        } finally {
+            updateStatement.close();
+        } */
+        
+        // TODO: Provide parent JTA groups to their childrens where modules match.
+        /* SELECT child_group.activity_group_id, parent_group.activity_group_id
+            FROM sync_activity_vw child_activity
+              JOIN variantjtaacts child_vjta ON child_vjta.tt_activity_id=child_activity.tt_activity_id AND child_vjta.tt_is_jta_child='1'
+              JOIN activity_parents ap ON child_activity.tt_activity_id=ap.tt_activity_id
+              JOIN sync_activity_vw parent_activity ON parent_activity.tt_activity_id=ap.tt_parent_activity_id
+              JOIN variantjtaacts parent_vjta ON parent_vjta.tt_activity_id=parent_activity.tt_activity_id AND parent_vjta.tt_is_jta_parent='1'
+              JOIN activity_group child_group ON child_group.tt_activity_id=child_activity.tt_activity_id
+              JOIN activity_group parent_group ON parent_group.tt_activity_id=parent_activity.tt_activity_id
+              JOIN module_course child_course ON child_course.module_course_id=child_group.module_course_id
+              JOIN module_course parent_course ON parent_course.module_course_id=parent_group.module_course_id
+            WHERE child_course.learn_course_id=parent_course.learn_course_id; */
+        
+        // Create/update groups for all activities.
+        try {
+            final PreparedStatement queryStatement = stagingDatabase.prepareStatement(
+                "SELECT tt_activity_id, activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
+                    + "FROM activity_group_vw "
+                        + "WHERE learn_course_id IS NOT NULL"
+                );
+            try {
+                doCreateGroupsForActivities(stagingDatabase, run, queryStatement,
+                        groupDbLoader, groupDbPersister, updateStatement, now);
+            } finally {
+                queryStatement.close();
+            }
+        } finally {
+            updateStatement.close();
+        }
+    }
+
+    /**
+     * Creates groups for activities in timetabling that can be mapped to
+     * courses in Learn. This is intended only to be called from
+     * {@link BlackboardService#createGroupsForActivities(java.sql.Connection, uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun)}.
+     *
+     * @param stagingDatabase a connection to the staging database.
+     * @param run the current synchronisation run, used for attaching any resulting
+     * changes (such as re-adding students to groups) to.
+     * @param queryStatement the query from which to take the group details.
+     * @param groupDbLoader a loader for groups.
+     * @param groupDbPersiter a persister for newly created groups.
+     * @param updateStatement a managed statement for updating groups once they've
+     * been created in Learn.
+     * @param now the current time; provided as a parameter to ensure it's set
+     * consistently on all work done in a batch.
+     * @throws PersistenceException if there was a problem loading or saving
+     * data in Learn.
+     * @throws SQLException if there was a problem accessing one of the
+     * databases.
+     * @throws ValidationException if a newly generated group fails validation
+     * by Learn prior to persistence.
+     */
+    private void doCreateGroupsForActivities(final Connection stagingDatabase,
+            final SynchronisationRun run,
+            final PreparedStatement queryStatement,
+            final GroupDbLoader groupDbLoader, final GroupDbPersister groupDbPersister,
+            final ManagedLearnGroupIDStatement updateStatement, final Timestamp now)
+            throws SQLException, PersistenceException, ValidationException {
+        final BlackboardService blackboardService = this.getBlackboardService();
+        final ResultSet rs = queryStatement.executeQuery();
+        try {
+            while (rs.next()) {
+                final Id courseId = Id.generateId(Course.DATA_TYPE, rs.getString("learn_course_id"));
+                final Id groupId;
+                final String descriptionText = rs.getString("description");
+                final FormattedText description;
+                Group group;
+                
+                final String groupIdStr = rs.getString("learn_group_id");
+                groupId = groupIdStr == null
+                    ? null
+                    : Id.generateId(Group.DATA_TYPE, groupIdStr);
+
+                if (null == descriptionText) {
+                    description = null;
+                } else {
+                    description = new FormattedText(descriptionText, FormattedText.Type.PLAIN_TEXT);
+                }
+
+                if (null != groupId) {
+                    try {
+                        group = groupDbLoader.loadById(groupId);
+                    } catch(KeyNotFoundException e) {
+                        final String activityId = rs.getString("tt_activity_id");
+                        final String groupName = rs.getString("learn_group_name");
+                        
+                        group = blackboardService.buildCourseGroup(courseId, groupName, description);
+                        groupDbPersister.persist(group);
+                        this.createFullDiffForStudentsOnActivity(stagingDatabase, run, activityId);
+                    }
+                } else {
+                    group = blackboardService.buildCourseGroup(courseId, rs.getString("learn_group_name"), description);
+                    groupDbPersister.persist(group);
+                }
+
+                final int activityGroupId = rs.getInt("activity_group_id");
+
+                updateStatement.recordGroupId(now, activityGroupId, group.getId());
+            }
+        } finally {
+            rs.close();
+        }
+    }
+
+    /**
+     * Force the synchronisation process to rebuild the entire set of students
+     * on the given activity.
+     * 
+     * @param stagingDatabase a connection to the staging database.
+     * @param run the synchronisation run to attach changes to.
+     * @param activityId the activity to be rebuilt.
+     */
+    protected void createFullDiffForStudentsOnActivity(final Connection stagingDatabase,
+            final SynchronisationRun run, final String activityId)
+            throws SQLException {
+        final PreparedStatement statement = stagingDatabase.prepareStatement(
+                "INSERT INTO ENROLMENT_CHANGE "
+                    + "(RUN_ID, TT_ACTIVITY_ID, TT_STUDENT_SET_ID, CHANGE_TYPE) "
+                    + "(SELECT C.RUN_ID, C.TT_ACTIVITY_ID, C.TT_STUDENT_SET_ID, ? "
+                        + "FROM CACHE_ENROLMENT C "
+                            + "LEFT OUTER JOIN ENROLMENT_CHANGE E ON E.RUN_ID=C.RUN_ID AND E.TT_ACTIVITY_ID=C.TT_ACTIVITY_ID AND E.TT_STUDENT_SET_ID=C.TT_STUDENT_SET_ID "
+                            + "WHERE C.RUN_ID=? AND C.TT_ACTIVITY_ID=? AND E.RUN_ID IS NULL)"
+            );
+        try {
+            int paramIdx = 1;
+            
+            statement.setString(paramIdx++, EnrolmentChange.Type.ADD.name());
+            statement.setInt(paramIdx++, run.getRunId());
+            statement.setString(paramIdx++, activityId);
+            statement.executeUpdate();
+        } finally {
+            statement.close();
+        }
+        
+        this.doGenerateDiffParts(stagingDatabase, run);
+    }
+
+    /**
      * Generates an up to date difference set between the last time the
      * synchronisation service ran, and now.
      * 
@@ -404,7 +586,9 @@ public class SynchronisationService extends Object {
                     + "(tt_module_id, merged_course, learn_course_code) "
                     + "(SELECT m.tt_module_id, 'N', learn_course_code "
                         + "FROM module m "
+                            + "LEFT OUTER JOIN learn_merged_course merge ON merge.learn_source_course_code = m.learn_course_code "
                         + "WHERE m.learn_course_code IS NOT NULL "
+                            + "AND merge.learn_source_course_code IS NULL "
                             + "AND m.tt_module_id NOT IN (SELECT tt_module_id FROM module_course WHERE merged_course='N')"
                     + ")"
                 );
@@ -499,7 +683,7 @@ public class SynchronisationService extends Object {
             this.updateGroupDescriptions(stagingDatabase);
         
             this.generateGroupNames(stagingDatabase);
-            bbService.createGroupsForActivities(stagingDatabase, run);
+            this.createGroupsForActivities(stagingDatabase, run);
             bbService.mapStudentSetsToUsers(stagingDatabase);
             this.applyEnrolmentChanges(run, stagingDatabase);
         } finally {
@@ -855,6 +1039,43 @@ public class SynchronisationService extends Object {
             insertStatement.executeUpdate();
         } finally {
             insertStatement.close();
+        }
+    }
+
+    /**
+     * Wrapper around a prepared statement for updating the Learn group ID
+     * associated with an activity in the database.
+     */
+    private class ManagedLearnGroupIDStatement extends Object {
+
+        private final PreparedStatement statement;
+
+        private ManagedLearnGroupIDStatement(final Connection connection)
+                throws SQLException {
+            this.statement = connection.prepareStatement("UPDATE activity_group g "
+                    + "SET g.learn_group_id=?, g.learn_group_created=? "
+                    + "WHERE g.activity_group_id=?");
+        }
+
+        /**
+         * Closes the prepared statement underlying this object.
+         *
+         * @throws SQLException
+         */
+        public void close() throws SQLException {
+            this.statement.close();
+        }
+
+        public int recordGroupId(final Timestamp now,
+                final int activityGroupId, final Id groupId)
+                throws SQLException {
+            int paramIdx = 1;
+            
+            this.statement.setString(paramIdx++, groupId.toExternalString());
+            this.statement.setTimestamp(paramIdx++, now);
+            this.statement.setInt(paramIdx++, activityGroupId);
+            
+            return this.statement.executeUpdate();
         }
     }
 }

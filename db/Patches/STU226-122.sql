@@ -1,3 +1,7 @@
+/**
+ * Correct view for remove enrolment changes.
+ */
+
 CREATE OR REPLACE VIEW removed_enrolment_vw AS
     (SELECT a.run_id AS run_id, a.previous_run_id AS previous_run_id,
         cb.tt_student_set_id AS tt_student_set_id, cb.tt_activity_id AS tt_activity_id,

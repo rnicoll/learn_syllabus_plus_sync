@@ -1,3 +1,6 @@
+DROP VIEW jta_parent_child_vw;
+DROP VIEW jta_parent_activity_group_vw;
+DROP VIEW activity_group_vw;
 DROP VIEW change_part_vw;
 DROP VIEW template_set_size_vw;
 DROP VIEW added_enrolment_vw;

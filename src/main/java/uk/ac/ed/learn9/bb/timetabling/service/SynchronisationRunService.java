@@ -194,13 +194,13 @@ public class SynchronisationRunService {
                 + "(SELECT ?, MAX(run_id) "
                     + "FROM synchronisation_run "
                     + "WHERE run_id!=? "
-                        + "AND (result_code IS NULL OR result_code!=?)"
+                        + "AND (result_code IS NULL OR result_code=?)"
                 + ")");
         try {
             int paramIdx = 1;
             statement.setInt(paramIdx++, runId);
             statement.setInt(paramIdx++, runId);
-            statement.setString(paramIdx++, SynchronisationResult.ABANDONED.name());
+            statement.setString(paramIdx++, SynchronisationResult.SUCCESS.name());
             // XXX: Handle constraint violation
             statement.executeUpdate();
         } finally {
