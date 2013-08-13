@@ -271,11 +271,10 @@ public class SynchronisationService extends Object {
               JOIN module_course parent_course ON parent_course.module_course_id=parent_group.module_course_id
             WHERE child_course.learn_course_id=parent_course.learn_course_id; */
         
-        // Create/update groups for all activities.
         try {
             final PreparedStatement queryStatement = stagingDatabase.prepareStatement(
                 "SELECT tt_activity_id, activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
-                    + "FROM activity_group_vw "
+                    + "FROM non_jta_activity_group_vw "
                         + "WHERE learn_course_id IS NOT NULL"
                 );
             try {
