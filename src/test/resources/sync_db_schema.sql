@@ -116,8 +116,7 @@ CREATE TABLE synchronisation_run_prev (
     previous_run_id INTEGER NULL,
     PRIMARY KEY(run_id),
     CONSTRAINT sync_prev_run FOREIGN KEY (run_id) REFERENCES synchronisation_run(run_id),
-    CONSTRAINT sync_prev_prev FOREIGN KEY (previous_run_id) REFERENCES synchronisation_run(run_id),
-    UNIQUE(previous_run_id)
+    CONSTRAINT sync_prev_prev FOREIGN KEY (previous_run_id) REFERENCES synchronisation_run(run_id)
 );
 
 CREATE TABLE cache_enrolment (

@@ -171,8 +171,7 @@ CREATE TABLE synchronisation_run_prev (
   previous_run_id INTEGER NULL,
   constraint "SYNC_RUN_PREV_RUN" FOREIGN KEY (run_id) REFERENCES synchronisation_run(run_id),
   constraint "SYNC_RUN_PREV_PREV" FOREIGN KEY (previous_run_id) REFERENCES synchronisation_run(run_id),
-  constraint "SYNC_RUN_PREV_PK" PRIMARY KEY(run_id) using index tablespace SATVLE_INDEX,
-  constraint "SYNC_RUN_PREV_UNIQ" UNIQUE(previous_run_id) using index tablespace SATVLE_INDEX
+  constraint "SYNC_RUN_PREV_PK" PRIMARY KEY(run_id) using index tablespace SATVLE_INDEX
 ) tablespace "SATVLE_DATA";
 comment on column synchronisation_run_prev.run_id is 'ID for the synchronisation run.';
 comment on column synchronisation_run_prev.previous_run_id is 'ID for the synchronisation run against which a difference is to be generated.';
