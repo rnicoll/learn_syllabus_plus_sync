@@ -134,8 +134,9 @@ class UnsafeGroupMembershipManager {
         final Set<String> emailAddresses = new HashSet<String>();
         
         for (CourseMembership membership: this.courseMembershipLoader.loadByCourseIdAndInstructorFlag(course.getId())) {
-            final User user = membership.getUser();
+            final User user = this.userLoader.loadById(membership.getUserId());
             
+            assert null != user;
             if (null == user.getEmailAddress()) {
                 continue;
             }
