@@ -554,7 +554,9 @@ public class SynchronisationService extends Object {
                         + "(SELECT a.tt_activity_id, mc.module_course_id "
                             + "FROM module_course mc "
                                 + "JOIN activity a ON mc.tt_module_id=a.tt_module_id "
-                            + "WHERE tt_activity_id NOT IN (SELECT tt_activity_id FROM activity_group)"
+                                + "LEFT OUTER JOIN activity_group mutex ON mutex.module_course_id=mc.module_course_id "
+                                    + "AND mutex.tt_activity_id=a.tt_activity_id "
+                            + "WHERE mutex.module_course_id IS NULL"
                         + ")"
                 );
             } finally {
