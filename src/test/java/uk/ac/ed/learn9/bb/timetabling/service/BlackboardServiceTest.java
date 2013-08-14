@@ -139,27 +139,27 @@ public class BlackboardServiceTest extends AbstractJUnit4SpringContextTests {
     public void testIsGroupMembershipRemovalUnsafe()
         throws Exception {
         final BlackboardService service = this.getService();
-        final MockGroup availableGroup = new MockGroup();
-        final Group unavailableGroup = new Group();
+        final Group availableGroup = new Group();
+        final MockGroup unavailableGroup = new MockGroup();
         final GroupMembership groupMembership = new GroupMembership();
         
         availableGroup.setIsAvailable(true);
         unavailableGroup.setIsAvailable(false);
         
+        unavailableGroup.setHasGroupToolWithGradeableItem(false);
+        unavailableGroup.setIsDiscussionBoardAvailable(false);
+        
         assertFalse(service.isGroupMembershipRemovalUnsafe(unavailableGroup, groupMembership));
-        
-        availableGroup.setIsDiscussionBoardAvailable(false);
-        availableGroup.setHasGroupToolWithGradeableItem(false);
-        assertFalse(service.isGroupMembershipRemovalUnsafe(availableGroup, groupMembership));
-        
-        availableGroup.setHasGroupToolWithGradeableItem(true);
         assertTrue(service.isGroupMembershipRemovalUnsafe(availableGroup, groupMembership));
         
-        availableGroup.setIsDiscussionBoardAvailable(true);
-        assertTrue(service.isGroupMembershipRemovalUnsafe(availableGroup, groupMembership));
+        unavailableGroup.setHasGroupToolWithGradeableItem(true);
+        assertTrue(service.isGroupMembershipRemovalUnsafe(unavailableGroup, groupMembership));
         
-        availableGroup.setHasGroupToolWithGradeableItem(false);
-        assertTrue(service.isGroupMembershipRemovalUnsafe(availableGroup, groupMembership));
+        unavailableGroup.setIsDiscussionBoardAvailable(true);
+        assertTrue(service.isGroupMembershipRemovalUnsafe(unavailableGroup, groupMembership));
+        
+        unavailableGroup.setHasGroupToolWithGradeableItem(false);
+        assertTrue(service.isGroupMembershipRemovalUnsafe(unavailableGroup, groupMembership));
     }
 
     /**

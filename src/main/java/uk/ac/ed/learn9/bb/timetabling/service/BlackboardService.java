@@ -481,12 +481,9 @@ public class BlackboardService {
      */
     protected boolean isGroupMembershipRemovalUnsafe(final Group group, final GroupMembership groupMembership)
         throws PersistenceException {
-        if (group.getIsAvailable()) {
-            return group.hasGroupToolWithGradeableItem()
+        return group.getIsAvailable()
+                || group.hasGroupToolWithGradeableItem()
                 || group.getIsDiscussionBoardAvailable();
-        }
-        
-        return false;
     }
 
     /**
