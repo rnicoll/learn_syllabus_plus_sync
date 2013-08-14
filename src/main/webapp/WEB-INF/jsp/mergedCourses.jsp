@@ -28,7 +28,7 @@
                         description="This following is a list of merged child courses of this course."
         objectVar="courseCode"
         >
-        <bbNG:listElement name="courseCode" label="Course Code">
+        <bbNG:listElement name="courseCode" isRowHeader="true" label="Course Code">
             ${fn:escapeXml(courseCode)}
         </bbNG:listElement>
     </bbNG:inventoryList>
