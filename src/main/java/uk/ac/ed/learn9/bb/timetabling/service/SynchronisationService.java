@@ -596,9 +596,9 @@ public class SynchronisationService extends Object {
                     + "(SELECT m.tt_module_id, 'Y', merge.learn_target_course_code "
                         + "FROM module m "
                             + "JOIN learn_merged_course merge ON merge.learn_source_course_code = m.learn_course_code "
-                            + "LEFT JOIN module_course exist ON exist.tt_module_id=m.tt_module_id "
+                            + "LEFT OUTER JOIN module_course exist ON exist.tt_module_id=m.tt_module_id "
                                 + "AND exist.merged_course = 'Y' "
-                                + "AND exist.learn_course_code=m.learn_course_code "
+                                + "AND exist.learn_course_code=merge.learn_target_course_code "
                         + "WHERE exist.tt_module_id IS NULL"
                     + ")"
                 );
