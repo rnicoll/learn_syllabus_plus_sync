@@ -7,8 +7,6 @@ import java.sql.SQLException;
 
 import javax.sql.DataSource;
 
-import blackboard.data.course.Group;
-
 import org.junit.After;
 import static org.junit.Assert.*;
 import org.junit.Before;
@@ -16,12 +14,9 @@ import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 
+import blackboard.data.course.Group;
 import blackboard.data.course.GroupMembership;
 import uk.ac.ed.learn9.bb.timetabling.blackboard.MockGroup;
-import uk.ac.ed.learn9.bb.timetabling.dao.ActivityDao;
-import uk.ac.ed.learn9.bb.timetabling.dao.ActivityGroupDao;
-import uk.ac.ed.learn9.bb.timetabling.dao.ModuleCourseDao;
-import uk.ac.ed.learn9.bb.timetabling.dao.ModuleDao;
 import uk.ac.ed.learn9.bb.timetabling.util.DbScriptUtil;
 
 /**

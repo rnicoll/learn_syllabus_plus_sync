@@ -118,7 +118,7 @@ CREATE OR REPLACE VIEW jta_parent_activity_group_vw AS
         WHERE a.tt_activity_id IN (SELECT tt_activity_id FROM jta_parent_activity_vw)
     );
 
-  CREATE OR REPLACE VIEW activity_group_vw AS
+CREATE OR REPLACE VIEW activity_group_vw AS
   (SELECT ag.activity_group_id, a.tt_activity_id, a.tt_activity_name,
             a.learn_group_name, a.description, a.tt_type_id, a.tt_template_id,
             ag.learn_group_id, ag.learn_group_created, mc.learn_course_id
@@ -126,7 +126,11 @@ CREATE OR REPLACE VIEW jta_parent_activity_group_vw AS
             JOIN activity_group ag ON ag.tt_activity_id=a.tt_activity_id
             JOIN module_course mc ON mc.module_course_id=ag.module_course_id
     );
-    
+
+/*
+ * Maps from groups belonging to an activity which is a joint taught child,
+ * through the groups belonging to its joint taught activity parent.
+ */    
 CREATE OR REPLACE VIEW jta_parent_child_vw AS
   (SELECT child_group.activity_group_id child_group_id, parent_group.activity_group_id parent_group_id
         FROM sync_activity_vw child_activity
