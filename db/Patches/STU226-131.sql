@@ -24,7 +24,7 @@ CREATE OR REPLACE VIEW activity_group_vw AS
     );
     
 CREATE OR REPLACE VIEW jta_parent_child_vw AS
-  (SELECT child_group.activity_group_id, parent_group.activity_group_id
+  (SELECT child_group.activity_group_id child_group_id, parent_group.activity_group_id parent_group_id
             FROM sync_activity_vw child_activity
               JOIN variantjtaacts child_vjta ON child_vjta.tt_activity_id=child_activity.tt_activity_id AND child_vjta.tt_is_jta_child='1'
               JOIN activity_parents ap ON child_activity.tt_activity_id=ap.tt_activity_id
