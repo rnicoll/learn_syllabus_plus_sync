@@ -53,6 +53,11 @@ public class SynchronisationService extends Object {
      */
     public static final int DAYS_KEEP_ENROLMENT_CACHE = 3;
     
+    /**
+     * Default group name to use where no group name can be generated.
+     */
+    public static final String DEFAULT_GROUP_NAME = GROUP_NAME_PREFIX + "Group";
+    
     private Logger log = Logger.getLogger(SynchronisationService.class);
     
     @Autowired
@@ -275,7 +280,8 @@ public class SynchronisationService extends Object {
             final PreparedStatement queryStatement = stagingDatabase.prepareStatement(
                 "SELECT tt_activity_id, activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
                     + "FROM non_jta_activity_group_vw "
-                        + "WHERE learn_course_id IS NOT NULL"
+                        + "WHERE learn_course_id IS NOT NULL "
+                        + "AND learn_group_name IS NOT NULL"
                 );
             try {
                 doCreateGroupsForActivities(stagingDatabase, run, queryStatement,
@@ -489,7 +495,7 @@ public class SynchronisationService extends Object {
      */
     private String buildGroupName(final String activityName, final String moduleName, final String activityType) {
         if (null == activityName) {
-            return null;
+            return DEFAULT_GROUP_NAME;
         }
                 
         // The ID of a group, for example a number to identify it within its
@@ -709,11 +715,10 @@ public class SynchronisationService extends Object {
         // Find groups that need their names completed.
         final PreparedStatement queryStatement = stagingDatabase.prepareStatement(
                 "SELECT a.tt_activity_id, a.tt_activity_name, a.learn_group_name, m.tt_module_name, t.tt_type_name "
-                    + "FROM sync_activity_vw a "
-                        + "JOIN sync_module_vw m ON m.tt_module_id=a.tt_module_id "
-                        + "JOIN activity_type t ON t.tt_type_id=a.tt_type_id "
+                    + "FROM activity a "
+                        + "LEFT JOIN module m ON m.tt_module_id=a.tt_module_id "
+                        + "LEFT JOIN activity_type t ON t.tt_type_id=a.tt_type_id "
                     + "WHERE a.learn_group_name IS NULL "
-                        + "AND m.learn_course_code IS NOT NULL "
         );
         try {
             final ResultSet rs = queryStatement.executeQuery();

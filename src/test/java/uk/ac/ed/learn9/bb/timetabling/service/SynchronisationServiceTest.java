@@ -7,15 +7,16 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.After;
 import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.beans.BeansException;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 
@@ -508,6 +509,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     public void testGenerateGroupNames() throws Exception {
         System.out.println("generateGroupNames");
         final AcademicYearCode academicYearCode = new AcademicYearCode("2012/3");
+        final Map<String, String> expectedActivityGroupNames = new HashMap<String, String>();
         final SynchronisationService synchronisationService = this.getService();
         final Connection rdbConnection = synchronisationService.getRdbDataSource().getConnection();
         try {
@@ -521,10 +523,12 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
             
             int activityId = 1;
             
-            RdbUtil.createTestActivity(rdbConnection, activityTemplateSync,
-                    module, RdbUtil.SchedulingMethod.SCHEDULED, activityId++, rdbIdSource);
-            RdbUtil.createTestActivity(rdbConnection, activityTemplateSync,
-                    module, RdbUtil.SchedulingMethod.SCHEDULED, activityId++, rdbIdSource);
+            expectedActivityGroupNames.put(RdbUtil.createTestActivity(rdbConnection, activityTemplateSync,
+                    module, RdbUtil.SchedulingMethod.SCHEDULED, activityId++, rdbIdSource).getActivityId(),
+                    "TT_Tutorial_1");
+            expectedActivityGroupNames.put(RdbUtil.createTestActivity(rdbConnection, "Tutorial/" + activityId++, 
+                    module, RdbUtil.SchedulingMethod.SCHEDULED, tutorialType, rdbIdSource).getActivityId(),
+                    "TT_Tutorial_2");
             
             final Connection cacheConnection = synchronisationService.getStagingDataSource().getConnection();
             try {
@@ -533,7 +537,15 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
             } finally {
                 cacheConnection.close();
             }
-            // XXX: Validate the generated group names
+            
+            // Validate the group names that have been generated
+            final List<Activity> activities = this.getActivityDao().getAll();
+            
+            for (Activity activity: activities) {
+                final String expectedName = expectedActivityGroupNames.get(activity.getActivityId());
+                assertNotNull(expectedName);
+                assertEquals(expectedName, activity.getLearnGroupName());
+            }
         } finally {
             rdbConnection.close();
         }

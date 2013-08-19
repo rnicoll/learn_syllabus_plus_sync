@@ -17,4 +17,6 @@ public interface ActivityGroupDao {
      * @return a list of activity groups.
      */
     public List<ActivityGroup> getByActivity(final Activity activity);
+
+    public List<ActivityGroup> getAll();
 }

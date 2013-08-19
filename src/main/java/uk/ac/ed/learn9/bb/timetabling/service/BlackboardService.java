@@ -418,6 +418,10 @@ public class BlackboardService {
      */
     public Group buildCourseGroup(final Id courseId, final String groupName,
             final FormattedText description) {
+        assert null != courseId;
+        assert null != groupName;
+        assert null != description;
+        
         // Create the new group
         final Group group = new Group();
         group.setCourseId(courseId);
@@ -438,6 +442,9 @@ public class BlackboardService {
      */
     public GroupMembership buildGroupMembership(final CourseMembership courseMembership,
             final Id groupId) {
+        assert null != courseMembership;
+        assert null != groupId;
+        
         final GroupMembership groupMembership = new GroupMembership();
 
         groupMembership.setCourseMembershipId(courseMembership.getId());

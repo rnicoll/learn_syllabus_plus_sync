@@ -3,6 +3,7 @@ package uk.ac.ed.learn9.bb.timetabling.util;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Types;
 import uk.ac.ed.learn9.bb.timetabling.RdbIdSource;
 import uk.ac.ed.learn9.bb.timetabling.data.AcademicYearCode;
 import uk.ac.ed.learn9.bb.timetabling.data.Activity;
@@ -121,7 +122,11 @@ public class RdbUtil {
             statement.setString(paramIdx++, activity.getActivityName());
             statement.setString(paramIdx++, RdbUtil.generateHostKey(activity.getActivityId()));
             statement.setString(paramIdx++, activity.getActivityName());
-            statement.setString(paramIdx++, module.getModuleId());
+            if (null != module) {
+                statement.setString(paramIdx++, module.getModuleId());
+            } else {
+                statement.setNull(paramIdx++, Types.VARCHAR);
+            }
             switch (schedulingMethod) {
                 case SCHEDULED:
                     statement.setInt(paramIdx++, 1);
@@ -131,6 +136,74 @@ public class RdbUtil {
                     break;
             }
             statement.setString(paramIdx++, activityTemplate.getTemplateId());
+            
+            statement.executeUpdate();
+        } finally {
+            statement.close();
+        }
+        
+        return activity;
+    }
+    
+    
+    /**
+     * Creates an activity in the test reporting database, where the activity
+     * doesn't have a template.
+     * 
+     * @param rdb a connection to the TEST reporting database.
+     * @param activityName the name of the new activity.
+     * @param module the module the activity will belong to.
+     * @param schedulingMethod whether the activity has been scheduled.
+     * @param idSource the RDB ID generator to use for ID values.
+     * @return the newly generated activity, for reference.
+     * @throws SQLException if there was a problem communicating with the reporting
+     * database.
+     */
+    public static Activity createTestActivity(final Connection rdb,
+        final String activityName, final Module module,
+        final SchedulingMethod schedulingMethod, final ActivityType activityType,
+        final RdbIdSource idSource)
+        throws SQLException {
+        final Activity activity = new Activity();
+        
+        activity.setActivityId(idSource.getId());
+        activity.setActivityName(activityName);
+        activity.setModule(module);
+        
+        final PreparedStatement statement = rdb.prepareStatement(
+            "INSERT INTO ACTIVITY (ID, NAME, HOST_KEY, DESCRIPTION, MODUL, "
+                    + "SCHEDULING_METHOD, DEPARTMENT, ACTIVITY_TYPE, ACTIVITY_TMPL, "
+                    + "WEEK_PATTERN) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        );
+        try {
+            int paramIdx = 1;
+            
+            statement.setString(paramIdx++, activity.getActivityId());
+            statement.setString(paramIdx++, activity.getActivityName());
+            statement.setString(paramIdx++, RdbUtil.generateHostKey(activity.getActivityId()));
+            statement.setString(paramIdx++, activity.getActivityName());
+            if (null != module) {
+                statement.setString(paramIdx++, module.getModuleId());
+            } else {
+                statement.setNull(paramIdx++, Types.VARCHAR);
+            }
+            switch (schedulingMethod) {
+                case SCHEDULED:
+                    statement.setInt(paramIdx++, 1);
+                    break;
+                default:
+                    statement.setInt(paramIdx++, 0);
+                    break;
+            }
+            statement.setString(paramIdx++, DEPARTMENT_ID);
+            if (null != activityType) {
+                statement.setString(paramIdx++, activityType.getTypeId());
+            } else {
+                statement.setNull(paramIdx++, Types.VARCHAR);
+            }
+            statement.setNull(paramIdx++, Types.VARCHAR);
+            statement.setString(paramIdx++, WEEK_PATTERN);
             
             statement.executeUpdate();
         } finally {
