@@ -246,48 +246,52 @@ public class SynchronisationService extends Object {
         final Timestamp now = new Timestamp(System.currentTimeMillis());
         final ManagedLearnGroupIDStatement updateStatement = new ManagedLearnGroupIDStatement(stagingDatabase);
         
-        // Create groups for JTA parents first
-        /* try {
-            final PreparedStatement queryStatement = stagingDatabase.prepareStatement(
+        try {
+            // Create/rebuild groups for JTA parents first
+            final PreparedStatement jtaParentStatement = stagingDatabase.prepareStatement(
                 "SELECT tt_activity_id, activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
                     + "FROM jta_parent_activity_group_vw "
                         + "WHERE learn_course_id IS NOT NULL"
                 );
             try {
-                doCreateGroupsForActivities(stagingDatabase, run, queryStatement,
+                doCreateGroupsForActivities(stagingDatabase, run, jtaParentStatement,
                         groupDbLoader, groupDbPersister, updateStatement, now);
             } finally {
-                queryStatement.close();
+                jtaParentStatement.close();
             }
-        } finally {
-            updateStatement.close();
-        } */
+            
+            // Copy all groups from JTA parents to their children
+            final PreparedStatement jtaChildStatement = stagingDatabase.prepareStatement(
+                "SELECT pc.child_group_id activity_group_id, g.learn_group_id "
+                    + "FROM jta_parent_child_vw pc "
+                        + "JOIN activity_group g ON g.activity_group_id=pc.parent_group_id "
+                    + "WHERE g.learn_group_id IS NOT NULL"
+            );
+            try {
+                final ResultSet rs = jtaChildStatement.executeQuery();
+                try {                    
+                    while (rs.next()) {
+                        updateStatement.recordGroupId(now, rs.getInt("activity_group_id"),
+                            Id.generateId(Group.DATA_TYPE, rs.getString("learn_group_id")));
+                    }
+                } finally {
+                    rs.close();
+                }
+            } finally {
+                jtaChildStatement.close();
+            }
         
-        // TODO: Provide parent JTA groups to their childrens where modules match.
-        /* SELECT child_group.activity_group_id, parent_group.activity_group_id
-            FROM sync_activity_vw child_activity
-              JOIN variantjtaacts child_vjta ON child_vjta.tt_activity_id=child_activity.tt_activity_id AND child_vjta.tt_is_jta_child='1'
-              JOIN activity_parents ap ON child_activity.tt_activity_id=ap.tt_activity_id
-              JOIN sync_activity_vw parent_activity ON parent_activity.tt_activity_id=ap.tt_parent_activity_id
-              JOIN variantjtaacts parent_vjta ON parent_vjta.tt_activity_id=parent_activity.tt_activity_id AND parent_vjta.tt_is_jta_parent='1'
-              JOIN activity_group child_group ON child_group.tt_activity_id=child_activity.tt_activity_id
-              JOIN activity_group parent_group ON parent_group.tt_activity_id=parent_activity.tt_activity_id
-              JOIN module_course child_course ON child_course.module_course_id=child_group.module_course_id
-              JOIN module_course parent_course ON parent_course.module_course_id=parent_group.module_course_id
-            WHERE child_course.learn_course_id=parent_course.learn_course_id; */
-        
-        try {
-            final PreparedStatement queryStatement = stagingDatabase.prepareStatement(
+            final PreparedStatement nonJtaStatement = stagingDatabase.prepareStatement(
                 "SELECT tt_activity_id, activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
                     + "FROM non_jta_activity_group_vw "
                         + "WHERE learn_course_id IS NOT NULL "
                         + "AND learn_group_name IS NOT NULL"
                 );
             try {
-                doCreateGroupsForActivities(stagingDatabase, run, queryStatement,
+                doCreateGroupsForActivities(stagingDatabase, run, nonJtaStatement,
                         groupDbLoader, groupDbPersister, updateStatement, now);
             } finally {
-                queryStatement.close();
+                nonJtaStatement.close();
             }
         } finally {
             updateStatement.close();
