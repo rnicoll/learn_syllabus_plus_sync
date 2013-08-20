@@ -814,7 +814,8 @@ public class SynchronisationRunService {
         final StringBuilder body = new StringBuilder();
         
         body.append(this.getClass().getCanonicalName()).append("\r\n\r\n"
-            + "The Learn/Timetabling synchronisation process failed due to a serious error:\r\n");
+            + "The Learn/Timetabling synchronisation process failed due to a serious error:\r\n\r\n");
+        body.append(cause.getClass().getName()).append("\r\n");
         for (StackTraceElement element: cause.getStackTrace()) {
             body.append(element.toString()).append("\r\n");
         }
