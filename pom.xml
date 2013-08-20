@@ -4,7 +4,7 @@
 
     <groupId>uk.ac.ed.learn9.bb</groupId>
     <artifactId>learn_timetabling</artifactId>
-    <version>1.1.13</version>
+    <version>1.1.14</version>
     <packaging>war</packaging>
 
     <name>learn_timetabling</name>
