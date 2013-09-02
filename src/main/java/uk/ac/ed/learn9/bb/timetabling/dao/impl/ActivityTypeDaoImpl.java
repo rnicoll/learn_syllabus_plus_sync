@@ -17,7 +17,7 @@ import uk.ac.ed.learn9.bb.timetabling.data.ActivityType;
 public class ActivityTypeDaoImpl extends HibernateDaoSupport implements ActivityTypeDao {
 
     @Override
-    public ActivityType getById(final int typeId) {
+    public ActivityType getById(final String typeId) {
         return (ActivityType)this.getSession().get(ActivityType.class, typeId);
     }
 

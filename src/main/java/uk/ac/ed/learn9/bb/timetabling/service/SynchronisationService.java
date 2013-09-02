@@ -407,7 +407,8 @@ public class SynchronisationService extends Object {
 
     /**
      * Generates an up to date difference set between the last time the
-     * synchronisation service ran, and now.
+     * synchronisation service ran, and now. This includes copying
+     * student set/activity relationships into the staging database.
      * 
      * @param run the synchronisation run that we're generating a difference set
      * for.

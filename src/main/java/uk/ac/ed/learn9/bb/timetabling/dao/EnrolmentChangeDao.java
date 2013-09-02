@@ -1,7 +1,6 @@
 package uk.ac.ed.learn9.bb.timetabling.dao;
 
 import java.util.List;
-import blackboard.data.course.Course;
 import uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange;
 
 /**
@@ -16,4 +15,11 @@ public interface EnrolmentChangeDao {
      * @return the change.
      */
     public EnrolmentChange getById(final int changeId);
+    
+    /**
+     * Get all changes.
+     * 
+     * @return a list of changes.
+     */
+    public List<EnrolmentChange> getAll();
 }

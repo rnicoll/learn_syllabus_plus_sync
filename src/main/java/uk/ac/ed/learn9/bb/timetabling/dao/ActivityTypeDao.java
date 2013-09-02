@@ -14,7 +14,7 @@ public interface ActivityTypeDao {
      * @param typeId a timetabling ID (as in a 32 character unique identifier).
      * @return the activity type.
      */
-    public ActivityType getById(final int typeId);
+    public ActivityType getById(final String typeId);
     
     /**
      * Retrieves all activity types in the staging database.

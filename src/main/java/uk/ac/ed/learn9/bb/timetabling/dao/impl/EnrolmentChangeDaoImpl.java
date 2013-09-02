@@ -1,12 +1,12 @@
 package uk.ac.ed.learn9.bb.timetabling.dao.impl;
 
 import java.util.List;
-import blackboard.data.course.Course;
-import org.hibernate.criterion.Restrictions;
+
 import org.springframework.context.annotation.Scope;
 import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
 import uk.ac.ed.learn9.bb.timetabling.dao.EnrolmentChangeDao;
 import uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange;
 
@@ -22,4 +22,9 @@ public class EnrolmentChangeDaoImpl extends HibernateDaoSupport implements Enrol
     public EnrolmentChange getById(final int changeId) {
         return (EnrolmentChange)this.getSession().get(EnrolmentChange.class, changeId);
     }    
+
+    @Override
+    public List<EnrolmentChange> getAll() {
+        return this.getSession().createQuery("from uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange").list();
+    }
 }

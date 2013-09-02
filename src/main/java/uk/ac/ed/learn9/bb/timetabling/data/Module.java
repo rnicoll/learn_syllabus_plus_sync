@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -28,6 +29,27 @@ public class Module extends Object implements Serializable {
     private String learnCourseCode;
     private Boolean webctActive;
     private List<ModuleCourse> courses;
+    
+    @Override
+    public boolean equals(final Object o) {
+        if (!(o instanceof Module)) {
+            return false;
+        }
+        
+        final Module other = (Module)o;
+        
+        return other.getModuleId().equals(this.getModuleId());
+    }
+    
+    @Override
+    public int hashCode() {
+        return this.getModuleId().hashCode();
+    }
+    
+    @Override
+    public String toString() {
+        return this.getTimetablingModuleName();
+    }
 
     /**
      * Gets the ID of this module (a 32 character identifier).
@@ -111,7 +133,7 @@ public class Module extends Object implements Serializable {
      * 
      * @return the Learn courses this timetabling module maps to.
      */
-    @OneToMany(mappedBy="module")
+    @OneToMany(mappedBy="module", fetch=FetchType.LAZY)
     public List<ModuleCourse> getCourses() {
         return courses;
     }

@@ -14,7 +14,7 @@ public interface ActivityTemplateDao {
      * @param templateId a timetabling ID (as in a 32 character unique identifier).
      * @return the activity template.
      */
-    public ActivityTemplate getById(final int templateId);
+    public ActivityTemplate getById(final String templateId);
     
     /**
      * Retrieves all activity templates in the staging database.

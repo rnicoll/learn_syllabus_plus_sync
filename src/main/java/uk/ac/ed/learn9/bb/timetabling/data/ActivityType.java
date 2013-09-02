@@ -1,8 +1,11 @@
 package uk.ac.ed.learn9.bb.timetabling.data;
 
+import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 /**
@@ -14,6 +17,28 @@ import javax.persistence.Table;
 public class ActivityType extends Object {
     private String typeId;
     private String typeName;
+    private List<Activity> activities;
+    
+    @Override
+    public boolean equals(final Object o) {
+        if (!(o instanceof ActivityType)) {
+            return false;
+        }
+        
+        final ActivityType other = (ActivityType)o;
+        
+        return other.getTypeId().equals(this.getTypeId());
+    }
+    
+    @Override
+    public int hashCode() {
+        return this.getTypeId().hashCode();
+    }
+    
+    @Override
+    public String toString() {
+        return this.getTypeName();
+    }
 
     /**
      * Gets the ID of this activity type from Timetabling (a 32 character identifier).
@@ -28,6 +53,16 @@ public class ActivityType extends Object {
     }
 
     /**
+     * Get the activities of this activity type.
+     * 
+     * @return a list of the activities of this activity type.
+     */
+    @OneToMany(mappedBy="type", fetch=FetchType.LAZY)
+    public List<Activity> getActivities() {
+        return activities;
+    }
+
+    /**
      * Returns the human readable name of this activity type, for example "Lecture",
      * "Tutorial", etc.
      * 
@@ -39,16 +74,29 @@ public class ActivityType extends Object {
     }
 
     /**
+     * Get the activities of this activity type.
+     * 
+     * @param newActivities list of the activities of this activity type.
+     */
+    public void setActivities(final List<Activity> newActivities) {
+        this.activities = newActivities;
+    }
+
+    /**
+     * Set the ID of this activity type.
+     * 
      * @param typeId the new ID of this activity type.
      */
-    public void setTypeId(String typeId) {
+    public void setTypeId(final String typeId) {
         this.typeId = typeId;
     }
 
     /**
+     * Set the name of this activity type.
+     * 
      * @param typeName the new name of this activity type.
      */
-    public void setTypeName(String typeName) {
+    public void setTypeName(final String typeName) {
         this.typeName = typeName;
     }
 }

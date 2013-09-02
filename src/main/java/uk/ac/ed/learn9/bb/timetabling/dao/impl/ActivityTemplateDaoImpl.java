@@ -17,7 +17,7 @@ import uk.ac.ed.learn9.bb.timetabling.data.ActivityTemplate;
 public class ActivityTemplateDaoImpl extends HibernateDaoSupport implements ActivityTemplateDao {
 
     @Override
-    public ActivityTemplate getById(final int changeId) {
+    public ActivityTemplate getById(final String changeId) {
         return (ActivityTemplate)this.getSession().get(ActivityTemplate.class, changeId);
     }
 

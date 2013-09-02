@@ -2,6 +2,7 @@ package uk.ac.ed.learn9.bb.timetabling.dao;
 
 import java.util.List;
 
+import blackboard.persist.Id;
 import uk.ac.ed.learn9.bb.timetabling.data.Activity;
 
 /**
@@ -22,6 +23,14 @@ public interface ActivityDao {
      * @return a list of activities.
      */
     public List<Activity> getAll();
+
+    /**
+     * Retrieves activities by the ID of the Learn course.
+     * 
+     * @param id a Learn course ID.
+     * @return a list of activities matching the given Learn course.
+     */
+    public List<Activity> getByCourseLearnId(final Id id);
     
     /**
      * Refreshes an activity from the database.

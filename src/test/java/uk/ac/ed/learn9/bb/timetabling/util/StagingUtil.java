@@ -10,14 +10,19 @@ import blackboard.persist.Id;
 
 import uk.ac.ed.learn9.bb.timetabling.RdbIdSource;
 import uk.ac.ed.learn9.bb.timetabling.dao.ActivityDao;
+import uk.ac.ed.learn9.bb.timetabling.dao.ActivityTemplateDao;
+import uk.ac.ed.learn9.bb.timetabling.dao.ActivityTypeDao;
 import uk.ac.ed.learn9.bb.timetabling.dao.ModuleCourseDao;
 import uk.ac.ed.learn9.bb.timetabling.dao.ModuleDao;
+import uk.ac.ed.learn9.bb.timetabling.dao.StudentSetDao;
 import uk.ac.ed.learn9.bb.timetabling.data.AcademicYearCode;
 import uk.ac.ed.learn9.bb.timetabling.data.Activity;
 import uk.ac.ed.learn9.bb.timetabling.data.ActivityTemplate;
 import uk.ac.ed.learn9.bb.timetabling.data.ActivityType;
 import uk.ac.ed.learn9.bb.timetabling.data.Module;
 import uk.ac.ed.learn9.bb.timetabling.data.ModuleCourse;
+import uk.ac.ed.learn9.bb.timetabling.data.StudentSet;
+import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 
 /**
  * Utility class for creating data into the staging database.
@@ -188,5 +193,90 @@ public class StagingUtil {
         } finally {
             statement.close();
         }
+    }
+
+    public static StudentSet createTestStudentSet(final Connection stagingDatabase,
+            final StudentSetDao studentSetDao,
+            final RdbIdSource idSource, final String studentId)
+        throws SQLException {
+        final String studentSetId = idSource.getId();
+        final PreparedStatement statement = stagingDatabase.prepareStatement(
+                "INSERT INTO STUDENT_SET (TT_STUDENT_SET_ID, TT_HOST_KEY) "
+                + "VALUES (?, ?)");
+        try {
+            int paramIdx = 1;
+            
+            statement.setString(paramIdx++, studentSetId);
+            statement.setString(paramIdx++, studentId);
+            statement.executeUpdate();
+        } finally {
+            statement.close();
+        }
+        
+        return studentSetDao.getById(studentSetId);
+    }
+
+    public static void createStudentSetActivity(final Connection stagingDatabase,
+            final SynchronisationRun run, final StudentSet studentSet,
+            final Activity activity)
+        throws SQLException {
+        final PreparedStatement statement = stagingDatabase.prepareStatement(
+                "INSERT INTO CACHE_ENROLMENT (RUN_ID, TT_STUDENT_SET_ID, TT_ACTIVITY_ID) "
+                + "VALUES (?, ?, ?)");
+        try {
+            int paramIdx = 1;
+            
+            statement.setInt(paramIdx++, run.getRunId());
+            statement.setString(paramIdx++, studentSet.getStudentSetId());
+            statement.setString(paramIdx++, activity.getActivityId());
+            statement.executeUpdate();
+        } finally {
+            statement.close();
+        }
+    }
+
+    public static ActivityTemplate createActivityTemplate(final Connection stagingDatabase,
+            final ActivityTemplateDao activityTemplateDao, final String name,
+            final String userText5, final RdbIdSource idSource)
+        throws SQLException {
+        final String templateId = idSource.getId();
+        
+        final PreparedStatement statement = stagingDatabase.prepareStatement(
+                "INSERT INTO ACTIVITY_TEMPLATE (TT_TEMPLATE_ID, TT_TEMPLATE_NAME, TT_USER_TEXT_5) "
+                + "VALUES (?, ?, ?)");
+        try {
+            int paramIdx = 1;
+            
+            statement.setString(paramIdx++, templateId);
+            statement.setString(paramIdx++, name);
+            statement.setString(paramIdx++, userText5);
+            statement.executeUpdate();
+        } finally {
+            statement.close();
+        }
+        
+        return activityTemplateDao.getById(templateId);
+    }
+
+    public static ActivityType createActivityType(final Connection stagingDatabase,
+            final ActivityTypeDao activityTypeDao, final String name,
+            final RdbIdSource idSource)
+        throws SQLException {
+        final String typeId = idSource.getId();
+        
+        final PreparedStatement statement = stagingDatabase.prepareStatement(
+                "INSERT INTO ACTIVITY_TYPE (TT_TYPE_ID, TT_TYPE_NAME) "
+                + "VALUES (?, ?)");
+        try {
+            int paramIdx = 1;
+            
+            statement.setString(paramIdx++, typeId);
+            statement.setString(paramIdx++, name);
+            statement.executeUpdate();
+        } finally {
+            statement.close();
+        }
+        
+        return activityTypeDao.getById(typeId);
     }
 }

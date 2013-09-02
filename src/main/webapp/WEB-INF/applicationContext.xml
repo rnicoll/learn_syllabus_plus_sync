@@ -122,6 +122,9 @@
     <bean id="moduleCourseDao" class="uk.ac.ed.learn9.bb.timetabling.dao.impl.ModuleCourseDaoImpl">
         <property name="sessionFactory" ref="sessionFactory"/>
     </bean>
+    <bean id="studentSetDao" class="uk.ac.ed.learn9.bb.timetabling.dao.impl.StudentSetDaoImpl">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
     <bean id="synchronisationRunDao" class="uk.ac.ed.learn9.bb.timetabling.dao.impl.SynchronisationRunDaoImpl">
         <property name="sessionFactory" ref="sessionFactory"/>
     </bean>

@@ -1,9 +1,12 @@
 package uk.ac.ed.learn9.bb.timetabling.data;
 
 import java.io.Serializable;
+import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 /**
@@ -18,6 +21,28 @@ public class ActivityTemplate extends Object implements Serializable {
     private String templateName;
     private String userText5;
     private String learnGroupSetId;
+    private List<Activity> activities;
+    
+    @Override
+    public boolean equals(final Object o) {
+        if (!(o instanceof ActivityTemplate)) {
+            return false;
+        }
+        
+        final ActivityTemplate other = (ActivityTemplate)o;
+        
+        return other.getTemplateId().equals(this.getTemplateId());
+    }
+    
+    @Override
+    public int hashCode() {
+        return this.getTemplateId().hashCode();
+    }
+    
+    @Override
+    public String toString() {
+        return this.getTemplateName();
+    }
 
     /**
      * Returns the ID of this template in Learn (a 32 character identifier).
@@ -29,6 +54,16 @@ public class ActivityTemplate extends Object implements Serializable {
     @Column(name="tt_template_id", nullable=false, length=32)
     public String getTemplateId() {
         return templateId;
+    }
+
+    /**
+     * Get the activities based on this template.
+     * 
+     * @return the activities based on this template.
+     */
+    @OneToMany(mappedBy="template", fetch=FetchType.LAZY)
+    public List<Activity> getActivities() {
+        return this.activities;
     }
 
     /**
@@ -63,6 +98,10 @@ public class ActivityTemplate extends Object implements Serializable {
     @Column(name="learn_group_set_id", nullable=true, length=255)
     public String getLearnGroupSetId() {
         return learnGroupSetId;
+    }
+    
+    public void setActivities(final List<Activity> newActivities) {
+        this.activities = newActivities;
     }
 
     /**

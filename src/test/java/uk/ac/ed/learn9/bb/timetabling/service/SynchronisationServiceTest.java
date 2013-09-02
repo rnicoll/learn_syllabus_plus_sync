@@ -28,8 +28,12 @@ import uk.ac.ed.learn9.bb.timetabling.RdbIdSource;
 import uk.ac.ed.learn9.bb.timetabling.SequentialRdbIdSource;
 import uk.ac.ed.learn9.bb.timetabling.dao.ActivityDao;
 import uk.ac.ed.learn9.bb.timetabling.dao.ActivityGroupDao;
+import uk.ac.ed.learn9.bb.timetabling.dao.ActivityTemplateDao;
+import uk.ac.ed.learn9.bb.timetabling.dao.ActivityTypeDao;
+import uk.ac.ed.learn9.bb.timetabling.dao.EnrolmentChangeDao;
 import uk.ac.ed.learn9.bb.timetabling.dao.ModuleCourseDao;
 import uk.ac.ed.learn9.bb.timetabling.dao.ModuleDao;
+import uk.ac.ed.learn9.bb.timetabling.dao.StudentSetDao;
 import uk.ac.ed.learn9.bb.timetabling.data.AcademicYearCode;
 import uk.ac.ed.learn9.bb.timetabling.data.Activity;
 import uk.ac.ed.learn9.bb.timetabling.data.ActivityGroup;
@@ -38,6 +42,7 @@ import uk.ac.ed.learn9.bb.timetabling.data.ActivityType;
 import uk.ac.ed.learn9.bb.timetabling.data.Configuration;
 import uk.ac.ed.learn9.bb.timetabling.data.Module;
 import uk.ac.ed.learn9.bb.timetabling.data.ModuleCourse;
+import uk.ac.ed.learn9.bb.timetabling.data.StudentSet;
 import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 import uk.ac.ed.learn9.bb.timetabling.util.DbScriptUtil;
 import uk.ac.ed.learn9.bb.timetabling.util.RdbUtil;
@@ -80,6 +85,18 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
         return this.applicationContext.getBean("activityGroupDao", ActivityGroupDao.class);
     }
     
+    private ActivityTemplateDao getActivityTemplateDao() {
+        return this.applicationContext.getBean("activityTemplateDao", ActivityTemplateDao.class);
+    }
+    
+    private ActivityTypeDao getActivityTypeDao() {
+        return this.applicationContext.getBean("activityTypeDao", ActivityTypeDao.class);
+    }
+    
+    private EnrolmentChangeDao getEnrolmentChangeDao() {
+        return this.applicationContext.getBean("enrolmentChangeDao", EnrolmentChangeDao.class);
+    }
+    
     private ModuleDao getModuleDao() {
         return this.applicationContext.getBean("moduleDao", ModuleDao.class);
     }
@@ -95,6 +112,10 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
      */
     public SynchronisationService getService() {
         return this.applicationContext.getBean(SynchronisationService.class);
+    }
+    
+    private StudentSetDao getStudentSetDao() {
+        return this.applicationContext.getBean("studentSetDao", StudentSetDao.class);
     }
     
     /**
@@ -376,7 +397,9 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     }
 
     /**
-     * Test of generateGroupsForActivities method, of class BlackboardService.
+     * Test of createFullDiffForStudentsOnActivity method, of class
+     * SynchronisationService. This method is used to re-generate all student sets on
+     * an activity, for example where a group is being rebuilt from scratch.
      */
     @Test
     public void testCreateFullDiffForStudentsOnActivity() throws Exception {
@@ -459,7 +482,8 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     
     /**
      * Very simple test for difference generation code; at this point this
-     * just tests the SQL is valid, without verifying the results.
+     * just tests the SQL is valid, without verifying the results. This test
+     * is a simplified version of {@link #testGenerateDiff()}
      */
     @Test
     public void testDoGenerateDiff() throws Exception {
@@ -481,11 +505,62 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     @Test
     public void testGenerateDiff() throws Exception {
         System.out.println("generateDiff");
-        final SynchronisationService synchronisationService = this.getService();
-        final SynchronisationRunService synchronisationRunService = this.getSynchronisationRunService();
-        
+        final ActivityDao activityDao = this.getActivityDao();
+        final RdbIdSource rdbIdSource = new SequentialRdbIdSource();
+        final SynchronisationRunService synchronisationRunService
+                = this.getSynchronisationRunService();
         final SynchronisationRun run = synchronisationRunService.startNewRun();
-        synchronisationService.generateDiff(run);
+        final Connection connection = this.getService().getStagingDataSource().getConnection();
+        try {
+            int activityId = 1;
+            final String courseCode = "ENLI11007_SV1_SEM2";
+            final Id courseId = new MockId(Course.DATA_TYPE, "_1_");
+            final Id groupId = new MockId(Group.DATA_TYPE, "_2_");
+            final String moduleName = "Test module";
+            final AcademicYearCode academicYear = new AcademicYearCode("2013/4");
+            final boolean webCtActive = true;
+            final Module module = StagingUtil.createTestModule(connection,
+                this.getModuleDao(), courseCode, moduleName, academicYear, webCtActive,
+                rdbIdSource);
+
+            assertEquals("ENLI110072013-4SV1SEM2", module.getLearnCourseCode());
+
+            final ActivityTemplate activityTemplate
+                    = StagingUtil.createActivityTemplate(connection, this.getActivityTemplateDao(),
+                    "Activity template", (String)null, rdbIdSource);
+            final ActivityType activityType 
+                    = StagingUtil.createActivityType(connection, this.getActivityTypeDao(),
+                    "Activity type", rdbIdSource);
+            final Activity activityA
+                = StagingUtil.createTestActivity(connection, activityDao, activityTemplate,
+                    activityType, module, RdbUtil.SchedulingMethod.SCHEDULED,
+                    activityId, rdbIdSource);
+            final Activity activityB
+                = StagingUtil.createTestActivity(connection, activityDao, activityTemplate,
+                    activityType, module, RdbUtil.SchedulingMethod.SCHEDULED,
+                    activityId, rdbIdSource);
+            
+            assertEquals(activityTemplate, activityA.getTemplate());
+            assertEquals(module, activityA.getModule());
+            
+            final ModuleCourse moduleCourse = StagingUtil.createModuleCourse(connection,
+                    this.getModuleCourseDao(), module, courseId);
+
+            StagingUtil.createTestActivityGroup(connection,
+                    activityA, moduleCourse, groupId);
+            
+            final StudentSet studentSet = StagingUtil.createTestStudentSet(connection,
+                    this.getStudentSetDao(), rdbIdSource, "s1234567890");
+            
+            StagingUtil.createStudentSetActivity(connection, run, studentSet,
+                    activityA);
+        } finally {
+            connection.close();
+        }
+            
+        this.getService().generateDiff(run);
+        
+        assertEquals(1, this.getEnrolmentChangeDao().getAll().size());
     }
 
     /**
