@@ -18,21 +18,19 @@ import blackboard.data.course.Course;
 import blackboard.platform.context.Context;
 import blackboard.platform.context.ContextManagerFactory;
 import blackboard.platform.plugin.PlugInUtil;
-import uk.ac.ed.learn9.bb.timetabling.dao.EnrolmentChangePartDao;
-import uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChangePart;
+import uk.ac.ed.learn9.bb.timetabling.dao.ActivityDao;
+import uk.ac.ed.learn9.bb.timetabling.data.Activity;
 
 /**
- * Controller for rendering audit logs of changes made to a course in Learn,
- * over time.
+ * Controller for rendering activities related to a course in Learn.
  */
 @Controller
-public class AuditLogController extends AbstractController {
+public class ActivitiesController extends AbstractController {
     @Autowired
-    private EnrolmentChangePartDao enrolmentChangePartDao;
+    private ActivityDao activityDao;
     
     /**
-     * Displays an audit log of when students were added/removed to/from groups
-     * for a single course.
+     * Displays a list of activities related to a course in Learn.
      * 
      * @param request the request from the remote client.
      * @param response the response to be returned to the remote client.
@@ -40,43 +38,36 @@ public class AuditLogController extends AbstractController {
      * @throws UnsupportedEncodingException if the US-ASCII character set is
      * not supported, and as such URL elements cannot be encoded.
      */
-    @RequestMapping("/index")
-    public ModelAndView getAuditLog(final HttpServletRequest request, final HttpServletResponse response)
+    @RequestMapping("/activities")
+    public ModelAndView getActivities(final HttpServletRequest request, final HttpServletResponse response)
             throws UnsupportedEncodingException {
         final Context context = ContextManagerFactory.getInstance().getContext();
-        final ModelAndView modelAndView = new ModelAndView("auditLog");
+        final ModelAndView modelAndView = new ModelAndView("activities");
         final Course course = context.getCourse();
-        final List<EnrolmentChangePart> pendingChange = new ArrayList<EnrolmentChangePart>();
+        final List<Activity> activities = getActivityDao().getByCourseLearnId(course.getId());
         
-        pendingChange.addAll(this.getEnrolmentChangePartDao().getByCourse(course));
-        Collections.sort(pendingChange);
-        
-        modelAndView.addObject("activities", PlugInUtil.getUri(PLUGIN_VENDOR_ID,
-                PLUGIN_ID, "activities?course_id="
+        modelAndView.addObject("activities", activities);
+        modelAndView.addObject("auditLog", PlugInUtil.getUri(PLUGIN_VENDOR_ID,
+                PLUGIN_ID, "index?course_id="
                 + URLEncoder.encode(course.getId().getExternalString(), US_ASCII)));
         modelAndView.addObject("mergedCourses", PlugInUtil.getUri(PLUGIN_VENDOR_ID,
                 PLUGIN_ID, "mergedCourses?course_id="
                 + URLEncoder.encode(course.getId().getExternalString(), US_ASCII)));
-        modelAndView.addObject("changes", pendingChange);
         
         return modelAndView;
     }
 
     /**
-     * Get the enrolment change part DAO.
-     * 
-     * @return the enrolment change part DAO.
+     * @return the activityDao
      */
-    public EnrolmentChangePartDao getEnrolmentChangePartDao() {
-        return enrolmentChangePartDao;
+    public ActivityDao getActivityDao() {
+        return activityDao;
     }
 
     /**
-     * Set the enrolment change part DAO.
-     * 
-     * @param enrolmentChangePartDao the enrolment change part DAO to set.
+     * @param activityDao the activityDao to set
      */
-    public void setEnrolmentChangePartDao(EnrolmentChangePartDao enrolmentChangePartDao) {
-        this.enrolmentChangePartDao = enrolmentChangePartDao;
+    public void setActivityDao(ActivityDao activityDao) {
+        this.activityDao = activityDao;
     }
 }

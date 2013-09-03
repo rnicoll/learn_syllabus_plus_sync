@@ -18,6 +18,9 @@
 
     <bbNG:actionControlBar>
         <bbNG:actionButton id="merged_courses" title="Merged Courses" primary="true" url="${mergedCourses}" />
+        <%--
+        <bbNG:actionButton id="activities" title="Activities" primary="true" url="${activities}" />
+        --%>
     </bbNG:actionControlBar>
 
     <p>The following is a list of changes to student/group enrolments on this

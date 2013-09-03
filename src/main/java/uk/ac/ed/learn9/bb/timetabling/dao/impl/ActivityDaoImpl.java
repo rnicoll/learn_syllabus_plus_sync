@@ -30,7 +30,7 @@ public class ActivityDaoImpl extends HibernateDaoSupport implements ActivityDao 
     
     @Override
     public List<Activity> getByCourseLearnId(final Id id) {
-        return this.getSession().createQuery("SELECT a.* FROM uk.ac.ed.learn9.bb.timetabling.data.Activity a "
+        return this.getSession().createQuery("SELECT a FROM uk.ac.ed.learn9.bb.timetabling.data.Activity a "
                 + "JOIN a.module as m "
                 + "JOIN m.courses as mc "
             + "WHERE mc.learnCourseId=?").setString(0, id.getExternalString())

@@ -55,6 +55,9 @@ public class MergedCoursesController extends AbstractController {
         
         // XXX: Resolve JTA activities here.
         
+        modelAndView.addObject("activities", PlugInUtil.getUri(PLUGIN_VENDOR_ID,
+                PLUGIN_ID, "activities?course_id="
+                + URLEncoder.encode(course.getId().getExternalString(), US_ASCII)));
         modelAndView.addObject("auditLog", PlugInUtil.getUri(PLUGIN_VENDOR_ID,
                 PLUGIN_ID, "index?course_id="
                 + URLEncoder.encode(course.getId().getExternalString(), US_ASCII)));
