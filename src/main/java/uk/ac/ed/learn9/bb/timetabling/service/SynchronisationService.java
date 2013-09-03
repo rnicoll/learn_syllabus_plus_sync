@@ -594,6 +594,8 @@ public class SynchronisationService extends Object {
         try {
             final Statement statement = stagingDatabase.createStatement();
             try {
+                // Generate module-course relationships for non-merged courses
+                // first.
                 statement.executeUpdate("INSERT INTO module_course "
                     + "(tt_module_id, merged_course, learn_course_code) "
                     + "(SELECT m.tt_module_id, 'N', learn_course_code "
@@ -604,6 +606,22 @@ public class SynchronisationService extends Object {
                             + "AND m.tt_module_id NOT IN (SELECT tt_module_id FROM module_course WHERE merged_course='N')"
                     + ")"
                 );
+                
+                // Generate module-course relationships for non-merged courses,
+                // without excluding merged courses. This should replace the SQL
+                // above, but missed initial development.
+                // statement.executeUpdate("INSERT INTO module_course "
+                //     + "(tt_module_id, merged_course, learn_course_code) "
+                //     + "(SELECT m.tt_module_id, 'N', learn_course_code "
+                //         + "FROM module m "
+                //             + "LEFT OUTER JOIN module_course exist ON exist.tt_module_id=m.tt_module_id "
+                //                 + "AND exist.learn_course_code=m.learn_course_code "
+                //         + "WHERE m.learn_course_code IS NOT NULL "
+                //             + "AND exist.tt_module_id IS NULL "
+                //     + ")"
+                // );
+                
+                // Generate relationships for merged courses.
                 statement.executeUpdate("INSERT INTO module_course "
                     + "(tt_module_id, merged_course, learn_course_code) "
                     + "(SELECT m.tt_module_id, 'Y', merge.learn_target_course_code "
