@@ -281,6 +281,9 @@ public class SynchronisationService extends Object {
                 jtaChildStatement.close();
             }
         
+            // This should be changed to all groups, not just non-JTA ones, so
+            // that JTA child activities are created as well, where valid.
+            // There is a view "activity_group_vw" which is suitable for this.
             final PreparedStatement nonJtaStatement = stagingDatabase.prepareStatement(
                 "SELECT tt_activity_id, activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
                     + "FROM non_jta_activity_group_vw "
