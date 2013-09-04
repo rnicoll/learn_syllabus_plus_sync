@@ -248,7 +248,7 @@ public class SynchronisationService extends Object {
         
         try {
             // Create/rebuild groups for JTA parents first
-            /* final PreparedStatement jtaParentStatement = stagingDatabase.prepareStatement(
+            final PreparedStatement jtaParentStatement = stagingDatabase.prepareStatement(
                 "SELECT tt_activity_id, activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
                     + "FROM jta_parent_activity_group_vw "
                         + "WHERE learn_course_id IS NOT NULL"
@@ -279,22 +279,6 @@ public class SynchronisationService extends Object {
                 }
             } finally {
                 jtaChildStatement.close();
-            } */
-        
-            // This should be changed to all groups, not just non-JTA ones, so
-            // that JTA child activities are created as well, where valid.
-            // There is a view "activity_group_vw" which is suitable for this.
-            final PreparedStatement nonJtaStatement = stagingDatabase.prepareStatement(
-                "SELECT tt_activity_id, activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
-                    + "FROM non_jta_activity_group_vw "
-                        + "WHERE learn_course_id IS NOT NULL "
-                        + "AND learn_group_name IS NOT NULL"
-                );
-            try {
-                doCreateGroupsForActivities(stagingDatabase, run, nonJtaStatement,
-                        groupDbLoader, groupDbPersister, updateStatement, now);
-            } finally {
-                nonJtaStatement.close();
             }
             
             // Create/rebuild all groups. The JTA child activities will already
@@ -303,7 +287,7 @@ public class SynchronisationService extends Object {
             // where possible.
             // NOTE: This should REPLACE the immediately above statement, but
             // there's no time to test it now.
-            /* final PreparedStatement remainingActivityStatement = stagingDatabase.prepareStatement(
+            final PreparedStatement remainingActivityStatement = stagingDatabase.prepareStatement(
                 "SELECT tt_activity_id, activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
                     + "FROM activity_group_vw "
                         + "WHERE learn_course_id IS NOT NULL "
@@ -314,7 +298,7 @@ public class SynchronisationService extends Object {
                         groupDbLoader, groupDbPersister, updateStatement, now);
             } finally {
                 remainingActivityStatement.close();
-            } */
+            }
         } finally {
             updateStatement.close();
         }
