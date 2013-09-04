@@ -248,7 +248,7 @@ public class SynchronisationService extends Object {
         
         try {
             // Create/rebuild groups for JTA parents first
-            final PreparedStatement jtaParentStatement = stagingDatabase.prepareStatement(
+            /* final PreparedStatement jtaParentStatement = stagingDatabase.prepareStatement(
                 "SELECT tt_activity_id, activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
                     + "FROM jta_parent_activity_group_vw "
                         + "WHERE learn_course_id IS NOT NULL"
@@ -279,7 +279,7 @@ public class SynchronisationService extends Object {
                 }
             } finally {
                 jtaChildStatement.close();
-            }
+            } */
         
             // This should be changed to all groups, not just non-JTA ones, so
             // that JTA child activities are created as well, where valid.
