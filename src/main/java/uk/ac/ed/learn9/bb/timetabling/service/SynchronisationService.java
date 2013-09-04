@@ -296,6 +296,25 @@ public class SynchronisationService extends Object {
             } finally {
                 nonJtaStatement.close();
             }
+            
+            // Create/rebuild all groups. The JTA child activities will already
+            // have their groups set for any merged course, so this ignores those
+            // cases, but will create groups for them in their "native" course
+            // where possible.
+            // NOTE: This should REPLACE the immediately above statement, but
+            // there's no time to test it now.
+            /* final PreparedStatement remainingActivityStatement = stagingDatabase.prepareStatement(
+                "SELECT tt_activity_id, activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
+                    + "FROM activity_group_vw "
+                        + "WHERE learn_course_id IS NOT NULL "
+                        + "AND learn_group_name IS NOT NULL"
+                );
+            try {
+                doCreateGroupsForActivities(stagingDatabase, run, remainingActivityStatement,
+                        groupDbLoader, groupDbPersister, updateStatement, now);
+            } finally {
+                remainingActivityStatement.close();
+            } */
         } finally {
             updateStatement.close();
         }
