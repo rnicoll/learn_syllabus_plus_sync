@@ -23,6 +23,7 @@ import blackboard.data.course.Group;
 import blackboard.persist.Id;
 import blackboard.persist.KeyNotFoundException;
 import blackboard.persist.PersistenceException;
+import blackboard.persist.course.CourseDbLoader;
 import blackboard.persist.course.GroupDbLoader;
 import blackboard.persist.course.GroupDbPersister;
 import uk.ac.ed.learn9.bb.timetabling.dao.ConfigurationDao;
@@ -241,6 +242,7 @@ public class SynchronisationService extends Object {
     public void createGroupsForActivities(final Connection stagingDatabase,
             final SynchronisationRun run)
             throws PersistenceException, SQLException, ValidationException {
+        final CourseDbLoader courseDbLoader = this.getBlackboardService().getCourseDbLoader();
         final GroupDbPersister groupDbPersister = this.getBlackboardService().getGroupDbPersister();
         final GroupDbLoader groupDbLoader = this.getBlackboardService().getGroupDbLoader();
         final Timestamp now = new Timestamp(System.currentTimeMillis());
@@ -255,7 +257,7 @@ public class SynchronisationService extends Object {
                 );
             try {
                 doCreateGroupsForActivities(stagingDatabase, run, jtaParentStatement,
-                        groupDbLoader, groupDbPersister, updateStatement, now);
+                        courseDbLoader, groupDbLoader, groupDbPersister, updateStatement, now);
             } finally {
                 jtaParentStatement.close();
             }
@@ -292,7 +294,7 @@ public class SynchronisationService extends Object {
                 );
             try {
                 doCreateGroupsForActivities(stagingDatabase, run, nonJtaStatement,
-                        groupDbLoader, groupDbPersister, updateStatement, now);
+                        courseDbLoader, groupDbLoader, groupDbPersister, updateStatement, now);
             } finally {
                 nonJtaStatement.close();
             }
@@ -311,7 +313,7 @@ public class SynchronisationService extends Object {
                 );
             try {
                 doCreateGroupsForActivities(stagingDatabase, run, remainingActivityStatement,
-                        groupDbLoader, groupDbPersister, updateStatement, now);
+                        courseDbLoader, groupDbLoader, groupDbPersister, updateStatement, now);
             } finally {
                 remainingActivityStatement.close();
             } */
@@ -345,19 +347,32 @@ public class SynchronisationService extends Object {
     private void doCreateGroupsForActivities(final Connection stagingDatabase,
             final SynchronisationRun run,
             final PreparedStatement queryStatement,
+            final CourseDbLoader courseDbLoader,
             final GroupDbLoader groupDbLoader, final GroupDbPersister groupDbPersister,
             final ManagedLearnGroupIDStatement updateStatement, final Timestamp now)
             throws SQLException, PersistenceException, ValidationException {
-        final BlackboardService blackboardService = this.getBlackboardService();
+        final Map<Id, Course> courseCache = new HashMap<Id, Course>();
         final ResultSet rs = queryStatement.executeQuery();
         try {
             while (rs.next()) {
                 final Id courseId = Id.generateId(Course.DATA_TYPE, rs.getString("learn_course_id"));
+                final String groupName = rs.getString("learn_group_name");
+                // Verify the course exists
+                Course course = courseCache.get(courseId);
+
+                if (null == course) {
+                    try {
+                        course = courseDbLoader.loadById(courseId);
+                    } catch(KeyNotFoundException e2) {
+                        this.purgeCourse(stagingDatabase, courseId);
+                        continue;
+                    }
+                    courseCache.put(courseId, course);
+                }
+                    
                 final Id groupId;
                 final String descriptionText = rs.getString("description");
-                final FormattedText description;
-                Group group;
-                
+                final FormattedText description;                
                 final String groupIdStr = rs.getString("learn_group_id");
                 groupId = groupIdStr == null
                     ? null
@@ -371,12 +386,11 @@ public class SynchronisationService extends Object {
 
                 if (null != groupId) {
                     try {
-                        group = groupDbLoader.loadById(groupId);
+                        groupDbLoader.loadById(groupId);
                     } catch(KeyNotFoundException e) {
-                        // Group has been deleted; rebuild if still valid                        
+                        // Group has been deleted; rebuild if still valid
                         final String activityId = rs.getString("tt_activity_id");
-                        final String groupName = rs.getString("learn_group_name");
-                        
+        
                         // Check the activity still exists before we re-create it
                         final Connection rdbDatabase = this.getRdbDataSource().getConnection();
                         try {
@@ -387,19 +401,18 @@ public class SynchronisationService extends Object {
                         } finally {
                             rdbDatabase.close();
                         }
-                        
-                        group = blackboardService.buildCourseGroup(courseId, groupName, description);
+        
+                        final Group group = this.getBlackboardService().buildCourseGroup(course, groupName, description);
                         groupDbPersister.persist(group);
                         this.createFullDiffForStudentsOnActivity(stagingDatabase, run, activityId);
+                        updateStatement.recordGroupId(now, rs.getInt("activity_group_id"), group.getId());
                     }
-                } else {
-                    group = blackboardService.buildCourseGroup(courseId, rs.getString("learn_group_name"), description);
+                } else {                        
+                    final Group group = blackboardService.buildCourseGroup(course, groupName, description);
                     groupDbPersister.persist(group);
+
+                    updateStatement.recordGroupId(now, rs.getInt("activity_group_id"), group.getId());
                 }
-
-                final int activityGroupId = rs.getInt("activity_group_id");
-
-                updateStatement.recordGroupId(now, activityGroupId, group.getId());
             }
         } finally {
             rs.close();
@@ -895,6 +908,47 @@ public class SynchronisationService extends Object {
             return insertStatement.executeUpdate();
         } finally {
             insertStatement.close();
+        }
+    }
+
+    /**
+     * Purges references to a course from the database. This is performed where
+     * a course no longer exists in Learn.
+     * 
+     * @param stagingDatabase a link to the staging database.
+     * @param courseId the Learn course ID for the course to be purged.
+     */
+    private void purgeCourse(final Connection stagingDatabase, final Id courseId)
+        throws SQLException {
+        
+        PreparedStatement statement = stagingDatabase.prepareStatement("DELETE FROM ENROLMENT_CHANGE_PART "
+            + "WHERE MODULE_COURSE_ID IN (SELECT MODULE_COURSE_ID "
+                + "FROM MODULE_COURSE WHERE LEARN_COURSE_ID=?)");
+        try {
+            statement.setString(1, courseId.getExternalString());
+            statement.executeUpdate();
+        } finally {
+            statement.close();
+        }
+        
+        statement = stagingDatabase.prepareStatement("DELETE FROM ACTIVITY_GROUP "
+            + "WHERE MODULE_COURSE_ID IN (SELECT MODULE_COURSE_ID "
+                + "FROM MODULE_COURSE WHERE LEARN_COURSE_ID=?)");
+        try {
+            statement.setString(1, courseId.getExternalString());
+            statement.executeUpdate();
+        } finally {
+            statement.close();
+        }
+        
+        statement = stagingDatabase.prepareStatement("UPDATE MODULE_COURSE "
+            + "SET LEARN_COURSE_ID=NULL "
+                + "WHERE LEARN_COURSE_ID=?");
+        try {
+            statement.setString(1, courseId.getExternalString());
+            statement.executeUpdate();
+        } finally {
+            statement.close();
         }
     }
     

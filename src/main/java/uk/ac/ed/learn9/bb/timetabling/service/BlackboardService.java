@@ -413,19 +413,19 @@ public class BlackboardService {
     /**
      * Constructs a new course group and returns it.
      *
-     * @param courseId the course that the group will belong to.
+     * @param course the course that the group will belong to.
      * @param groupName the name of the group.
      * @return the new group.
      */
-    public Group buildCourseGroup(final Id courseId, final String groupName,
+    public Group buildCourseGroup(final Course course, final String groupName,
             final FormattedText description) {
-        assert null != courseId;
+        assert null != course;
         assert null != groupName;
         assert null != description;
         
         // Create the new group
         final Group group = new Group();
-        group.setCourseId(courseId);
+        group.setCourseId(course.getId());
         group.setTitle(groupName);
         group.setIsAvailable(false);
         group.setSelfEnrolledAllowed(false);
