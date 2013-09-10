@@ -1,5 +1,6 @@
 package uk.ac.ed.learn9.bb.timetabling.service;
 
+import blackboard.persist.Id;
 import blackboard.persist.PersistenceException;
 import blackboard.persist.course.CourseCourseDbLoader;
 import blackboard.persist.course.CourseDbLoader;
@@ -9,6 +10,7 @@ import blackboard.persist.course.GroupDbPersister;
 import blackboard.persist.course.GroupMembershipDbLoader;
 import blackboard.persist.course.GroupMembershipDbPersister;
 import blackboard.persist.user.UserDbLoader;
+import blackboard.data.course.Group;
 import uk.ac.ed.learn9.bb.timetabling.blackboard.MockPersistenceManager;
 
 
@@ -53,5 +55,10 @@ public class BlackboardMockService extends BlackboardService {
     @Override
     protected UserDbLoader getUserDbLoader() throws PersistenceException {
         return this.persistenceManager.getUserLoader();
+    }
+    
+    @Override
+    public Id buildGroupId(final String id) throws PersistenceException {
+        return new MockId(Group.DATA_TYPE, id);
     }
 }

@@ -248,7 +248,7 @@ public class SynchronisationService extends Object {
         
         try {
             // Create/rebuild groups for JTA parents first
-            final PreparedStatement jtaParentStatement = stagingDatabase.prepareStatement(
+            /* final PreparedStatement jtaParentStatement = stagingDatabase.prepareStatement(
                 "SELECT tt_activity_id, activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
                     + "FROM jta_parent_activity_group_vw "
                         + "WHERE learn_course_id IS NOT NULL"
@@ -279,6 +279,22 @@ public class SynchronisationService extends Object {
                 }
             } finally {
                 jtaChildStatement.close();
+            } */
+        
+            // This should be changed to all groups, not just non-JTA ones, so
+            // that JTA child activities are created as well, where valid.
+            // There is a view "activity_group_vw" which is suitable for this.
+            final PreparedStatement nonJtaStatement = stagingDatabase.prepareStatement(
+                "SELECT tt_activity_id, activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
+                    + "FROM non_jta_activity_group_vw "
+                        + "WHERE learn_course_id IS NOT NULL "
+                        + "AND learn_group_name IS NOT NULL"
+                );
+            try {
+                doCreateGroupsForActivities(stagingDatabase, run, nonJtaStatement,
+                        groupDbLoader, groupDbPersister, updateStatement, now);
+            } finally {
+                nonJtaStatement.close();
             }
             
             // Create/rebuild all groups. The JTA child activities will already
@@ -287,7 +303,7 @@ public class SynchronisationService extends Object {
             // where possible.
             // NOTE: This should REPLACE the immediately above statement, but
             // there's no time to test it now.
-            final PreparedStatement remainingActivityStatement = stagingDatabase.prepareStatement(
+            /* final PreparedStatement remainingActivityStatement = stagingDatabase.prepareStatement(
                 "SELECT tt_activity_id, activity_group_id, tt_activity_name, learn_group_id, learn_group_name, learn_course_id, description "
                     + "FROM activity_group_vw "
                         + "WHERE learn_course_id IS NOT NULL "
@@ -298,7 +314,7 @@ public class SynchronisationService extends Object {
                         groupDbLoader, groupDbPersister, updateStatement, now);
             } finally {
                 remainingActivityStatement.close();
-            }
+            } */
         } finally {
             updateStatement.close();
         }
@@ -357,8 +373,20 @@ public class SynchronisationService extends Object {
                     try {
                         group = groupDbLoader.loadById(groupId);
                     } catch(KeyNotFoundException e) {
+                        // Group has been deleted; rebuild if still valid                        
                         final String activityId = rs.getString("tt_activity_id");
                         final String groupName = rs.getString("learn_group_name");
+                        
+                        // Check the activity still exists before we re-create it
+                        final Connection rdbDatabase = this.getRdbDataSource().getConnection();
+                        try {
+                            if (!this.getTimetablingSynchroniseService().existsActivity(rdbDatabase, activityId)) {
+                                this.purgeActivity(stagingDatabase, activityId);
+                                continue;
+                            }
+                        } finally {
+                            rdbDatabase.close();
+                        }
                         
                         group = blackboardService.buildCourseGroup(courseId, groupName, description);
                         groupDbPersister.persist(group);
@@ -408,7 +436,7 @@ public class SynchronisationService extends Object {
             statement.close();
         }
         
-        this.doGenerateDiffParts(stagingDatabase, run);
+        this.doGenerateDiffParts(stagingDatabase, run, activityId);
     }
 
     /**
@@ -508,46 +536,10 @@ public class SynchronisationService extends Object {
         if (null == activityName) {
             return DEFAULT_GROUP_NAME;
         }
-                
-        // The ID of a group, for example a number to identify it within its
-        // set.
-        final String groupId;
-        
-        // In many cases, the activity name will have the module name at the
-        // start. In which case, we strip the module name to give us a group
-        // name.
-        if (null != moduleName
-            && activityName.startsWith(moduleName)) {
-            final String temp = activityName.substring(moduleName.length()).trim();
-            
-            // If the remainder of the activity name starts with a "/",
-            // it's likely to be something like "/1", and need more context.
-            // Otherwise we presume it's safe to use by itself.
-            if (!temp.startsWith("/")) {
-                return GROUP_NAME_PREFIX + temp;
-            } else {
-                groupId = temp.substring(1);
-            }
-        } else {
-            // If the activity name has a '/' in, split on the last '/'
-            // character.
-            if (activityName.lastIndexOf("/") >= 0) {
-                groupId = activityName.substring(activityName.lastIndexOf("/") + 1);
-            } else if (activityName.lastIndexOf(" ") >= 0) {
-                groupId = activityName.substring(activityName.lastIndexOf(" ") + 1);
-            } else {
-                groupId = activityName;
-            }
-        }
         
         final StringBuilder groupName = new StringBuilder(GROUP_NAME_PREFIX);
-        
-        if (null != activityType) {
-            groupName.append(activityType.trim())
-                .append("_");
-        }
-        
-        groupName.append(groupId.trim());
+                
+        groupName.append(activityName);
         
         return groupName.toString();
     }
@@ -701,7 +693,7 @@ public class SynchronisationService extends Object {
             final BlackboardService bbService = this.getBlackboardService();
             
             bbService.mapModulesToCourses(stagingDatabase);
-            this.updateGroupDescriptions(stagingDatabase);
+            // this.updateGroupDescriptions(stagingDatabase);
         
             this.generateGroupNames(stagingDatabase);
             this.createGroupsForActivities(stagingDatabase, run);
@@ -819,6 +811,61 @@ public class SynchronisationService extends Object {
         doGenerateDiffParts(stagingDatabase, run);
     }
 
+    /**
+     * Generates the individual parts of differences to be applied, so that each
+     * activity is copied into the relevant courses in Learn.
+     * 
+     * @param stagingDatabase a connection to the staging database.
+     * @param run the run to attribute changes to.
+     * @throws SQLException 
+     */
+    public void doGenerateDiffParts(final Connection stagingDatabase, final SynchronisationRun run)
+            throws SQLException {
+        this.doGenerateDiffParts(stagingDatabase, run, (String)null);
+    }
+
+    /**
+     * Generates the individual parts of differences to be applied, so that each
+     * activity is copied into the relevant courses in Learn.
+     * 
+     * @param stagingDatabase a connection to the staging database.
+     * @param run the run to attribute changes to.
+     * @param activityId an optional activity ID to restrict parts generated to.
+     * @throws SQLException 
+     */
+    public void doGenerateDiffParts(final Connection stagingDatabase, final SynchronisationRun run,
+            final String activityId)
+            throws SQLException {
+        final StringBuilder query = new StringBuilder("INSERT INTO enrolment_change_part "
+            + "(change_id, module_course_id) "
+            + "(SELECT c.change_id, mc.module_course_id "
+                + "FROM enrolment_change c "
+                    + "JOIN activity a ON a.tt_activity_id=c.tt_activity_id "
+                    + "JOIN module m ON m.tt_module_id=a.tt_module_id "
+                    + "JOIN module_course mc ON mc.tt_module_id=m.tt_module_id AND mc.learn_course_available='Y' "
+                + "WHERE c.run_id=?");
+        if (null != activityId) {
+            query.append(" AND a.tt_activity_id=?) ");
+        } else {
+            query.append(")");
+        }
+        
+        // Generate the individual change parts
+        final PreparedStatement insertStatement
+            = stagingDatabase.prepareStatement(query.toString());
+        try {
+            int paramIdx = 1;
+            
+            insertStatement.setInt(paramIdx++, run.getRunId());
+            if (null != activityId) {
+                insertStatement.setString(paramIdx++, activityId);
+            }
+            insertStatement.executeUpdate();
+        } finally {
+            insertStatement.close();
+        }
+    }
+
     private int doGenerateDiffAdd(final Connection stagingDatabase, final SynchronisationRun run)
             throws SQLException {
         final PreparedStatement insertStatement = stagingDatabase.prepareStatement(
@@ -893,26 +940,43 @@ public class SynchronisationService extends Object {
             try {
                 final ResultSet rs = selectStatement.executeQuery();
                 while (rs.next()) {
+                    Integer setSize = rs.getInt("set_size");
+                    
+                    if (rs.wasNull()) {
+                        setSize = null;
+                    }
+                    
                     final String description = buildGroupDescription(rs.getString("tt_activity_name"),
-                            rs.getString("tt_type_name"), rs.getInt("set_size"));
+                            rs.getString("tt_type_name"), setSize);
                     final String previousDescription = rs.getString("description");
                     
-                    if (null == previousDescription
-                        || !description.equals(previousDescription)) {
-                        updateStatement.setString(1, rs.getString("tt_activity_id"));
-                        updateStatement.setString(2, description);
-                        updateStatement.executeUpdate();
-                        
-                        final String learnGroupId = rs.getString("learn_group_id");
-                        
-                        if (null != learnGroupId) {
-                            try {
-                                this.getBlackboardService().updateGroupDescription(Id.generateId(Group.DATA_TYPE, learnGroupId),
-                                    description);
-                            } catch(KeyNotFoundException e) {
-                                // Remove the ID from the database?
-                            }
+                    if (null != previousDescription
+                        && description.equals(previousDescription)) {
+                        continue;
+                    }
+                    final String learnGroupId = rs.getString("learn_group_id");
+
+                    if (null != learnGroupId) {
+                        try {
+                            final Id groupId = this.getBlackboardService().buildGroupId(learnGroupId);
+
+                            this.getBlackboardService().updateGroupDescription(groupId,
+                                description);
+                        } catch(KeyNotFoundException e) {
+                            // Group does not exist - remove the ID from the database?
+                        } catch(PersistenceException e) {
+                            // For some reason sometimes this fails, but it's not serious enough to
+                            // give up
+                            log.warn("Failed to update group description for group \""
+                                + learnGroupId + "\" due to persistence error.", e);
                         }
+                    }
+                    int paramIdx = 1;
+
+                    updateStatement.setString(paramIdx++, description);
+                    updateStatement.setString(paramIdx++, rs.getString("tt_activity_id"));
+                    if (1 != updateStatement.executeUpdate()) {
+                        throw new RuntimeException("Group description update statement did not change exactly one row.");
                     }
                 }
             } finally {
@@ -1042,23 +1106,77 @@ public class SynchronisationService extends Object {
         this.blackboardService = blackboardService;
     }
 
-    public void doGenerateDiffParts(final Connection stagingDatabase, final SynchronisationRun run) throws SQLException {
-        // Generate the individual change parts
-        final PreparedStatement insertStatement = stagingDatabase.prepareStatement(
-            "INSERT INTO enrolment_change_part "
-                + "(change_id, module_course_id) "
-                + "(SELECT c.change_id, mc.module_course_id "
-                    + "FROM enrolment_change c "
-                        + "JOIN activity a ON a.tt_activity_id=c.tt_activity_id "
-                        + "JOIN module m ON m.tt_module_id=a.tt_module_id "
-                        + "JOIN module_course mc ON mc.tt_module_id=m.tt_module_id AND mc.learn_course_available='Y' "
-                    + "WHERE c.run_id=?) "
-        );
+    /**
+     * Remove all records of an activity having existed. Used where an activity
+     * has been deleted from both the reporting database and Learn.
+     * 
+     * @param stagingDatabase a connection to the local database.
+     * @param activityId the activity to be purged.
+     */
+    protected void purgeActivity(final Connection stagingDatabase, final String activityId)
+        throws SQLException {
+        PreparedStatement statement = stagingDatabase.prepareStatement("DELETE FROM ENROLMENT_CHANGE_PART "
+            + "WHERE CHANGE_ID IN (SELECT CHANGE_ID FROM ENROLMENT_CHANGE WHERE TT_ACTIVITY_ID=?)");
         try {
-            insertStatement.setInt(1, run.getRunId());
-            insertStatement.executeUpdate();
+            statement.setString(1, activityId);
+            statement.executeUpdate();
         } finally {
-            insertStatement.close();
+            statement.close();
+        }
+        
+        statement = stagingDatabase.prepareStatement("DELETE FROM ENROLMENT_CHANGE "
+            + "WHERE TT_ACTIVITY_ID=?");
+        try {
+            statement.setString(1, activityId);
+            statement.executeUpdate();
+        } finally {
+            statement.close();
+        }
+        
+        statement = stagingDatabase.prepareStatement("DELETE FROM CACHE_ENROLMENT "
+            + "WHERE TT_ACTIVITY_ID=?");
+        try {
+            statement.setString(1, activityId);
+            statement.executeUpdate();
+        } finally {
+            statement.close();
+        }
+        
+        statement = stagingDatabase.prepareStatement("DELETE FROM ACTIVITY_GROUP "
+            + "WHERE TT_ACTIVITY_ID=?");
+        try {
+            statement.setString(1, activityId);
+            statement.executeUpdate();
+        } finally {
+            statement.close();
+        }
+        
+        statement = stagingDatabase.prepareStatement("DELETE FROM VARIANTJTAACTS "
+            + "WHERE TT_ACTIVITY_ID=?");
+        try {
+            statement.setString(1, activityId);
+            statement.executeUpdate();
+        } finally {
+            statement.close();
+        }
+        
+        statement = stagingDatabase.prepareStatement("DELETE FROM ACTIVITY_PARENTS "
+            + "WHERE TT_ACTIVITY_ID=? OR TT_PARENT_ACTIVITY_ID=?");
+        try {
+            statement.setString(1, activityId);
+            statement.setString(2, activityId);
+            statement.executeUpdate();
+        } finally {
+            statement.close();
+        }
+        
+        statement = stagingDatabase.prepareStatement("DELETE FROM ACTIVITY "
+            + "WHERE TT_ACTIVITY_ID=?");
+        try {
+            statement.setString(1, activityId);
+            statement.executeUpdate();
+        } finally {
+            statement.close();
         }
     }
 

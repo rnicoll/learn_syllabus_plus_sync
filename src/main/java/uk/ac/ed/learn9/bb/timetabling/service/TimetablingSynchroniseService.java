@@ -5,7 +5,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -356,39 +358,65 @@ public class TimetablingSynchroniseService extends AbstractSynchroniseService {
      * @throws SQLException if there was a problem accessing one of the databases.
      */
     public void copyStudentSetActivities(final SynchronisationRun run,
-        final Connection destination)
+        final Connection stagingDatabase)
         throws SQLException, ThresholdException {
+        final Set<String> validActivityIds = new HashSet<String>();
+        final Set<String> validStudentSetIds = new HashSet<String>();
+        
+        // Pre-cache valid activity IDs
+        final PreparedStatement cacheActivityIds = stagingDatabase.prepareStatement(
+                "SELECT TT_ACTIVITY_ID FROM SYNC_ACTIVITY_VW");
+        try {
+            final ResultSet rs = cacheActivityIds.executeQuery();
+            while (rs.next()) {
+                validActivityIds.add(rs.getString("tt_activity_id"));
+            }
+        } finally {
+            cacheActivityIds.close();
+        }
+        
+        // Pre-cache valid student set IDs
+        final PreparedStatement cacheStudentSetIds = stagingDatabase.prepareStatement(
+                "SELECT TT_STUDENT_SET_ID FROM SYNC_STUDENT_SET_VW");
+        try {
+            final ResultSet rs = cacheStudentSetIds.executeQuery();
+            while (rs.next()) {
+                validStudentSetIds.add(rs.getString("tt_student_set_id"));
+            }
+        } finally {
+            cacheActivityIds.close();
+        }
+        
         final Connection source = this.getRdbDataSource().getConnection();
 
         try {
-            // Check the condition on this, I haven't had an opportunity to check
-            // it with real data.
             final PreparedStatement sourceStatement = source.prepareStatement(
-                "SELECT DISTINCT A.ID ACTIVITY_ID, S.ID STUDENT_SET_ID "
-                + "FROM " + this.getRdbTablePrefix() + "ACTIVITY A "
-                    + "JOIN " + this.getRdbTablePrefix() + "ACTIVITIES_STUDENTSET REL ON REL.ID=A.ID "
-                    + "JOIN " + this.getRdbTablePrefix() + "STUDENT_SET S ON REL.STUDENT_SET=S.ID "
-                    + "LEFT JOIN " + this.getRdbTablePrefix() + "VARIANTJTAACTS V ON V.ID=A.ID "
-                + "WHERE (V.ISVARIANTCHILD IS NULL OR V.ISVARIANTCHILD='0')"  // BRD requirement #1.3
+                "SELECT REL.STUDENT_SET STUDENT_SET_ID, REL.ID ACTIVITY_ID "
+                    + "FROM " + this.getRdbTablePrefix() + "ACTIVITIES_STUDENTSET REL"
             );
             try {
-                final PreparedStatement destinationStatement = destination.prepareStatement(
+                final PreparedStatement destinationStatement = stagingDatabase.prepareStatement(
                     "INSERT INTO cache_enrolment "
-                    + "(run_id, tt_student_set_id, tt_activity_id) "
-                    + "(SELECT ? run_id, s.tt_student_set_id, a.tt_activity_id "
-                            + "FROM sync_activity_vw a, sync_student_set_vw s "
-                                + "WHERE a.tt_activity_id=? "
-                                    + "AND s.tt_student_set_id=?)");
+                        + "(run_id, tt_student_set_id, tt_activity_id) "
+                        + "VALUES (?, ?, ?)");
                 try {
 
                     final ResultSet rs = sourceStatement.executeQuery();
                     try {
-                        while (rs.next()) {
-                            int paramIdx = 1;
+                        destinationStatement.setInt(1, run.getRunId());
                             
-                            destinationStatement.setInt(paramIdx++, run.getRunId());
-                            destinationStatement.setString(paramIdx++, rs.getString("ACTIVITY_ID"));
-                            destinationStatement.setString(paramIdx++, rs.getString("STUDENT_SET_ID"));
+                        while (rs.next()) {
+                            int paramIdx = 2;
+                            final String activityId = rs.getString("ACTIVITY_ID");
+                            final String studentSetId = rs.getString("STUDENT_SET_ID");
+                            
+                            if (!validActivityIds.contains(activityId)
+                                || !validStudentSetIds.contains(studentSetId)) {
+                                continue;
+                            }
+                            
+                            destinationStatement.setString(paramIdx++, studentSetId);
+                            destinationStatement.setString(paramIdx++, activityId);
                             destinationStatement.executeUpdate();
                         }
                     } finally {
@@ -403,28 +431,33 @@ public class TimetablingSynchroniseService extends AbstractSynchroniseService {
         } finally {
             source.close();
         }
-        
-        /**
-         * Ensure any references to student sets or activities we haven't successfully
-         * copied into the local database are not kept, as they cannot be written
-         * out as part of the update.
-         */
-        final PreparedStatement deleteUnknownStudentSetData
-            = destination.prepareStatement("DELETE FROM CACHE_ENROLMENT "
-                + "WHERE TT_STUDENT_SET_ID NOT IN (SELECT TT_STUDENT_SET_ID FROM STUDENT_SET)");
+    }
+
+    /**
+     * Tests whether an activity exists in the reporting database.
+     * 
+     * @param rdbDatabase a connection to the reporting database.
+     * @param activityId the activity to test if exists.
+     * @return true if the activity exists, false otherwise.
+     * @throws SQLException if there was a problem with the reporting database.
+     */
+    protected boolean existsActivity(final Connection rdbDatabase, final String activityId)
+        throws SQLException {
+        final PreparedStatement statement = rdbDatabase.prepareStatement(
+                "SELECT Id FROM "
+                    + this.getRdbTablePrefix() + "ACTIVITY WHERE Id=?");
         try {
-            deleteUnknownStudentSetData.executeUpdate();
+            int paramIdx = 1;
+            
+            statement.setString(paramIdx++, activityId);
+            final ResultSet rs = statement.executeQuery();
+            try {
+                return rs.next();
+            } finally {
+                rs.close();
+            }
         } finally {
-            deleteUnknownStudentSetData.close();
-        }
-        
-        final PreparedStatement deleteUnknownActivityData
-            = destination.prepareStatement("DELETE FROM CACHE_ENROLMENT "
-                + "WHERE TT_ACTIVITY_ID NOT IN (SELECT TT_ACTIVITY_ID FROM ACTIVITY)");
-        try {
-            deleteUnknownActivityData.executeUpdate();
-        } finally {
-            deleteUnknownActivityData.close();
+            statement.close();
         }
     }
     

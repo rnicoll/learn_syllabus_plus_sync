@@ -88,7 +88,7 @@ public class StagingUtil {
             }
             switch (schedulingMethod) {
                 case SCHEDULED:
-                    statement.setInt(paramIdx++, 1);
+                    statement.setInt(paramIdx++, 2);
                     break;
                 default:
                     statement.setInt(paramIdx++, 0);

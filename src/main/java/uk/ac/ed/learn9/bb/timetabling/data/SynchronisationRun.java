@@ -39,7 +39,8 @@ public class SynchronisationRun extends Object implements Comparable<Synchronisa
         int startTimeCompare = this.getStartTime().compareTo(other.getStartTime());
         
         if (startTimeCompare != 0) {
-            return startTimeCompare;
+            // Note that this is in descending order, as we want later runs first
+            return 0 - startTimeCompare;
         } else {
             return this.getRunId() - other.getRunId();
         }

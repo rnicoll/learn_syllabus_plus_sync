@@ -71,6 +71,8 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
      */
     public static final String LOCATION_STAGING_DB_DROP_RESOURCE = "classpath:sync_db_drop.sql";
     
+    private BlackboardMockService blackboardService = null;
+    
     /**
      * Default constructor.
      */
@@ -91,6 +93,15 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     
     private ActivityTypeDao getActivityTypeDao() {
         return this.applicationContext.getBean("activityTypeDao", ActivityTypeDao.class);
+    }
+    
+    /**
+     * Gets an instance of {@link BlackboardService}.
+     * 
+     * @return an instance of {@link BlackboardService}.
+     */
+    public BlackboardService getBlackboardService() {
+        return this.blackboardService;
     }
     
     private EnrolmentChangeDao getEnrolmentChangeDao() {
@@ -156,6 +167,15 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
         } finally {
             rdbConnection.close();
         }
+        
+        // Set up the mock Blackboard service
+        final BlackboardService contextBlackboardService = this.applicationContext.getBean(BlackboardService.class);
+        
+        this.blackboardService = new BlackboardMockService();
+        this.blackboardService.setForceAllMailTo(contextBlackboardService.getForceAllMailTo());
+        this.blackboardService.setMailSender(contextBlackboardService.getMailSender());
+        this.blackboardService.setTemplateMessage(contextBlackboardService.getTemplateMessage());
+        this.blackboardService.setVelocityEngine(contextBlackboardService.getVelocityEngine());
     }
     
     /**
@@ -328,7 +348,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
      */
     @Test
     public void testActivityTemplateFiltering() throws Exception {
-        System.out.println("activityCourseCodeGeneration");
+        System.out.println("activityTemplateFiltering");
         final SynchronisationService synchronisationService = this.getService();
         final AcademicYearCode academicYearCode = new AcademicYearCode("2012/3");            
         final Connection rdbConnection = synchronisationService.getRdbDataSource().getConnection();
@@ -455,7 +475,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
      */
     @Test
     public void testModuleCourseCodeGeneration() throws Exception {
-        System.out.println("activityCourseCodeGeneration");
+        System.out.println("moduleCourseCodeGeneration");
         final SynchronisationService synchronisationService = this.getService();
         final AcademicYearCode academicYearCode = new AcademicYearCode("2012/3");
         final Connection rdbConnection = synchronisationService.getRdbDataSource().getConnection();
@@ -593,17 +613,17 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
             final Module module = RdbUtil.createTestModule(rdbConnection, academicYearCode, rdbIdSource);
             
             // Generate a pair of activities that we can build names for
-            final ActivityTemplate activityTemplateSync = RdbUtil.createTestActivityTemplate(rdbConnection, module,
-                    tutorialType, "Tutorials", RdbUtil.TemplateForVle.FOR_VLE, rdbIdSource);
+            final ActivityTemplate activityTemplate = RdbUtil.createTestActivityTemplate(rdbConnection, module,
+                    tutorialType, "Tutorial", RdbUtil.TemplateForVle.FOR_VLE, rdbIdSource);
             
             int activityId = 1;
             
-            expectedActivityGroupNames.put(RdbUtil.createTestActivity(rdbConnection, activityTemplateSync,
+            expectedActivityGroupNames.put(RdbUtil.createTestActivity(rdbConnection, activityTemplate,
                     module, RdbUtil.SchedulingMethod.SCHEDULED, activityId++, rdbIdSource).getActivityId(),
-                    "TT_Tutorial_1");
+                    "TT_Tutorial/1");
             expectedActivityGroupNames.put(RdbUtil.createTestActivity(rdbConnection, "Tutorial/" + activityId++, 
                     module, RdbUtil.SchedulingMethod.SCHEDULED, tutorialType, rdbIdSource).getActivityId(),
-                    "TT_Tutorial_2");
+                    "TT_Tutorial/2");
             
             final Connection cacheConnection = synchronisationService.getStagingDataSource().getConnection();
             try {
@@ -645,9 +665,133 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
      * tests the SQL is sane.
      */
     @Test
-    public void testUpdateGroupDescriptions() throws Exception {
-        System.out.println("doGenerateDiff");
+    public void testPurgeActivity() throws Exception {
+        final ActivityDao activityDao = this.getActivityDao();
+        final RdbIdSource rdbIdSource = new SequentialRdbIdSource();
+        final SynchronisationRunService synchronisationRunService
+                = this.getSynchronisationRunService();
         final SynchronisationService synchronisationService = this.getService();
-        synchronisationService.updateGroupDescriptions();
+        final Connection stagingDatabase = this.getService().getStagingDataSource().getConnection();
+        
+        System.out.println("purgeActivity");
+        synchronisationService.setBlackboardService(this.getBlackboardService());
+        
+        try {
+            int activityId = 1;
+            final String courseCode = "ENLI11007_SV1_SEM2";
+            final Id courseId = new MockId(Course.DATA_TYPE, "_1_");
+            final Id groupId = new MockId(Group.DATA_TYPE, "_2_");
+            final String moduleName = "Test module";
+            final AcademicYearCode academicYear = new AcademicYearCode("2013/4");
+            final boolean webCtActive = true;
+            final Module module = StagingUtil.createTestModule(stagingDatabase,
+                this.getModuleDao(), courseCode, moduleName, academicYear, webCtActive,
+                rdbIdSource);
+
+            assertEquals("ENLI110072013-4SV1SEM2", module.getLearnCourseCode());
+
+            final ActivityTemplate activityTemplate
+                    = StagingUtil.createActivityTemplate(stagingDatabase, this.getActivityTemplateDao(),
+                    "Activity template", (String)null, rdbIdSource);
+            final ActivityType activityType
+                    = StagingUtil.createActivityType(stagingDatabase, this.getActivityTypeDao(),
+                    "Activity type", rdbIdSource);
+            Activity activityA
+                = StagingUtil.createTestActivity(stagingDatabase, activityDao, activityTemplate,
+                    activityType, module, RdbUtil.SchedulingMethod.SCHEDULED,
+                    activityId++, rdbIdSource);
+            Activity activityB
+                = StagingUtil.createTestActivity(stagingDatabase, activityDao, activityTemplate,
+                    activityType, module, RdbUtil.SchedulingMethod.SCHEDULED,
+                    activityId++, rdbIdSource);
+            final ModuleCourse moduleCourse = StagingUtil.createModuleCourse(stagingDatabase,
+                    this.getModuleCourseDao(), module, courseId);
+
+            StagingUtil.createTestActivityGroup(stagingDatabase,
+                    activityA, moduleCourse, groupId);
+            StagingUtil.createTestActivityGroup(stagingDatabase,
+                    activityB, moduleCourse, groupId);
+            
+            // Check we have two activities
+            assertEquals(2, this.getActivityDao().getAll().size());
+            
+            // Delete one activity
+            synchronisationService.purgeActivity(stagingDatabase, activityA.getActivityId());
+            assertEquals(1, this.getActivityDao().getAll().size());
+            
+            // Delete the same activity (no-op)
+            synchronisationService.purgeActivity(stagingDatabase, activityA.getActivityId());
+            assertEquals(1, this.getActivityDao().getAll().size());
+            
+            // Delete the last activity
+            synchronisationService.purgeActivity(stagingDatabase, activityB.getActivityId());
+            assertEquals(0, this.getActivityDao().getAll().size());
+        } finally {
+            stagingDatabase.close();
+        }
+    }
+    
+    /**
+     * Very simple test for group description update code; basically just
+     * tests the SQL is sane.
+     */
+    @Test
+    public void testUpdateGroupDescriptions() throws Exception {
+        final ActivityDao activityDao = this.getActivityDao();
+        final RdbIdSource rdbIdSource = new SequentialRdbIdSource();
+        final SynchronisationRunService synchronisationRunService
+                = this.getSynchronisationRunService();
+        final SynchronisationService synchronisationService = this.getService();
+        final Connection stagingDatabase = this.getService().getStagingDataSource().getConnection();
+        
+        System.out.println("updateGroupDescriptions");
+        synchronisationService.setBlackboardService(this.getBlackboardService());
+        
+        try {
+            int activityId = 1;
+            final String courseCode = "ENLI11007_SV1_SEM2";
+            final Id courseId = new MockId(Course.DATA_TYPE, "_1_");
+            final Id groupId = new MockId(Group.DATA_TYPE, "_2_");
+            final String moduleName = "Test module";
+            final AcademicYearCode academicYear = new AcademicYearCode("2013/4");
+            final boolean webCtActive = true;
+            final Module module = StagingUtil.createTestModule(stagingDatabase,
+                this.getModuleDao(), courseCode, moduleName, academicYear, webCtActive,
+                rdbIdSource);
+
+            assertEquals("ENLI110072013-4SV1SEM2", module.getLearnCourseCode());
+
+            final ActivityTemplate activityTemplate
+                    = StagingUtil.createActivityTemplate(stagingDatabase, this.getActivityTemplateDao(),
+                    "Activity template", (String)null, rdbIdSource);
+            final ActivityType activityType
+                    = StagingUtil.createActivityType(stagingDatabase, this.getActivityTypeDao(),
+                    "Activity type", rdbIdSource);
+            Activity activityA
+                = StagingUtil.createTestActivity(stagingDatabase, activityDao, activityTemplate,
+                    activityType, module, RdbUtil.SchedulingMethod.SCHEDULED,
+                    activityId++, rdbIdSource);
+            Activity activityB
+                = StagingUtil.createTestActivity(stagingDatabase, activityDao, activityTemplate,
+                    activityType, module, RdbUtil.SchedulingMethod.SCHEDULED,
+                    activityId++, rdbIdSource);
+            final ModuleCourse moduleCourse = StagingUtil.createModuleCourse(stagingDatabase,
+                    this.getModuleCourseDao(), module, courseId);
+
+            StagingUtil.createTestActivityGroup(stagingDatabase,
+                    activityA, moduleCourse, groupId);
+            StagingUtil.createTestActivityGroup(stagingDatabase,
+                    activityB, moduleCourse, groupId);
+            
+            assertNull(activityDao.getById(activityA.getActivityId()).getDescription());
+            assertNull(activityDao.getById(activityB.getActivityId()).getDescription());
+            
+            synchronisationService.updateGroupDescriptions(stagingDatabase);
+            
+            assertNotNull(activityDao.getById(activityA.getActivityId()).getDescription());
+            assertNotNull(activityDao.getById(activityB.getActivityId()).getDescription());
+        } finally {
+            stagingDatabase.close();
+        }
     }
 }

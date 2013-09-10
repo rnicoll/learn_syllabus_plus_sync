@@ -49,6 +49,11 @@
         <bbNG:listElement name="changeType" label="Change Type">
             ${fn:escapeXml(change.changeLabel)}
         </bbNG:listElement>
+        <bbNG:listElement name="changeTime" label="Completed">
+            <c:if test="${not empty change.updateCompleted}">
+                <fmt:formatDate value="${change.updateCompleted}" type="BOTH" />
+            </c:if>
+        </bbNG:listElement>
         <bbNG:listElement name="result" label="Status">
             ${fn:escapeXml(change.resultLabel)}
         </bbNG:listElement>

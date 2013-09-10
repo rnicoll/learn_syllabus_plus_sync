@@ -34,6 +34,7 @@ public class Activity extends Object implements Serializable {
     private Boolean isJtaChild;
     private Boolean isVariantParent;
     private Boolean isVariantChild;
+    private int schedulingMethod;
     private List<ActivityGroup> groups;
     private ActivityTemplate template;
     private ActivityType type;
@@ -159,6 +160,14 @@ public class Activity extends Object implements Serializable {
     }
 
     /**
+     * @return the schedulingMethod
+     */
+    @Column(name="TT_SCHEDULING_METHOD", nullable=false)
+    public int getSchedulingMethod() {
+        return schedulingMethod;
+    }
+
+    /**
      * @return the template
      */
     @ManyToOne(fetch=FetchType.EAGER)
@@ -258,5 +267,12 @@ public class Activity extends Object implements Serializable {
      */
     public void setIsVariantChild(Boolean isVariantChild) {
         this.isVariantChild = isVariantChild;
+    }
+    
+    /**
+     * @param newSchedulingMethod the schedulingMethod to set
+     */
+    public void setSchedulingMethod(int newSchedulingMethod) {
+        this.schedulingMethod = newSchedulingMethod;
     }
 }

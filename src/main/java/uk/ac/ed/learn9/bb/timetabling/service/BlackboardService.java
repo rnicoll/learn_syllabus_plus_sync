@@ -23,6 +23,7 @@ import blackboard.data.course.CourseMembership;
 import blackboard.data.course.Group;
 import blackboard.data.course.GroupMembership;
 import blackboard.data.user.User;
+import blackboard.persist.DataType;
 import blackboard.persist.Id;
 import blackboard.persist.KeyNotFoundException;
 import blackboard.persist.PersistenceException;
@@ -188,7 +189,7 @@ public class BlackboardService {
                     }
 
                     final Id courseId = Id.generateId(Course.DATA_TYPE, courseIdStr);
-                    final Id groupId = Id.generateId(Group.DATA_TYPE, groupIdStr);
+                    final Id groupId = this.buildGroupId(groupIdStr);
                     final Id userId = Id.generateId(User.DATA_TYPE, userIdStr);
 
                     if (null == currentCourse
@@ -659,5 +660,16 @@ public class BlackboardService {
      */
     public void setTemplateMessage(SimpleMailMessage templateMessage) {
         this.templateMessage = templateMessage;
+    }
+
+    /**
+     * Constructs a Learn group ID based on the given string. This is provided as
+     * a method so that it can be overriden for unit testing.
+     * 
+     * @param id the string to convert to a group ID.
+     * @return a group ID.
+     */
+    public Id buildGroupId(final String id) throws PersistenceException {
+        return Id.generateId(Group.DATA_TYPE, id);
     }
 }
