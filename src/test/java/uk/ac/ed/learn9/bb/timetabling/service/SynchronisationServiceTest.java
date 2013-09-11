@@ -587,6 +587,18 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
      * Test SQL for generating activity-group relationships in the database.
      */
     @Test
+    public void testForgetCourse() throws Exception {
+        System.out.println("forgetCourse");
+        final SynchronisationService synchronisationService = this.getService();
+        final Id brokenId = new MockId(Course.DATA_TYPE, "000");
+        
+        synchronisationService.forgetCourse(synchronisationService.getStagingDataSource().getConnection(), brokenId);
+    }
+
+    /**
+     * Test SQL for generating activity-group relationships in the database.
+     */
+    @Test
     public void testGenerateActivityGroups() throws Exception {
         System.out.println("generateActivityGroups");
         final SynchronisationService synchronisationService = this.getService();

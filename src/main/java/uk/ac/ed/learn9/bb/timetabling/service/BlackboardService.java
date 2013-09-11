@@ -4,13 +4,13 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.apache.velocity.app.VelocityEngine;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.MailException;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.stereotype.Service;
@@ -23,7 +23,6 @@ import blackboard.data.course.CourseMembership;
 import blackboard.data.course.Group;
 import blackboard.data.course.GroupMembership;
 import blackboard.data.user.User;
-import blackboard.persist.DataType;
 import blackboard.persist.Id;
 import blackboard.persist.KeyNotFoundException;
 import blackboard.persist.PersistenceException;
@@ -36,14 +35,13 @@ import blackboard.persist.course.GroupMembershipDbLoader;
 import blackboard.persist.course.GroupMembershipDbPersister;
 import blackboard.persist.user.UserDbLoader;
 import uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange;
-import uk.ac.ed.learn9.bb.timetabling.data.SynchronisationRun;
 
 /**
  * Service for interacting with Blackboard Learn.
  */
 @Service
 public class BlackboardService {
-    private static final Logger logger = Logger.getLogger(BlackboardService.class);
+    private static final Logger log = Logger.getLogger(BlackboardService.class);
     
     @Autowired
     private MailSender mailSender;
@@ -69,11 +67,7 @@ public class BlackboardService {
      */
     public void applyEnrolmentChanges(final Connection stagingDatabase)
             throws PersistenceException, SQLException, ValidationException {
-        final CourseDbLoader courseDbLoader = this.getCourseDbLoader();
         final CourseMembershipDbLoader courseMembershipDbLoader = this.getCourseMembershipDbLoader();
-        final GroupDbLoader groupDbLoader = this.getGroupDbLoader();
-        final GroupMembershipDbLoader groupMembershipDbLoader = this.getGroupMembershipDbLoader();
-        final GroupMembershipDbPersister groupMembershipDbPersister = this.getGroupMembershipDbPersister();
         
         // Stores group memberships that should have been removed, but are
         // unsafe to do so. These are then e-mailed out at the end of the process.
@@ -84,8 +78,6 @@ public class BlackboardService {
         if (null != this.getForceAllMailTo()) {
             unsafeGroups.setMailToOverride(this.forceAllMailTo);
         }
-
-        final ChangeOutcomeUpdateStatement outcome = new ChangeOutcomeUpdateStatement(stagingDatabase);
 
         final PreparedStatement queryStatement = stagingDatabase.prepareStatement(
             "SELECT p.part_id, mc.learn_course_id, ag.learn_group_id, s.learn_user_id, c.change_type "
@@ -99,107 +91,10 @@ public class BlackboardService {
                     + "AND (p.result_code IS NULL OR r.retry='1') "
                 + "ORDER BY mc.learn_course_id, p.part_id");
         try {
+            final ChangeOutcomeUpdateStatement outcome = new ChangeOutcomeUpdateStatement(stagingDatabase);
+            
             try {
-                final ResultSet rs = queryStatement.executeQuery();
-                try {
-                    Course currentCourse = null;
-                    Map<Id, CourseMembership> studentCourseMemberships = null;
-                    Map<Id, Group> courseGroups = null;
-
-                    while (rs.next()) {
-                        final EnrolmentChange.Type changeType = EnrolmentChange.Type.valueOf(rs.getString("change_type"));
-                        final int partId = rs.getInt("part_id");
-                        final Id courseId = this.buildCourseId(rs.getString("learn_course_id"));
-                        final Id groupId = this.buildGroupId(rs.getString("learn_group_id"));
-                        final Id userId = this.buildUserId(rs.getString("learn_user_id"));
-
-                        if (null == courseId) {
-                            outcome.markCourseMissing(partId);
-                            continue;
-                        }
-
-                        if (null == groupId) {
-                            outcome.markGroupMissing(partId);
-                            continue;
-                        }
-
-                        if (null == userId) {
-                            outcome.markStudentMissing(partId);
-                            continue;
-                        }
-
-                        if (null == currentCourse
-                                || !currentCourse.getId().equals(courseId)) {
-                            // Load student memberships on the current course
-                            try {
-                                currentCourse = courseDbLoader.loadById(courseId);
-                            } catch(KeyNotFoundException e) {
-                                // XXX: Wipe the stored association?
-                                outcome.markCourseMissing(partId);
-                                continue;
-                            }
-                            studentCourseMemberships = getStudentCourseMemberships(courseMembershipDbLoader, courseId);
-                            courseGroups = getCourseGroups(groupDbLoader, courseId);
-                        }
-
-                        final Group group = courseGroups.get(groupId);
-
-                        if (null == group) {
-                            // Shouldn't happen as we've just re-created these, but
-                            // handle anyway.
-                            outcome.markGroupMissing(partId);
-                            continue;
-                        }
-
-                        // Load the group membership if possible.
-                        GroupMembership groupMembership;
-                        try {
-                            groupMembership = groupMembershipDbLoader.loadByGroupAndUserId(groupId, userId);
-                        } catch(KeyNotFoundException e) {
-                            groupMembership = null;
-                        }
-                        switch (changeType) {
-                            case ADD:
-                                // final CourseMembership courseMembership = studentCourseMemberships.get(studentId);
-                                final CourseMembership courseMembership;
-
-                                try {
-                                    courseMembership = courseMembershipDbLoader.loadByCourseAndUserId(courseId, userId);
-                                } catch (KeyNotFoundException e) {
-                                    // Student is not on this course - probably a delay
-                                    // bringing in data from Learn, but we can ignore
-                                    outcome.markNotOnCourse(partId);
-                                    continue;
-                                }
-
-                                if (null == groupMembership) {
-                                    groupMembershipDbPersister.persist(buildGroupMembership(courseMembership, groupId));
-                                    outcome.markSuccess(partId);
-                                } else {
-                                    outcome.markAlreadyInGroup(partId);
-                                }
-                                break;
-                            case REMOVE:
-                                if (null != groupMembership) {
-                                    if (this.isGroupMembershipRemovalUnsafe(group, groupMembership)) {
-                                        unsafeGroups.addMembership(currentCourse, groupMembership);
-                                        outcome.markRemoveUnsafe(partId);
-                                    } else {
-                                        groupMembershipDbPersister.deleteById(groupMembership.getId());
-                                        outcome.markSuccess(partId);
-                                    }
-                                } else {
-                                    outcome.markAlreadyRemoved(partId);
-                                }
-                                break;
-                            default:
-                                throw new RuntimeException("Unexpected change type \""
-                                        + changeType + "\".");
-                        }
-                    }
-                } finally {
-                    rs.close();
-                }
+                applyEnrolmentChanges(queryStatement, outcome, courseMembershipDbLoader, unsafeGroups);
             } finally {
                 outcome.close();
             }
@@ -207,7 +102,123 @@ public class BlackboardService {
             queryStatement.close();
         }
         
-        unsafeGroups.emailMemberships();
+        for (MailException mailError: unsafeGroups.emailMemberships()) {
+            log.warn("Error sending notification to instructors of problems with removing student(s) from group.",
+                    mailError);
+        }
+    }
+
+    private void applyEnrolmentChanges(final PreparedStatement queryStatement,
+            final ChangeOutcomeUpdateStatement outcome, final CourseMembershipDbLoader courseMembershipDbLoader,
+            final UnsafeGroupMembershipManager unsafeGroups)
+            throws SQLException, ValidationException, PersistenceException, RuntimeException {
+        final CourseDbLoader courseDbLoader = this.getCourseDbLoader();
+        final GroupDbLoader groupDbLoader = this.getGroupDbLoader();
+        final GroupMembershipDbLoader groupMembershipDbLoader = this.getGroupMembershipDbLoader();
+        final GroupMembershipDbPersister groupMembershipDbPersister = this.getGroupMembershipDbPersister();
+        
+        final ResultSet rs = queryStatement.executeQuery();
+        try {
+            Course currentCourse = null;
+            Map<Id, Group> courseGroups = null;
+
+            while (rs.next()) {
+                final EnrolmentChange.Type changeType = EnrolmentChange.Type.valueOf(rs.getString("change_type"));
+                final int partId = rs.getInt("part_id");
+                final Id courseId = this.buildCourseId(rs.getString("learn_course_id"));
+                final Id groupId = this.buildGroupId(rs.getString("learn_group_id"));
+                final Id userId = this.buildUserId(rs.getString("learn_user_id"));
+
+                if (null == courseId) {
+                    outcome.markCourseMissing(partId);
+                    continue;
+                }
+
+                if (null == groupId) {
+                    outcome.markGroupMissing(partId);
+                    continue;
+                }
+
+                if (null == userId) {
+                    outcome.markStudentMissing(partId);
+                    continue;
+                }
+
+                try {
+                    if (null == currentCourse
+                            || !currentCourse.getId().equals(courseId)) {
+                        // Load student memberships on the current course
+                        try {
+                            currentCourse = courseDbLoader.loadById(courseId);
+                        } catch(KeyNotFoundException e) {
+                            // XXX: Wipe the stored association?
+                            outcome.markCourseMissing(partId);
+                            continue;
+                        }
+                        courseGroups = getCourseGroups(groupDbLoader, courseId);
+                    }
+
+                    final Group group = courseGroups.get(groupId);
+
+                    if (null == group) {
+                        // Shouldn't happen as we've just re-created these, but
+                        // handle anyway.
+                        outcome.markGroupMissing(partId);
+                        continue;
+                    }
+
+                    // Load the group membership if possible.
+                    GroupMembership groupMembership;
+                    try {
+                        groupMembership = groupMembershipDbLoader.loadByGroupAndUserId(groupId, userId);
+                    } catch(KeyNotFoundException e) {
+                        groupMembership = null;
+                    }
+                    switch (changeType) {
+                        case ADD:
+                            // final CourseMembership courseMembership = studentCourseMemberships.get(studentId);
+                            final CourseMembership courseMembership;
+
+                            try {
+                                courseMembership = courseMembershipDbLoader.loadByCourseAndUserId(courseId, userId);
+                            } catch (KeyNotFoundException e) {
+                                // Student is not on this course - probably a delay
+                                // bringing in data from Learn, but we can ignore
+                                outcome.markNotOnCourse(partId);
+                                continue;
+                            }
+
+                            if (null == groupMembership) {
+                                groupMembershipDbPersister.persist(buildGroupMembership(courseMembership, groupId));
+                                outcome.markSuccess(partId);
+                            } else {
+                                outcome.markAlreadyInGroup(partId);
+                            }
+                            break;
+                        case REMOVE:
+                            if (null != groupMembership) {
+                                if (this.isGroupMembershipRemovalUnsafe(group, groupMembership)) {
+                                    unsafeGroups.addMembership(currentCourse, groupMembership);
+                                    outcome.markRemoveUnsafe(partId);
+                                } else {
+                                    groupMembershipDbPersister.deleteById(groupMembership.getId());
+                                    outcome.markSuccess(partId);
+                                }
+                            } else {
+                                outcome.markAlreadyRemoved(partId);
+                            }
+                            break;
+                        default:
+                            throw new RuntimeException("Unexpected change type \""
+                                    + changeType + "\".");
+                    }
+                } catch(PersistenceException e) {
+                    log.warn("Error while writing group membership changes back into Learn.", e);
+                }
+            }
+        } finally {
+            rs.close();
+        }
     }
     
     /**
@@ -242,7 +253,7 @@ public class BlackboardService {
      * @throws SQLException if there was a problem accessing the cache database.
      */
     public void mapModulesToCourses(final Connection stagingDatabase)
-            throws KeyNotFoundException, PersistenceException, SQLException {
+            throws PersistenceException, SQLException {
         final PreparedStatement updateStatement = stagingDatabase.prepareStatement(
             "UPDATE module_course "
                 + "SET learn_course_id=?, "
@@ -261,30 +272,35 @@ public class BlackboardService {
                     while (rs.next()) {
                         final String learnCourseCode = rs.getString("learn_course_code");
 
-                        if (!courseDbLoader.doesCourseIdExist(learnCourseCode)) {
-                            continue;
-                        }
-
-                        Course course = courseDbLoader.loadByCourseId(learnCourseCode);
-
-                        // If the course has a parent-child relationship with another
-                        // course, use the parent
                         try {
-                            final CourseCourse courseCourse = courseCourseDbLoader.loadParent(course.getId());
+                            if (!courseDbLoader.doesCourseIdExist(learnCourseCode)) {
+                                continue;
+                            }
 
-                            // Successfully found a parent course, replace the child with it.
-                            course = courseDbLoader.loadById(courseCourse.getParentCourseId());
-                        } catch (KeyNotFoundException e) {
-                            // No parent course, ignore
+                            Course course = courseDbLoader.loadByCourseId(learnCourseCode);
+
+                            // If the course has a parent-child relationship with another
+                            // course, use the parent
+                            try {
+                                final CourseCourse courseCourse = courseCourseDbLoader.loadParent(course.getId());
+
+                                // Successfully found a parent course, replace the child with it.
+                                course = courseDbLoader.loadById(courseCourse.getParentCourseId());
+                            } catch (KeyNotFoundException e) {
+                                // No parent course, ignore
+                            }
+
+                            int paramIdx = 1;
+                            updateStatement.setString(paramIdx++, course.getId().getExternalString());
+                            updateStatement.setString(paramIdx++, course.getIsAvailable()
+                                ? "Y"
+                                : "N");
+                            updateStatement.setInt(paramIdx++, rs.getInt("module_course_id"));
+                            updateStatement.executeUpdate();
+                        } catch(PersistenceException e) {
+                            log.warn("Error while looking up course \""
+                                + learnCourseCode + "\" in Learn.", e);
                         }
-
-                        int paramIdx = 1;
-                        updateStatement.setString(paramIdx++, course.getId().getExternalString());
-                        updateStatement.setString(paramIdx++, course.getIsAvailable()
-                            ? "Y"
-                            : "N");
-                        updateStatement.setInt(paramIdx++, rs.getInt("module_course_id"));
-                        updateStatement.executeUpdate();
                     }
                 } finally {
                     rs.close();
@@ -331,6 +347,10 @@ public class BlackboardService {
                             user = userDbLoader.loadByUserName(username);
                         } catch (KeyNotFoundException e) {
                             // User isn't in Learn, ignore
+                            continue;
+                        } catch (PersistenceException e) {
+                            log.warn("Error while attempting to look up user \""
+                                + username + "\" in Learn.", e);
                             continue;
                         }
 
