@@ -93,7 +93,7 @@ class UnsafeGroupMembershipManager {
             .append("These students have been added to their new groups in Learn, but have not ")
             .append("been removed from their existing groups because group tools have been ")
             .append("enabled and there may be important content that would be lost if they ")
-            .append("were removed automatically. A list of affected students is provided below:\r\n");
+            .append("were removed automatically. A list of affected students is provided below:\r\n\r\n");
 
         for (GroupMembership membership: memberships) {
             final CourseMembership courseMembership = this.courseMembershipLoader.loadById(membership.getCourseMembershipId());
@@ -115,9 +115,9 @@ class UnsafeGroupMembershipManager {
         
         final SimpleMailMessage message = new SimpleMailMessage(this.messageTemplate);
         
+        log.debug("Instructors: "
+            + to.toString());
         if (null != this.getMailToOverride()) {
-            log.debug("Instructors: "
-                + to.toString());
             message.setTo(this.getMailToOverride());
         } else {
             message.setTo(to.toArray(new String[to.size()]));
@@ -138,6 +138,10 @@ class UnsafeGroupMembershipManager {
             
             assert null != user;
             if (null == user.getEmailAddress()) {
+                log.info("No e-mail address listed for instructor "
+                    + user.getGivenName() + " "
+                    + user.getFamilyName() + " ("
+                    + user.getUserName() + ").");
                 continue;
             }
             
