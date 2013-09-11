@@ -2,8 +2,10 @@ package uk.ac.ed.learn9.bb.timetabling.service;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -63,20 +65,28 @@ class UnsafeGroupMembershipManager {
         memberships.add(membership);
     }
     
-    public void emailMemberships()
-        throws KeyNotFoundException, MailException, PersistenceException {
+    public List<MailException> emailMemberships()
+        throws PersistenceException {
         if (this.unsafeMemberships.isEmpty()) {
-            return;
+            return Collections.EMPTY_LIST;
         }
+        
+        final List<MailException> mailErrors = new ArrayList<MailException>();        
         
         for (Course course: this.unsafeMemberships.keySet()) {
             final Collection<GroupMembership> memberships = this.unsafeMemberships.get(course);
             final SimpleMailMessage message = this.buildMessage(course, memberships);
             
             if (null != message) {
-                this.mailSender.send(message);
+                try {
+                    this.mailSender.send(message);
+                } catch(MailException e) {
+                    mailErrors.add(e);
+                }
             }
         }
+        
+        return mailErrors;
     }
 
     protected SimpleMailMessage buildMessage(final Course course, final Collection<GroupMembership> memberships)
