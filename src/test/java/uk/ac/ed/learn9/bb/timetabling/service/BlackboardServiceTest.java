@@ -114,13 +114,15 @@ public class BlackboardServiceTest extends AbstractJUnit4SpringContextTests {
     }
 
     /**
-     * Test of applyPreviouslyFailedEnrolmentChanges method, of class BlackboardService.
+     * Test of applyEnrolmentChanges method, of class BlackboardService. Currently
+     * this does nothing more than basic validation of the query being run.
      */
     @Test
-    public void testApplyPreviouslyFailedEnrolmentChanges() throws Exception {
+    public void testApplyEnrolmentChanges() throws Exception {
+        System.out.println("applyEnrolmentChanges");
         final Connection connection = this.getStagingDataSource().getConnection();
         try {
-            this.getService().applyPreviouslyFailedEnrolmentChanges(connection);
+            this.getService().applyEnrolmentChanges(connection);
         } finally {
             connection.close();
         }

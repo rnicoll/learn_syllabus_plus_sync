@@ -121,8 +121,7 @@ public class SynchronisationService extends Object {
      */
     public void applyEnrolmentChanges(final SynchronisationRun run, final Connection stagingDatabase)
         throws PersistenceException, SQLException, ValidationException {
-        this.getBlackboardService().applyPreviouslyFailedEnrolmentChanges(stagingDatabase);
-        this.getBlackboardService().applyNewEnrolmentChanges(stagingDatabase, run);
+        this.getBlackboardService().applyEnrolmentChanges(stagingDatabase);
     }
 
     /**
@@ -706,6 +705,9 @@ public class SynchronisationService extends Object {
             final BlackboardService bbService = this.getBlackboardService();
             
             bbService.mapModulesToCourses(stagingDatabase);
+            // This has problems with unexpected side-effects meaning that it
+            // requires modify privileges on random tools (i.e. Wiki). Needs
+            // a lot more testing before re-enabling.
             // this.updateGroupDescriptions(stagingDatabase);
         
             this.generateGroupNames(stagingDatabase);
