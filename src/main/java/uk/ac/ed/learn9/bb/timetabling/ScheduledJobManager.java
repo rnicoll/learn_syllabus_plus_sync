@@ -1,7 +1,10 @@
 package uk.ac.ed.learn9.bb.timetabling;
 
+import java.sql.Driver;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Calendar;
+import java.util.Enumeration;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicReference;
@@ -69,16 +72,33 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
      * Listens for application lifecycle events (specifically start/stop),
      * and schedules the new run/cancels the next run as appropriate.
      * 
-     * @param e the application event to process.
+     * @param event the application event to process.
      */
     @Override
-    public void onApplicationEvent(final ApplicationContextEvent e) {
-        if (e instanceof ContextRefreshedEvent) {
-            this.applicationContext = e.getApplicationContext();
+    public void onApplicationEvent(final ApplicationContextEvent event) {
+        if (event instanceof ContextRefreshedEvent) {
+            this.applicationContext = event.getApplicationContext();
             this.startTimer();
-        } else if (e instanceof ContextClosedEvent) {
+        } else if (event instanceof ContextClosedEvent) {
             this.cancel();
             this.applicationContext = null;
+            
+            // This manually deregisters JDBC driver, which prevents Tomcat 7 from complaining about memory leaks wrto this class
+            Enumeration<Driver> drivers = DriverManager.getDrivers();
+            while (drivers.hasMoreElements()) {
+                final Driver driver = drivers.nextElement();
+                
+                // Really ought to take the list of drivers to de-register from
+                // application context
+                if (driver instanceof com.microsoft.sqlserver.jdbc.SQLServerDriver
+                    || driver instanceof oracle.jdbc.OracleDriver) {
+                    try {
+                        DriverManager.deregisterDriver(driver);
+                    } catch (SQLException e) {
+                        log.error(String.format("Error deregistering driver %s", driver), e);
+                    }
+                }
+            }
         }
     }
 
