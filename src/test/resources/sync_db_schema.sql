@@ -352,6 +352,7 @@ INSERT INTO change_result (result_code, label, retry) VALUES ('SUCCESS', 'Succes
 INSERT INTO change_result (result_code, label, retry) VALUES ('ALREADY_REMOVED', 'Student has already been removed from the group', '0');
 INSERT INTO change_result (result_code, label, retry) VALUES ('ALREADY_IN_GROUP', 'Student has already been added to the group', '0');
 INSERT INTO change_result (result_code, label, retry) VALUES ('COURSE_MISSING', 'Course does not exist', '1');
+INSERT INTO change_result (result_code, label, retry) VALUES ('COURSE_UNAVAILABLE', 'Course is not available in Learn', '1');
 INSERT INTO change_result (result_code, label, retry) VALUES ('GROUP_MISSING', 'Group does not exist', '1');
 INSERT INTO change_result (result_code, label, retry) VALUES ('CANNOT_REMOVE_SAFELY', 'Cannot safely remove student from group as it appears to be in use already.', '1');
 INSERT INTO change_result (result_code, label, retry) VALUES ('STUDENT_MISSING', 'Student does not exist', '1');
