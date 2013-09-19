@@ -83,15 +83,15 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
             this.cancel();
             this.applicationContext = null;
             
-            // This manually deregisters JDBC driver, which prevents Tomcat 7 from complaining about memory leaks wrto this class
+            // This manually deregisters JDBC driver, which prevents Tomcat 7
+            // from complaining about memory leaks from this class
             Enumeration<Driver> drivers = DriverManager.getDrivers();
             while (drivers.hasMoreElements()) {
                 final Driver driver = drivers.nextElement();
                 
                 // Really ought to take the list of drivers to de-register from
                 // application context
-                if (driver instanceof com.microsoft.sqlserver.jdbc.SQLServerDriver
-                    || driver instanceof oracle.jdbc.OracleDriver) {
+                if (driver instanceof com.microsoft.sqlserver.jdbc.SQLServerDriver) {
                     try {
                         DriverManager.deregisterDriver(driver);
                     } catch (SQLException e) {
