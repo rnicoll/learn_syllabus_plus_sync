@@ -154,8 +154,13 @@ public class BlackboardService {
                             // XXX: Wipe the stored association?
                             outcome.markCourseMissing(partId);
                             continue;
-                        }
+                        }                        
                         courseGroups = getCourseGroups(groupDbLoader, courseId);
+                    }
+                    
+                    // We ignore differences for courses which are not available
+                    if (!currentCourse.getIsAvailable()) {
+                        continue;
                     }
 
                     final Group group = courseGroups.get(groupId);

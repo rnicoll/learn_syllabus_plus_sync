@@ -869,7 +869,7 @@ public class SynchronisationService extends Object {
                 + "FROM enrolment_change c "
                     + "JOIN activity a ON a.tt_activity_id=c.tt_activity_id "
                     + "JOIN module m ON m.tt_module_id=a.tt_module_id "
-                    + "JOIN module_course mc ON mc.tt_module_id=m.tt_module_id AND mc.learn_course_available='Y' "
+                    + "JOIN module_course mc ON mc.tt_module_id=m.tt_module_id "
                 + "WHERE c.run_id=?");
         if (null != activityId) {
             query.append(" AND a.tt_activity_id=?) ");
