@@ -31,6 +31,7 @@ import uk.ac.ed.learn9.bb.timetabling.dao.ActivityGroupDao;
 import uk.ac.ed.learn9.bb.timetabling.dao.ActivityTemplateDao;
 import uk.ac.ed.learn9.bb.timetabling.dao.ActivityTypeDao;
 import uk.ac.ed.learn9.bb.timetabling.dao.EnrolmentChangeDao;
+import uk.ac.ed.learn9.bb.timetabling.dao.EnrolmentChangePartDao;
 import uk.ac.ed.learn9.bb.timetabling.dao.ModuleCourseDao;
 import uk.ac.ed.learn9.bb.timetabling.dao.ModuleDao;
 import uk.ac.ed.learn9.bb.timetabling.dao.StudentSetDao;
@@ -40,6 +41,7 @@ import uk.ac.ed.learn9.bb.timetabling.data.ActivityGroup;
 import uk.ac.ed.learn9.bb.timetabling.data.ActivityTemplate;
 import uk.ac.ed.learn9.bb.timetabling.data.ActivityType;
 import uk.ac.ed.learn9.bb.timetabling.data.Configuration;
+import uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange;
 import uk.ac.ed.learn9.bb.timetabling.data.Module;
 import uk.ac.ed.learn9.bb.timetabling.data.ModuleCourse;
 import uk.ac.ed.learn9.bb.timetabling.data.StudentSet;
@@ -106,6 +108,10 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     
     private EnrolmentChangeDao getEnrolmentChangeDao() {
         return this.applicationContext.getBean("enrolmentChangeDao", EnrolmentChangeDao.class);
+    }
+    
+    private EnrolmentChangePartDao getEnrolmentChangePartDao() {
+        return this.applicationContext.getBean("enrolmentChangePartDao", EnrolmentChangePartDao.class);
     }
     
     private ModuleDao getModuleDao() {
@@ -451,7 +457,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
                     activityType, module, RdbUtil.SchedulingMethod.NOT_SCHEDULED,
                     activityId, rdbIdSource);
             final ModuleCourse moduleCourse = StagingUtil.createModuleCourse(connection,
-                    this.getModuleCourseDao(), module, courseId);
+                    this.getModuleCourseDao(), module, courseId, null);
 
             final ActivityGroupDao activityGroupDao = this.getActivityGroupDao();
             List<ActivityGroup> activityGroups;
@@ -525,21 +531,28 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
     @Test
     public void testGenerateDiff() throws Exception {
         System.out.println("generateDiff");
+        final Activity activityA;
+        final Activity activityB;
         final ActivityDao activityDao = this.getActivityDao();
         final RdbIdSource rdbIdSource = new SequentialRdbIdSource();
+        final Module module;
+        final StudentSet studentSet;
         final SynchronisationRunService synchronisationRunService
                 = this.getSynchronisationRunService();
         final SynchronisationRun run = synchronisationRunService.startNewRun();
-        final Connection connection = this.getService().getStagingDataSource().getConnection();
+        Connection connection = this.getService().getStagingDataSource().getConnection();
+        
         try {
             int activityId = 1;
             final String courseCode = "ENLI11007_SV1_SEM2";
             final Id courseId = new MockId(Course.DATA_TYPE, "_1_");
             final Id groupId = new MockId(Group.DATA_TYPE, "_2_");
+            final boolean learnCourseAvailable = true;
             final String moduleName = "Test module";
             final AcademicYearCode academicYear = new AcademicYearCode("2013/4");
             final boolean webCtActive = true;
-            final Module module = StagingUtil.createTestModule(connection,
+            
+            module = StagingUtil.createTestModule(connection,
                 this.getModuleDao(), courseCode, moduleName, academicYear, webCtActive,
                 rdbIdSource);
 
@@ -551,25 +564,25 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
             final ActivityType activityType 
                     = StagingUtil.createActivityType(connection, this.getActivityTypeDao(),
                     "Activity type", rdbIdSource);
-            final Activity activityA
-                = StagingUtil.createTestActivity(connection, activityDao, activityTemplate,
-                    activityType, module, RdbUtil.SchedulingMethod.SCHEDULED,
-                    activityId, rdbIdSource);
-            final Activity activityB
-                = StagingUtil.createTestActivity(connection, activityDao, activityTemplate,
-                    activityType, module, RdbUtil.SchedulingMethod.SCHEDULED,
-                    activityId, rdbIdSource);
             
-            assertEquals(activityTemplate, activityA.getTemplate());
-            assertEquals(module, activityA.getModule());
+            activityA
+                = StagingUtil.createTestActivity(connection, activityDao, activityTemplate,
+                    activityType, module, RdbUtil.SchedulingMethod.SCHEDULED,
+                    activityId, rdbIdSource);
+            activityB
+                = StagingUtil.createTestActivity(connection, activityDao, activityTemplate,
+                    activityType, module, RdbUtil.SchedulingMethod.SCHEDULED,
+                    activityId, rdbIdSource);
             
             final ModuleCourse moduleCourse = StagingUtil.createModuleCourse(connection,
-                    this.getModuleCourseDao(), module, courseId);
+                    this.getModuleCourseDao(), module, courseId, learnCourseAvailable);
+            
+            assertEquals(moduleCourse.getModule(), module);
 
             StagingUtil.createTestActivityGroup(connection,
                     activityA, moduleCourse, groupId);
             
-            final StudentSet studentSet = StagingUtil.createTestStudentSet(connection,
+            studentSet = StagingUtil.createTestStudentSet(connection,
                     this.getStudentSetDao(), rdbIdSource, "s1234567890");
             
             StagingUtil.createStudentSetActivity(connection, run, studentSet,
@@ -581,6 +594,13 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
         this.getService().generateDiff(run);
         
         assertEquals(1, this.getEnrolmentChangeDao().getAll().size());
+        for (EnrolmentChange change: this.getEnrolmentChangeDao().getAll()) {
+            assertEquals(run, change.getRun());
+            assertEquals(activityA, change.getActivity());
+            assertEquals(studentSet, change.getStudentSet());
+        }
+        
+        assertEquals(1, this.getEnrolmentChangePartDao().getAll().size());
     }
 
     /**
@@ -717,7 +737,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
                     activityType, module, RdbUtil.SchedulingMethod.SCHEDULED,
                     activityId++, rdbIdSource);
             final ModuleCourse moduleCourse = StagingUtil.createModuleCourse(stagingDatabase,
-                    this.getModuleCourseDao(), module, courseId);
+                    this.getModuleCourseDao(), module, courseId, null);
 
             StagingUtil.createTestActivityGroup(stagingDatabase,
                     activityA, moduleCourse, groupId);
@@ -788,7 +808,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
                     activityType, module, RdbUtil.SchedulingMethod.SCHEDULED,
                     activityId++, rdbIdSource);
             final ModuleCourse moduleCourse = StagingUtil.createModuleCourse(stagingDatabase,
-                    this.getModuleCourseDao(), module, courseId);
+                    this.getModuleCourseDao(), module, courseId, null);
 
             StagingUtil.createTestActivityGroup(stagingDatabase,
                     activityA, moduleCourse, groupId);
