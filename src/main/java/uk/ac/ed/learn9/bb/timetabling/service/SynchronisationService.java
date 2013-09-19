@@ -845,9 +845,9 @@ public class SynchronisationService extends Object {
      * @param run the run to attribute changes to.
      * @throws SQLException 
      */
-    public void doGenerateDiffParts(final Connection stagingDatabase, final SynchronisationRun run)
+    protected int doGenerateDiffParts(final Connection stagingDatabase, final SynchronisationRun run)
             throws SQLException {
-        this.doGenerateDiffParts(stagingDatabase, run, (String)null);
+        return this.doGenerateDiffParts(stagingDatabase, run, (String)null);
     }
 
     /**
@@ -857,9 +857,10 @@ public class SynchronisationService extends Object {
      * @param stagingDatabase a connection to the staging database.
      * @param run the run to attribute changes to.
      * @param activityId an optional activity ID to restrict parts generated to.
+     * @return the number of changes applied.
      * @throws SQLException 
      */
-    public void doGenerateDiffParts(final Connection stagingDatabase, final SynchronisationRun run,
+    protected int doGenerateDiffParts(final Connection stagingDatabase, final SynchronisationRun run,
             final String activityId)
             throws SQLException {
         final StringBuilder query = new StringBuilder("INSERT INTO enrolment_change_part "
@@ -886,7 +887,7 @@ public class SynchronisationService extends Object {
             if (null != activityId) {
                 insertStatement.setString(paramIdx++, activityId);
             }
-            insertStatement.executeUpdate();
+            return insertStatement.executeUpdate();
         } finally {
             insertStatement.close();
         }
