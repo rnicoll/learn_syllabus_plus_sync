@@ -4,6 +4,7 @@ import java.util.List;
 
 import blackboard.data.course.Course;
 import blackboard.persist.Id;
+import uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChange;
 import uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChangePart;
 
 /**
@@ -34,4 +35,11 @@ public interface EnrolmentChangePartDao {
      * @return a list of changes.
      */
     public List<EnrolmentChangePart> getByCourse(final Id courseId);
+    
+    /**
+     * Get all change parts.
+     * 
+     * @return a list of change parts.
+     */
+    public List<EnrolmentChangePart> getAll();
 }

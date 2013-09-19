@@ -21,7 +21,7 @@ public class EnrolmentChangeDaoImpl extends HibernateDaoSupport implements Enrol
     @Override
     public EnrolmentChange getById(final int changeId) {
         return (EnrolmentChange)this.getSession().get(EnrolmentChange.class, changeId);
-    }    
+    }
 
     @Override
     public List<EnrolmentChange> getAll() {
