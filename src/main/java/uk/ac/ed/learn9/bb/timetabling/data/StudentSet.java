@@ -18,6 +18,27 @@ public class StudentSet extends Object implements Serializable {
     private String studentSetId;
     private String hostKey;
     private String learnUserId;
+    
+    @Override
+    public boolean equals(final Object o) {
+        if (!(o instanceof StudentSet)) {
+            return false;
+        }
+        
+        final StudentSet other = (StudentSet)o;
+        
+        return other.getStudentSetId().equals(this.getStudentSetId());
+    }
+    
+    @Override
+    public int hashCode() {
+        return this.getStudentSetId().hashCode();
+    }
+    
+    @Override
+    public String toString() {
+        return this.getHostKey();
+    }
 
     /**
      * Gets the ID for the student set (a 32 character string).
