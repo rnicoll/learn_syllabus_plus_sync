@@ -153,8 +153,6 @@
         </property>
         <property name="sendSuccessMessageTo">
             <list>
-                <!-- value>apps-tels@mlists.is.ed.ac.uk</value -->
-                <value>Ross.Nicoll@ed.ac.uk</value>
             </list>
         </property>
     </bean>
