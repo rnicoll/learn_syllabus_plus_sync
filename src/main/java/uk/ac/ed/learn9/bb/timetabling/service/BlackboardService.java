@@ -160,6 +160,7 @@ public class BlackboardService {
                     
                     // We ignore differences for courses which are not available
                     if (!currentCourse.getIsAvailable()) {
+                        outcome.markCourseUnavailable(partId);
                         continue;
                     }
 
@@ -261,8 +262,7 @@ public class BlackboardService {
             throws PersistenceException, SQLException {
         final PreparedStatement updateStatement = stagingDatabase.prepareStatement(
             "UPDATE module_course "
-                + "SET learn_course_id=?, "
-                    + "learn_course_available=? "
+                + "SET learn_course_id=? "
                 + "WHERE module_course_id=?");
         try {
             final PreparedStatement queryStatement = stagingDatabase.prepareStatement(
@@ -297,9 +297,6 @@ public class BlackboardService {
 
                             int paramIdx = 1;
                             updateStatement.setString(paramIdx++, course.getId().getExternalString());
-                            updateStatement.setString(paramIdx++, course.getIsAvailable()
-                                ? "Y"
-                                : "N");
                             updateStatement.setInt(paramIdx++, rs.getInt("module_course_id"));
                             updateStatement.executeUpdate();
                         } catch(PersistenceException e) {

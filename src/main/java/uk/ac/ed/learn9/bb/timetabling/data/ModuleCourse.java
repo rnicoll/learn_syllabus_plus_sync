@@ -21,7 +21,6 @@ public class ModuleCourse {
     private String learnCourseId;
     private String learnCourseCode;
     private boolean mergedCourse;
-    private Boolean learnCourseAvaiable;
 
     /**
      * Gets the ID of this relationship.
@@ -43,18 +42,6 @@ public class ModuleCourse {
     @JoinColumn(name="tt_module_id", nullable=false)
     public Module getModule() {
         return this.module;
-    }
-
-    /**
-     * Get whether this course is available in Learn.
-     * 
-     * @return whether this course is available in Learn. May be null if
-     * unknown, or no matching course is present in Learn.
-     */
-    @Column(name="learn_course_available", nullable=true)
-    @Type(type="yes_no")
-    public Boolean getLearnCourseAvaiable() {
-        return learnCourseAvaiable;
     }
 
     /**
@@ -99,15 +86,6 @@ public class ModuleCourse {
      */
     public void setId(int id) {
         this.id = id;
-    }
-
-    /**
-     * Set whether this course is available in Learn, where applicable.
-     * 
-     * @param learnCourseAvaiable whether this course is available in Learn.
-     */
-    public void setLearnCourseAvaiable(Boolean learnCourseAvaiable) {
-        this.learnCourseAvaiable = learnCourseAvaiable;
     }
 
     /**

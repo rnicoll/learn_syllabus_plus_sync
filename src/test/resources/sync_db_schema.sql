@@ -38,9 +38,7 @@ CREATE TABLE module_course (
     merged_course CHAR(1) NOT NULL,
     learn_course_code VARCHAR(40) NOT NULL,
     learn_course_id VARCHAR(40) DEFAULT NULL,
-    learn_course_available CHAR(1) DEFAULT NULL,
     constraint module_course_merged FOREIGN KEY (merged_course) REFERENCES yes_no(yn_code),
-    constraint module_course_available FOREIGN KEY (learn_course_available) REFERENCES yes_no(yn_code),
     PRIMARY KEY (module_course_id)
 );
 

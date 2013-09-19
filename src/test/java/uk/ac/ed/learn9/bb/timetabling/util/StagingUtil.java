@@ -139,7 +139,7 @@ public class StagingUtil {
 
     public static ModuleCourse createModuleCourse(final Connection stagingDatabase,
             final ModuleCourseDao moduleCourseDao, final Module module,
-            final Id learnCourseId, final Boolean learnCourseAvailable)
+            final Id learnCourseId)
         throws SQLException {
         final ModuleCourse moduleCourse = new ModuleCourse();
         
@@ -148,8 +148,8 @@ public class StagingUtil {
         
         final PreparedStatement statement = stagingDatabase.prepareStatement(
                 "INSERT INTO MODULE_COURSE (TT_MODULE_ID, "
-                    + "MERGED_COURSE, LEARN_COURSE_CODE, LEARN_COURSE_ID, LEARN_COURSE_AVAILABLE) "
-                + "VALUES (?, ?, ?, ?, ?)");
+                    + "MERGED_COURSE, LEARN_COURSE_CODE, LEARN_COURSE_ID) "
+                + "VALUES (?, ?, ?, ?)");
         try {
             int paramIdx = 1;
 
@@ -158,13 +158,6 @@ public class StagingUtil {
             statement.setString(paramIdx++, module.getLearnCourseCode());
             if (null != learnCourseId) {
                 statement.setString(paramIdx++, learnCourseId.getExternalString());
-            } else {
-                statement.setNull(paramIdx++, Types.VARCHAR);
-            }
-            if (null != learnCourseAvailable) {
-                statement.setString(paramIdx++, learnCourseAvailable
-                    ? "Y"
-                    : "N");
             } else {
                 statement.setNull(paramIdx++, Types.VARCHAR);
             }

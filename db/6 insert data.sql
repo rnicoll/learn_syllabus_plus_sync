@@ -12,6 +12,7 @@ INSERT INTO change_result (result_code, label, retry) VALUES ('GROUP_MISSING', '
 INSERT INTO change_result (result_code, label, retry) VALUES ('STUDENT_MISSING', 'Student does not exist', '1');
 INSERT INTO change_result (result_code, label, retry) VALUES ('CANNOT_REMOVE_SAFELY', 'Cannot safely remove student from group as it appears to be in use already.', '1');
 INSERT INTO change_result (result_code, label, retry) VALUES ('NOT_ON_COURSE', 'Student is not on the course', '1');
+INSERT INTO change_result (result_code, label, retry) VALUES ('UNAVAILABLE', 'Course is not available in Learn', '1');
 
 INSERT INTO run_result (result_code, result_label)
   VALUES ('SUCCESS', 'Synchronisation completed successfully.');

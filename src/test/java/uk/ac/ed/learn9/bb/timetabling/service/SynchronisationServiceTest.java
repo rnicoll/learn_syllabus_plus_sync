@@ -457,7 +457,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
                     activityType, module, RdbUtil.SchedulingMethod.NOT_SCHEDULED,
                     activityId, rdbIdSource);
             final ModuleCourse moduleCourse = StagingUtil.createModuleCourse(connection,
-                    this.getModuleCourseDao(), module, courseId, null);
+                    this.getModuleCourseDao(), module, courseId);
 
             final ActivityGroupDao activityGroupDao = this.getActivityGroupDao();
             List<ActivityGroup> activityGroups;
@@ -547,7 +547,6 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
             final String courseCode = "ENLI11007_SV1_SEM2";
             final Id courseId = new MockId(Course.DATA_TYPE, "_1_");
             final Id groupId = new MockId(Group.DATA_TYPE, "_2_");
-            final boolean learnCourseAvailable = true;
             final String moduleName = "Test module";
             final AcademicYearCode academicYear = new AcademicYearCode("2013/4");
             final boolean webCtActive = true;
@@ -575,7 +574,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
                     activityId, rdbIdSource);
             
             final ModuleCourse moduleCourse = StagingUtil.createModuleCourse(connection,
-                    this.getModuleCourseDao(), module, courseId, learnCourseAvailable);
+                    this.getModuleCourseDao(), module, courseId);
             
             assertEquals(moduleCourse.getModule(), module);
 
@@ -764,7 +763,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
                     activityType, module, RdbUtil.SchedulingMethod.SCHEDULED,
                     activityId++, rdbIdSource);
             final ModuleCourse moduleCourse = StagingUtil.createModuleCourse(stagingDatabase,
-                    this.getModuleCourseDao(), module, courseId, null);
+                    this.getModuleCourseDao(), module, courseId);
 
             StagingUtil.createTestActivityGroup(stagingDatabase,
                     activityA, moduleCourse, groupId);
@@ -835,7 +834,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
                     activityType, module, RdbUtil.SchedulingMethod.SCHEDULED,
                     activityId++, rdbIdSource);
             final ModuleCourse moduleCourse = StagingUtil.createModuleCourse(stagingDatabase,
-                    this.getModuleCourseDao(), module, courseId, null);
+                    this.getModuleCourseDao(), module, courseId);
 
             StagingUtil.createTestActivityGroup(stagingDatabase,
                     activityA, moduleCourse, groupId);

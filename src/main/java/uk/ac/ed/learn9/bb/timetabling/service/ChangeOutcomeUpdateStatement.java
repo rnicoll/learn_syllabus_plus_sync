@@ -16,6 +16,7 @@ class ChangeOutcomeUpdateStatement {
     public enum Result {
         SUCCESS,
         COURSE_MISSING,
+        COURSE_UNAVAILABLE,
         GROUP_MISSING,
         CANNOT_REMOVE_SAFELY,
         STUDENT_MISSING,
@@ -54,6 +55,11 @@ class ChangeOutcomeUpdateStatement {
     public boolean markCourseMissing(final int changeId)
             throws SQLException {
         return this.update(null, Result.COURSE_MISSING, changeId);
+    }
+
+    public boolean markCourseUnavailable(int changeId)
+            throws SQLException {
+        return this.update(null, Result.COURSE_UNAVAILABLE, changeId);
     }
     
     public boolean markGroupMissing(final int changeId)
