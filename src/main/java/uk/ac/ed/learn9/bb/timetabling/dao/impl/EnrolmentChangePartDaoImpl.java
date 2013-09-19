@@ -27,6 +27,11 @@ public class EnrolmentChangePartDaoImpl extends HibernateDaoSupport implements E
     }
 
     @Override
+    public List<EnrolmentChangePart> getAll() {
+        return this.getSession().createQuery("from uk.ac.ed.learn9.bb.timetabling.data.EnrolmentChangePart").list();
+    }
+
+    @Override
     public List<EnrolmentChangePart> getByCourse(final Course course) {
         return this.getByCourse(course.getId());
     }
@@ -38,5 +43,4 @@ public class EnrolmentChangePartDaoImpl extends HibernateDaoSupport implements E
             .add(Restrictions.eq("learnCourseId", courseId.getExternalString()))
                 .list();
     }
-    
 }
