@@ -539,7 +539,7 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
         final StudentSet studentSet;
         final SynchronisationRunService synchronisationRunService
                 = this.getSynchronisationRunService();
-        final SynchronisationRun run = synchronisationRunService.startNewRun();
+        final SynchronisationRun runA = synchronisationRunService.startNewRun();
         Connection connection = this.getService().getStagingDataSource().getConnection();
         
         try {
@@ -585,22 +585,49 @@ public class SynchronisationServiceTest extends AbstractJUnit4SpringContextTests
             studentSet = StagingUtil.createTestStudentSet(connection,
                     this.getStudentSetDao(), rdbIdSource, "s1234567890");
             
-            StagingUtil.createStudentSetActivity(connection, run, studentSet,
+            StagingUtil.createStudentSetActivity(connection, runA, studentSet,
                     activityA);
         } finally {
             connection.close();
         }
             
-        this.getService().generateDiff(run);
+        this.getService().generateDiff(runA);
         
         assertEquals(1, this.getEnrolmentChangeDao().getAll().size());
+        assertEquals(1, this.getEnrolmentChangePartDao().getAll().size());
+        
+        synchronisationRunService.handleSuccessOutcome(runA);
+        
+        // Try generating a remove change
+        
+        final SynchronisationRun runB = synchronisationRunService.startNewRun();
+            
+        this.getService().generateDiff(runB);
+        
+        assertEquals(2, this.getEnrolmentChangeDao().getAll().size());        
+        assertEquals(2, this.getEnrolmentChangePartDao().getAll().size());
+        
         for (EnrolmentChange change: this.getEnrolmentChangeDao().getAll()) {
-            assertEquals(run, change.getRun());
             assertEquals(activityA, change.getActivity());
             assertEquals(studentSet, change.getStudentSet());
+            
+            if (change.getRun().getRunId() == runA.getRunId()) {
+                assertEquals(change.getChangeType(), EnrolmentChange.Type.ADD);
+            } else {
+                assertEquals(change.getChangeType(), EnrolmentChange.Type.REMOVE);
+            }
         }
         
-        assertEquals(1, this.getEnrolmentChangePartDao().getAll().size());
+        synchronisationRunService.handleSuccessOutcome(runB);
+        
+        // Generate no change
+        
+        final SynchronisationRun runC = synchronisationRunService.startNewRun();
+            
+        this.getService().generateDiff(runC);
+        
+        assertEquals(2, this.getEnrolmentChangeDao().getAll().size());        
+        assertEquals(2, this.getEnrolmentChangePartDao().getAll().size());
     }
 
     /**
