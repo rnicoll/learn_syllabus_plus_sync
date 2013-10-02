@@ -85,7 +85,9 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
             
             // This manually deregisters JDBC driver, which prevents Tomcat 7
             // from complaining about memory leaks from this class
-            Enumeration<Driver> drivers = DriverManager.getDrivers();
+            // XXX: Disabled as it's dangerous and Tomcat handles this much
+            // better, even if it does complain
+            /* Enumeration<Driver> drivers = DriverManager.getDrivers();
             while (drivers.hasMoreElements()) {
                 final Driver driver = drivers.nextElement();
                 
@@ -98,7 +100,7 @@ public class ScheduledJobManager extends Object implements ApplicationListener<A
                         log.error(String.format("Error deregistering driver %s", driver), e);
                     }
                 }
-            }
+            } */
         }
     }
 

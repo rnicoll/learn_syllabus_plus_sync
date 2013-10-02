@@ -374,6 +374,8 @@ public class SynchronisationService extends Object {
                         courseCache.put(courseId, course);
                     }
                     
+                    // XXX: Check the course is available?
+                    
                     description = null == descriptionText
                         ? null
                         : new FormattedText(descriptionText, FormattedText.Type.PLAIN_TEXT);
