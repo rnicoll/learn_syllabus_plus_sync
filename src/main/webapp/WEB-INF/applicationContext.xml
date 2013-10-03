@@ -161,8 +161,7 @@
         <property name="sendErrorMessageTo">
             <list>
                 <value>Ross.Nicoll@ed.ac.uk</value>
-                <!-- <value>apps-tels@mlists.is.ed.ac.uk</value> -->
-                <value>apps-deverror@lists.ed.ac.uk</value>
+                <!-- <value>apps-tels@mlist.is.ed.ac.uk</value> -->
                 <!-- <value>apps-appsupp@mlist.is.ed.ac.uk</value> -->
             </list>
         </property>
@@ -172,8 +171,8 @@
            -->
         <property name="sendSuccessMessageTo">
             <list>
-                <!-- <value>apps-tels@mlists.is.ed.ac.uk</value> -->
-                <value>apps-deverror@lists.ed.ac.uk</value>
+                <value>Ross.Nicoll@ed.ac.uk</value>
+                <!-- <value>apps-tels@mlist.is.ed.ac.uk</value> -->
                 <!-- <value>apps-appsupp@mlist.is.ed.ac.uk</value> -->
             </list>
         </property>
@@ -183,8 +182,7 @@
            -->
         <property name="sendThresholdExceededMessageTo">
             <list>
-                <value>apps-tels@mlists.is.ed.ac.uk</value>
-                <value>apps-deverror@lists.ed.ac.uk</value>
+                <value>apps-tels@mlist.is.ed.ac.uk</value>
                 <!-- <value>apps-appsupp@mlist.is.ed.ac.uk</value> -->
             </list>
         </property>
