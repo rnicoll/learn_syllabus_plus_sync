@@ -34,7 +34,7 @@ CREATE TABLE module (
   cache_occurrence_code VARCHAR2(6) DEFAULT NULL,
   cache_course_code VARCHAR2(12) DEFAULT NULL,
   learn_academic_year VARCHAR2(6) DEFAULT NULL,
-  learn_course_code VARCHAR2(40) DEFAULT NULL,
+  learn_course_code VARCHAR2(106) DEFAULT NULL,
   webct_active CHAR(1) DEFAULT NULL,
   constraint module_webct_active FOREIGN KEY (webct_active) REFERENCES yes_no(yn_code),
   constraint "MODULE_PK" PRIMARY KEY (tt_module_id) using index tablespace SATVLE_INDEX
@@ -54,7 +54,7 @@ CREATE TABLE module_course (
   module_course_id INTEGER NOT NULL,
   tt_module_id VARCHAR2(40) NOT NULL,
   merged_course CHAR(1) NOT NULL,
-  learn_course_code VARCHAR2(40) NOT NULL,
+  learn_course_code VARCHAR2(106) NOT NULL,
   learn_course_id VARCHAR2(40) DEFAULT NULL,
   constraint module_course_merged FOREIGN KEY (merged_course) REFERENCES yes_no(yn_code),
   constraint "MODULE_COURSE_PK" PRIMARY KEY (module_course_id) using index tablespace SATVLE_INDEX
