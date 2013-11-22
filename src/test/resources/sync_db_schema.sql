@@ -49,7 +49,7 @@ CREATE TABLE activity (
     tt_template_id VARCHAR(32) DEFAULT NULL,
     tt_type_id VARCHAR(32) DEFAULT NULL,
     tt_scheduling_method INTEGER DEFAULT NULL,
-    learn_group_name VARCHAR(255) DEFAULT NULL,
+    learn_group_name VARCHAR(300) DEFAULT NULL,
     description VARCHAR(2000) DEFAULT NULL,
     PRIMARY KEY (tt_activity_id),
     CONSTRAINT activity_module FOREIGN KEY (tt_module_id) REFERENCES module (tt_module_id),

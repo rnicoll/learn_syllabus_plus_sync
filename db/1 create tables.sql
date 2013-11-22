@@ -79,7 +79,7 @@ CREATE TABLE activity (
   tt_template_id VARCHAR2(32) DEFAULT NULL CONSTRAINT activity_template REFERENCES activity_template (tt_template_id),
   tt_type_id VARCHAR2(32) DEFAULT NULL,
   tt_scheduling_method NUMBER(10,0) DEFAULT NULL,
-  learn_group_name NVARCHAR2(255) DEFAULT NULL,
+  learn_group_name NVARCHAR2(300) DEFAULT NULL,
   description NVARCHAR2(2000) DEFAULT NULL,
   constraint "ACTIVITY_PK" PRIMARY KEY (tt_activity_id) using index tablespace SATVLE_INDEX
 ) tablespace "SATVLE_DATA";
